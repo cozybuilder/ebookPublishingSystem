@@ -1,0 +1,14 @@
+{
+  "name": "ebook-publishing-system",
+  "version": "0.1.0",
+  "description": "Markdown 원고를 입력하면 PDF/DOCX/미리보기/이미지까지 생산하는 전자책 출판 시스템",
+  "type": "module",
+  "private": true,
+  "scripts": {
+    "parse": "node src/main.ts",
+    "test:parser": "node test/parser.test.ts"
+  },
+  "engines": {
+    "node": ">=22.6.0"
+  }
+}
