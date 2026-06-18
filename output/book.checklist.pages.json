@@ -1,0 +1,16 @@
+{
+  "profile": "ChecklistPDF",
+  "pageCount": 1,
+  "pages": [
+    {
+      "type": "ChecklistPage",
+      "chapterIndex": 0,
+      "blockRefs": [
+        {
+          "chapterIndex": 0,
+          "blockIndex": 2
+        }
+      ]
+    }
+  ]
+}

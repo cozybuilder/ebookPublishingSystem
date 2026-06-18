@@ -1,0 +1,73 @@
+{
+  "profile": "FullBookPDF",
+  "pageCount": 5,
+  "pages": [
+    {
+      "type": "CoverPage",
+      "blockRefs": []
+    },
+    {
+      "type": "CopyrightPage",
+      "blockRefs": []
+    },
+    {
+      "type": "TableOfContentsPage",
+      "blockRefs": []
+    },
+    {
+      "type": "ChapterPage",
+      "chapterIndex": 0,
+      "blockRefs": []
+    },
+    {
+      "type": "ContentPage",
+      "chapterIndex": 0,
+      "blockRefs": [
+        {
+          "chapterIndex": 0,
+          "blockIndex": 0
+        },
+        {
+          "chapterIndex": 0,
+          "blockIndex": 1
+        },
+        {
+          "chapterIndex": 0,
+          "blockIndex": 2
+        },
+        {
+          "chapterIndex": 0,
+          "blockIndex": 3
+        },
+        {
+          "chapterIndex": 0,
+          "blockIndex": 4
+        },
+        {
+          "chapterIndex": 0,
+          "blockIndex": 5
+        },
+        {
+          "chapterIndex": 0,
+          "blockIndex": 6
+        },
+        {
+          "chapterIndex": 0,
+          "blockIndex": 7
+        },
+        {
+          "chapterIndex": 0,
+          "blockIndex": 8
+        },
+        {
+          "chapterIndex": 0,
+          "blockIndex": 9
+        },
+        {
+          "chapterIndex": 0,
+          "blockIndex": 10
+        }
+      ]
+    }
+  ]
+}

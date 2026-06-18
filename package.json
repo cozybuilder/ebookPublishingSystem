@@ -6,7 +6,9 @@
   "private": true,
   "scripts": {
     "parse": "node src/main.ts",
-    "test:parser": "node test/parser.test.ts"
+    "build:pages": "node src/build-pages.ts",
+    "test:parser": "node test/parser.test.ts",
+    "test:pages": "node test/pages.test.ts"
   },
   "engines": {
     "node": ">=22.6.0"
