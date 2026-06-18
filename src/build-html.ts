@@ -57,11 +57,11 @@ function main(): void {
 
   const forced = normalizeThemeName(parseThemeArg());
 
-  // 메인 출력: --theme 강제값 우선, 없으면 프로파일 기본 테마
+  // 메인 출력: --theme 강제값 우선, 없으면 프로파일 기본 테마(현재 ModernGlass)
   const fullTheme = forced ? resolveThemeByName(forced) : resolveThemeForProfile('FullBookPDF');
   const checklistTheme = forced ? resolveThemeByName(forced) : resolveThemeForProfile('ChecklistPDF');
 
-  console.log('✓ HTML 빌드 완료 (Theme Engine 연동)');
+  console.log('✓ HTML 빌드 완료 (Theme Engine 연동, default=ModernGlass)');
   console.log(`  입력 : ${inputPath}`);
   write(out('book.html'), render(book, FullBookPDF, fullTheme, title), `[FullBookPDF / ${fullTheme.name}]`);
   write(
@@ -70,13 +70,12 @@ function main(): void {
     `[ChecklistPDF / ${checklistTheme.name}]`,
   );
 
-  // Minimal 데모 출력(항상 생성)
-  const minimal = resolveThemeByName('Minimal');
-  write(out('book.minimal.html'), render(book, FullBookPDF, minimal, `${title} (Minimal)`), '[FullBookPDF / Minimal]');
+  // Modern Glass 검수용 명시 출력(항상 생성)
+  const modern = resolveThemeByName('ModernGlass');
   write(
-    out('book.checklist.minimal.html'),
-    render(book, ChecklistPDF, minimal, `${title} — 체크리스트 (Minimal)`),
-    '[ChecklistPDF / Minimal]',
+    out('book.modern.html'),
+    render(book, FullBookPDF, modern, `${title} (Modern Glass)`),
+    '[FullBookPDF / ModernGlass]',
   );
 }
 

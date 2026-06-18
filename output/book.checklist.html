@@ -7,20 +7,20 @@
 <style>
 :root {
   --navy: #1F2D5A;
-  --orange: #C2703D;
-  --cyan: #5B8A93;
+  --orange: #F5821F;
+  --cyan: #1FB6C9;
   --ink: #1A1A1A;
   --gray: #9AA0A6;
   --paper: #FFFFFF;
 
   /* 의미 톤별 배경/포인트 (레시피가 틴트 on/off 결정) */
   --emphasis-bg: #fff;
-  --emphasis-line: #e5e5e5;
+  --emphasis-line: #ECEEF2;
   --info-bg: #fff;
-  --info-line: #e5e5e5;
+  --info-line: #ECEEF2;
   --neutral-bg: #f6f8fc;
   --neutral-line: #e7ecf5;
-  --hairline: #e5e5e5;
+  --hairline: #ECEEF2;
 
   --font: Pretendard, "Apple SD Gothic Neo", "Noto Sans KR", "Malgun Gothic", system-ui, sans-serif;
   --fs-title: 40px;
@@ -38,15 +38,15 @@
   --sp-xl: 40px;
   --sp-xxl: 64px;
 
-  --r-card: 4px;
-  --r-image: 4px;
+  --r-card: 20px;
+  --r-image: 16px;
 }
 
 * { box-sizing: border-box; }
 html { -webkit-font-smoothing: antialiased; text-rendering: optimizeLegibility; }
 body {
   margin: 0;
-  background: #f5f5f4;
+  background: #f6f7f9;
   font-family: var(--font);
   color: var(--ink);
   line-height: var(--lh-body);
@@ -61,9 +61,10 @@ body {
   width: 840px;
   max-width: 100%;
   margin: 0 auto var(--sp-xl);
-  padding: 64px 56px;
-  border-radius: 4px;
+  padding: 96px 80px;
+  border-radius: 28px;
   box-shadow: none;
+  border: 1px solid #ECEEF2;
 }
 .page-label {
   position: absolute;
@@ -95,10 +96,10 @@ body {
 
 /* 카드 공통 — 연한 테두리, 부드러운 그림자, 넓은 여백 */
 .card {
-  border-radius: 16px;
-  padding: var(--sp-lg) var(--sp-lg);
-  margin: var(--sp-lg) 0;
-  background: #fff;
+  border-radius: var(--r-card);
+  padding: var(--sp-xl);
+  margin: var(--sp-xl) 0;
+  background: #fcfdff;
   border: 1px solid var(--hairline);
   box-shadow: none;
 }
@@ -123,9 +124,9 @@ body {
 .tone-neutral .card-label { color: var(--navy); }
 
 /* 표 — 인포그래픽형 */
-.tbl { border: 1px solid var(--neutral-line); border-radius: 14px; overflow: hidden; }
+.tbl { border: 1px solid transparent; border-radius: 14px; overflow: hidden; }
 table { width: 100%; border-collapse: collapse; font-size: var(--fs-body); }
-th, td { padding: 14px 18px; text-align: left; }
+th, td { padding: 18px 22px; text-align: left; }
 th {
   background: #fff; color: var(--navy);
   font-weight: 700; font-size: 13px; letter-spacing: .02em;
@@ -140,7 +141,7 @@ td:first-child { font-weight: 650; color: var(--navy); }
 .checklist { list-style: none; padding-left: 0; margin: 0; }
 .checklist li { display: flex; align-items: center; gap: 12px; padding: 12px 0; border-bottom: 1px dashed #eef1f6; font-size: var(--fs-body); color: #2f384d; }
 .checklist li:last-child { border-bottom: none; }
-.cbox { flex: 0 0 auto; width: 22px; height: 22px; border-radius: 2px; border: 2px solid var(--cyan); background: #f3fcfd; }
+.cbox { flex: 0 0 auto; width: 22px; height: 22px; border-radius: 6px; border: 2px solid var(--cyan); background: #f3fcfd; }
 
 /* Steps — 단계 플로우 */
 .steps { list-style: none; counter-reset: step; margin: 0; padding: 0; }
@@ -150,8 +151,8 @@ td:first-child { font-weight: 650; color: var(--navy); }
 }
 .steps li::before {
   content: counter(step); position: absolute; left: 0; top: 0;
-  width: 36px; height: 36px; border-radius: 50%;
-  background: var(--cyan); color: #fff; font-weight: 700;
+  width: 36px; height: 36px; border-radius: 50%; box-sizing: border-box;
+  background: #fff; color: var(--cyan); border: 2px solid var(--cyan); font-weight: 700;
   display: flex; align-items: center; justify-content: center;
   box-shadow: none;
 }

@@ -42,12 +42,14 @@ function check(name: string, condition: boolean, detail?: string): void {
 
 console.log('Theme Engine 단위 테스트 실행\n');
 
-// --- 기본 테마 ---
-check('default theme = CozyBuilderLab', DEFAULT_THEME_NAME === 'CozyBuilderLab');
-check('미지정 시 default theme 반환', getTheme().name === 'CozyBuilderLab');
+// --- 기본 테마 (v3: Modern Glass) ---
+check('default theme = ModernGlass', DEFAULT_THEME_NAME === 'ModernGlass');
+check('미지정 시 default theme 반환', getTheme().name === 'ModernGlass');
 
-// --- Minimal 선택 가능 ---
-check('Minimal 테마 선택 가능', getTheme('Minimal').name === 'Minimal');
+// --- 테마 선택 ---
+check('ModernGlass 테마 선택 가능', getTheme('ModernGlass').name === 'ModernGlass');
+check('Minimal 테마(레거시) 선택 가능', getTheme('Minimal').name === 'Minimal');
+check('theme name 정규화(modern → ModernGlass)', normalizeThemeName('modern') === 'ModernGlass');
 check('theme name 정규화(minimal → Minimal)', normalizeThemeName('minimal') === 'Minimal');
 check('theme name 정규화(대문자/별칭 cozy)', normalizeThemeName('COZY') === 'CozyBuilderLab');
 check('알 수 없는 이름 → undefined', normalizeThemeName('rainbow') === undefined);
@@ -63,29 +65,33 @@ const merged = mergeTokens(DEFAULT_TOKENS, { radius: { card: 99 } });
 check('mergeTokens: 부분 override', merged.radius.card === 99 && merged.radius.image === DEFAULT_TOKENS.radius.image);
 check('mergeTokens: base 불변(원본 미변경)', DEFAULT_TOKENS.radius.card === 12);
 
-// --- 프로파일 기본 테마 ---
-check('FullBookPDF 기본 theme = CozyBuilderLab', themeNameForProfile('FullBookPDF') === 'CozyBuilderLab');
-check('ChecklistPDF 기본 theme = Minimal', themeNameForProfile('ChecklistPDF') === 'Minimal');
+// --- 프로파일 기본 테마 (v3: 전부 ModernGlass) ---
+check('FullBookPDF 기본 theme = ModernGlass', themeNameForProfile('FullBookPDF') === 'ModernGlass');
+check('ChecklistPDF 기본 theme = ModernGlass', themeNameForProfile('ChecklistPDF') === 'ModernGlass');
 
 // --- 합성된 theme 으로 렌더링 ---
 const book = parseBook(readFileSync(samplePath, 'utf8'));
+const modern = resolveThemeByName('ModernGlass');
 const cozy = resolveThemeByName('CozyBuilderLab');
-const minimal = resolveThemeByName('Minimal');
-const layout = applyLayout(mapComponents(book, buildPages(book, FullBookPDF)), cozy.tokens);
+const layout = applyLayout(mapComponents(book, buildPages(book, FullBookPDF)), modern.tokens);
 
+const modernHtml = renderHtml(layout, modern.tokens, 'modern', modern.recipe);
 const cozyHtml = renderHtml(layout, cozy.tokens, 'cozy', cozy.recipe);
-const minimalHtml = renderHtml(layout, minimal.tokens, 'minimal', minimal.recipe);
 
+check('렌더 가능: ModernGlass HTML 생성', modernHtml.includes('<section class="page"'));
 check('렌더 가능: Cozy HTML 생성', cozyHtml.includes('<section class="page"'));
-check('렌더 가능: Minimal HTML 생성', minimalHtml.includes('<section class="page"'));
-check('Minimal recipe 반영: 페이지 배경 #f5f5f4', minimalHtml.includes('#f5f5f4'));
-check('Minimal recipe 반영: --r-card 4px', minimalHtml.includes('--r-card: 4px'));
-check('Cozy recipe 유지: 그라데이션 배경', cozyHtml.includes('linear-gradient(180deg, #f1eee7'));
-check('두 테마 결과가 서로 다름', cozyHtml !== minimalHtml);
+
+// Modern Glass 방향 반영: 큰 여백 / 얇은 border / 낮은 shadow
+check('ModernGlass: 큰 페이지 여백(96px 80px)', modernHtml.includes('padding: 96px 80px'));
+check('ModernGlass: 얇은 연한 border(#ECEEF2)', modernHtml.includes('#ECEEF2'));
+check('ModernGlass: 페이지 그림자 없음(box-shadow: none)', modernHtml.includes('box-shadow: none'));
+check('ModernGlass: 큰 radius(--r-card 20px)', modernHtml.includes('--r-card: 20px'));
+check('ModernGlass: 깔끔한 배경(#f6f7f9)', modernHtml.includes('#f6f7f9'));
+check('ModernGlass ≠ Cozy(서로 다른 결과)', modernHtml !== cozyHtml);
 
 // --- 기존 html 후크 유지(회귀 방지) ---
-check('Cozy: tone-emphasis 유지', cozyHtml.includes('tone-emphasis'));
-check('Cozy: Navy HEX 유지', cozyHtml.includes('#1F2D5A'));
+check('Modern: tone 클래스 유지', modernHtml.includes('tone-emphasis'));
+check('Modern: Navy HEX 유지', modernHtml.includes('#1F2D5A'));
 
 // --- 요약 ---
 console.log('\n────────────────────────────');

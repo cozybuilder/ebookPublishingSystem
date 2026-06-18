@@ -23,11 +23,31 @@ import type {
   ThemeRegistry,
 } from '../types/theme.ts';
 
-export const DEFAULT_THEME_NAME: ThemeName = 'CozyBuilderLab';
+export const DEFAULT_THEME_NAME: ThemeName = 'ModernGlass';
 
 // ----- 스타일 레시피 -----
 
-/** CozyBuilder Lab = 렌더러 기본 표현(현 v0.2 디자인) 그대로 */
+/**
+ * Modern Glass (v3 default) — Linear / OpenAI / Apple / Arc / Raycast 방향.
+ * 큰 여백, border 중심, 그림자 거의 없음, 색 절제, 깔끔한 흰 배경, 낮은 정보 밀도.
+ */
+const MODERN_GLASS_RECIPE: StyleRecipe = {
+  pageBackground: '#f6f7f9',
+  pageShadow: false, // 그림자 대신 얇은 border 로 분리
+  pageRadius: 28, // radius 큼
+  cardShadow: false, // 그림자 거의 없음
+  cardTint: false, // 과한 카드 틴트 제거
+  cardBorder: '#ECEEF2', // 얇고 연한 border 중심
+  accent: false, // 색 절제(장식 액센트 최소)
+  tableHeaderTinted: false, // 엑셀 느낌 표 제거
+  checkboxRadius: 6,
+  density: 'spacious', // 큰 여백, 낮은 밀도, 숨쉬는 느낌
+  cardStyle: 'glass',
+  tableStyle: 'open',
+  badgeStyle: 'outline',
+};
+
+/** CozyBuilder Lab(v2 레거시) = 렌더러 기본 표현 그대로 */
 const COZY_RECIPE: StyleRecipe = { ...BASE_RECIPE };
 
 /** Minimal = 그림자 약화, 색 강조 최소, 카드 표현 단순화 */
@@ -44,6 +64,16 @@ const MINIMAL_RECIPE: StyleRecipe = {
 };
 
 // ----- 테마 정의 -----
+
+const ModernGlass: Theme = {
+  name: 'ModernGlass',
+  label: 'Modern Glass',
+  // 큰 radius 지향 (base 의 navy/타이포/간격은 상속)
+  tokenOverride: {
+    radius: { card: 20, image: 16 },
+  },
+  recipe: MODERN_GLASS_RECIPE,
+};
 
 const CozyBuilderLab: Theme = {
   name: 'CozyBuilderLab',
@@ -66,18 +96,19 @@ const Minimal: Theme = {
 // ----- 레지스트리 -----
 
 export const THEMES: ThemeRegistry = {
-  CozyBuilderLab,
-  Minimal,
+  ModernGlass,
+  CozyBuilderLab, // v2 레거시(유지)
+  Minimal, // v2 레거시(유지)
 };
 
-/** 출력 프로파일 → 기본 테마 (미구현 테마는 v0.2까지 CozyBuilderLab 으로) */
+/** 출력 프로파일 → 기본 테마 (Bento 구현 전까지 전부 ModernGlass) */
 export const PROFILE_THEME: ProfileThemeMapping = {
-  FullBookPDF: 'CozyBuilderLab',
-  EditableDOCX: 'CozyBuilderLab',
-  KmongPreviewPDF: 'CozyBuilderLab',
-  ChecklistPDF: 'Minimal',
-  DetailPageImages: 'CozyBuilderLab',
-  SNSPromoImages: 'CozyBuilderLab',
+  FullBookPDF: 'ModernGlass',
+  EditableDOCX: 'ModernGlass',
+  KmongPreviewPDF: 'ModernGlass',
+  ChecklistPDF: 'ModernGlass',
+  DetailPageImages: 'ModernGlass',
+  SNSPromoImages: 'ModernGlass',
 };
 
 // ----- 합성 -----
@@ -110,6 +141,10 @@ export function mergeTokens(base: DesignTokens, override?: ThemeOverride): Desig
 // ----- 선택/해석 -----
 
 const NAME_ALIAS: Record<string, ThemeName> = {
+  modernglass: 'ModernGlass',
+  'modern glass': 'ModernGlass',
+  modern: 'ModernGlass',
+  glass: 'ModernGlass',
   cozybuilderlab: 'CozyBuilderLab',
   cozy: 'CozyBuilderLab',
   minimal: 'Minimal',

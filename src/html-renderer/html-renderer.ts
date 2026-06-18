@@ -32,6 +32,10 @@ export const BASE_RECIPE: StyleRecipe = {
   accent: true,
   tableHeaderTinted: true,
   checkboxRadius: 7,
+  density: 'comfortable',
+  cardStyle: 'soft',
+  tableStyle: 'lined',
+  badgeStyle: 'solid',
 };
 
 function esc(s: string): string {
@@ -65,6 +69,19 @@ function buildCss(t: DesignTokens, r: StyleRecipe): string {
   const subtitleAccentDisplay = r.accent ? 'block' : 'none';
   const stepsBadgeShadow = r.accent ? '0 4px 10px rgba(31,182,201,.35)' : 'none';
   const rowHover = r.accent ? '#fafbfe' : 'transparent';
+
+  // v3 다이얼
+  const spacious = r.density === 'spacious';
+  const pagePadding = spacious ? '96px 80px' : '64px 56px';
+  const pageBorder = r.pageShadow ? 'none' : `1px solid ${r.cardBorder}`;
+  const cardPadding = spacious ? 'var(--sp-xl)' : 'var(--sp-lg)';
+  const blockGap = spacious ? 'var(--sp-xl)' : 'var(--sp-lg)';
+  const cardBg = r.cardStyle === 'glass' ? '#fcfdff' : '#fff';
+  const cellPad = r.tableStyle === 'open' ? '18px 22px' : '14px 18px';
+  const tblBorder = r.tableStyle === 'open' ? 'transparent' : 'var(--neutral-line)';
+  const badgeBg = r.badgeStyle === 'outline' ? '#fff' : 'var(--cyan)';
+  const badgeColor = r.badgeStyle === 'outline' ? 'var(--cyan)' : '#fff';
+  const badgeBorder = r.badgeStyle === 'outline' ? '2px solid var(--cyan)' : '0';
 
   return `
 :root {
@@ -123,9 +140,10 @@ body {
   width: 840px;
   max-width: 100%;
   margin: 0 auto var(--sp-xl);
-  padding: 64px 56px;
+  padding: ${pagePadding};
   border-radius: ${r.pageRadius}px;
   box-shadow: ${pageShadow};
+  border: ${pageBorder};
 }
 .page-label {
   position: absolute;
@@ -157,10 +175,10 @@ body {
 
 /* 카드 공통 — 연한 테두리, 부드러운 그림자, 넓은 여백 */
 .card {
-  border-radius: 16px;
-  padding: var(--sp-lg) var(--sp-lg);
-  margin: var(--sp-lg) 0;
-  background: #fff;
+  border-radius: var(--r-card);
+  padding: ${cardPadding};
+  margin: ${blockGap} 0;
+  background: ${cardBg};
   border: 1px solid var(--hairline);
   box-shadow: ${cardShadow};
 }
@@ -185,9 +203,9 @@ body {
 .tone-neutral .card-label { color: var(--navy); }
 
 /* 표 — 인포그래픽형 */
-.tbl { border: 1px solid var(--neutral-line); border-radius: 14px; overflow: hidden; }
+.tbl { border: 1px solid ${tblBorder}; border-radius: 14px; overflow: hidden; }
 table { width: 100%; border-collapse: collapse; font-size: var(--fs-body); }
-th, td { padding: 14px 18px; text-align: left; }
+th, td { padding: ${cellPad}; text-align: left; }
 th {
   background: ${thBg}; color: var(--navy);
   font-weight: 700; font-size: 13px; letter-spacing: .02em;
@@ -212,8 +230,8 @@ td:first-child { font-weight: 650; color: var(--navy); }
 }
 .steps li::before {
   content: counter(step); position: absolute; left: 0; top: 0;
-  width: 36px; height: 36px; border-radius: 50%;
-  background: var(--cyan); color: #fff; font-weight: 700;
+  width: 36px; height: 36px; border-radius: 50%; box-sizing: border-box;
+  background: ${badgeBg}; color: ${badgeColor}; border: ${badgeBorder}; font-weight: 700;
   display: flex; align-items: center; justify-content: center;
   box-shadow: ${stepsBadgeShadow};
 }
