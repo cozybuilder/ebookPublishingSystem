@@ -34,7 +34,7 @@ function buildCss(t: DesignTokens): string {
   const ty = t.typography;
   const sp = t.spacing;
   const softStack =
-    '"Pretendard Variable", Pretendard, -apple-system, BlinkMacSystemFont, "Apple SD Gothic Neo", "Noto Sans KR", "Malgun Gothic", "Segoe UI", sans-serif';
+    'Pretendard, "Apple SD Gothic Neo", "Noto Sans KR", "Malgun Gothic", system-ui, sans-serif';
   return `
 :root {
   --navy: ${c.navy};

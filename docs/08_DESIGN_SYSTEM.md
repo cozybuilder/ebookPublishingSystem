@@ -26,7 +26,10 @@ CozyBuilder Lab 출판 스타일을 만드는 것이다.
 | paper | `#FFFFFF` | 배경 |
 
 ### Typography
-- Font: `system` (폰트 파일 추후 확정)
+- Primary font: **Pretendard**
+- Fallback: system Korean sans-serif stack
+  (`"Apple SD Gothic Neo", "Noto Sans KR", "Malgun Gothic", system-ui, sans-serif`)
+- Font file bundling: **v0.2 이후 검토** (현재는 설치 환경에서만 Pretendard 적용, CDN/번들 미사용)
 - Scale(px): title 40 · chapter 28 · body 16 · caption 12 · emphasis 18
 - Line height: body 1.7 · heading 1.3
 
