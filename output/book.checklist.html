@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>하루 30분, 나만의 루틴 만들기 — 체크리스트</title>
+<style>
+:root {
+  --navy: #1F2D5A;
+  --orange: #F5821F;
+  --cyan: #1FB6C9;
+  --ink: #1A1A1A;
+  --gray: #9AA0A6;
+  --paper: #FFFFFF;
+
+  --font: -apple-system, "Segoe UI", "Malgun Gothic", sans-serif;
+  --fs-title: 40px;
+  --fs-chapter: 28px;
+  --fs-body: 16px;
+  --fs-caption: 12px;
+  --fs-emphasis: 18px;
+  --lh-body: 1.7;
+  --lh-heading: 1.3;
+
+  --sp-xs: 4px;
+  --sp-sm: 8px;
+  --sp-md: 16px;
+  --sp-lg: 24px;
+  --sp-xl: 40px;
+  --sp-xxl: 64px;
+
+  --r-card: 12px;
+  --r-image: 8px;
+}
+
+* { box-sizing: border-box; }
+body {
+  margin: 0;
+  background: #e9ecef;
+  font-family: var(--font);
+  color: var(--ink);
+  line-height: var(--lh-body);
+}
+.book { padding: var(--sp-xl) var(--sp-md); }
+
+/* PDF 한 면처럼 보이는 페이지 컨테이너 */
+.page {
+  background: var(--paper);
+  width: 820px;
+  max-width: 100%;
+  margin: 0 auto var(--sp-xl);
+  padding: var(--sp-xxl) var(--sp-xl);
+  box-shadow: 0 2px 12px rgba(0,0,0,.12);
+  border-radius: var(--r-image);
+}
+.page-label {
+  font-size: var(--fs-caption);
+  color: var(--gray);
+  text-transform: uppercase;
+  letter-spacing: .08em;
+  margin-bottom: var(--sp-md);
+}
+
+/* 타이포 역할 */
+.ty-title    { font-size: var(--fs-title);    line-height: var(--lh-heading); color: var(--navy); font-weight: 800; margin: 0 0 var(--sp-md); }
+.ty-chapter  { font-size: var(--fs-chapter);  line-height: var(--lh-heading); color: var(--navy); font-weight: 700; margin: 0 0 var(--sp-md); }
+.ty-body     { font-size: var(--fs-body);     line-height: var(--lh-body); margin: 0 0 var(--sp-md); }
+.ty-caption  { font-size: var(--fs-caption);  color: var(--gray); margin: 0 0 var(--sp-sm); }
+.ty-emphasis { font-size: var(--fs-emphasis); color: var(--navy); margin: 0 0 var(--sp-sm); }
+
+/* 카드 공통 */
+.card {
+  border-radius: var(--r-card);
+  padding: var(--sp-md);
+  margin: 0 0 var(--sp-md);
+  border: 1px solid #e1e4e8;
+  background: #fff;
+}
+.card-label {
+  font-size: var(--fs-caption);
+  font-weight: 700;
+  letter-spacing: .06em;
+  text-transform: uppercase;
+  margin-bottom: var(--sp-sm);
+}
+
+/* 톤 (의미 기반 매핑) */
+.tone-emphasis { border-left: 4px solid var(--orange); }
+.tone-emphasis .card-label { color: var(--orange); }
+.tone-info { border-left: 4px solid var(--cyan); }
+.tone-info .card-label { color: var(--cyan); }
+.tone-neutral { border-left: 4px solid var(--navy); }
+.tone-neutral .card-label { color: var(--navy); }
+
+/* 표 */
+table { width: 100%; border-collapse: collapse; font-size: var(--fs-body); }
+th, td { border: 1px solid #e1e4e8; padding: var(--sp-sm); text-align: left; }
+th { background: var(--navy); color: var(--paper); }
+
+/* 리스트류 */
+.checklist { list-style: none; padding-left: 0; margin: 0; }
+.checklist li { margin: var(--sp-xs) 0; }
+.steps { margin: 0; padding-left: var(--sp-lg); }
+.toc { list-style: none; padding-left: 0; }
+.toc li { padding: var(--sp-xs) 0; border-bottom: 1px dashed #e1e4e8; }
+
+/* before/after */
+.before-after { display: flex; gap: var(--sp-md); }
+.before-after > div { flex: 1; }
+.ba-label { font-weight: 700; font-size: var(--fs-caption); }
+
+/* prompt */
+.prompt pre {
+  margin: 0; white-space: pre-wrap; font-family: "SFMono-Regular", Consolas, monospace;
+  font-size: var(--fs-body);
+}
+
+/* faq */
+.faq-q { font-weight: 700; color: var(--navy); margin-top: var(--sp-sm); }
+.faq-a { margin: var(--sp-xs) 0 var(--sp-sm) var(--sp-md); }
+
+/* image slot */
+.image-slot {
+  border: 2px dashed var(--cyan);
+  border-radius: var(--r-image);
+  background: #f1fbfd;
+  text-align: center;
+}
+.image-slot .slot-tag { font-weight: 700; color: var(--cyan); letter-spacing: .08em; }
+.image-slot .slot-meta { font-size: var(--fs-caption); color: var(--gray); margin-top: var(--sp-xs); }
+.image-slot .slot-prompt { font-size: var(--fs-body); margin-top: var(--sp-sm); }
+</style>
+</head>
+<body>
+<main class="book">
+<section class="page" data-page="ChecklistPage">
+  <div class="page-label">ChecklistPage</div>
+  <div class="card tone-neutral" data-id="cmp-0001" data-type="ChecklistCard"><div class="card-label">체크리스트</div><ul class="checklist"><li>☐ 매일 같은 시간에 할 수 있는가</li><li>☐ 5분 안에 시작할 수 있을 만큼 작은가</li><li>☐ 실패해도 다음 날 다시 할 수 있는가</li></ul></div>
+</section>
+</main>
+</body>
+</html>

@@ -9,10 +9,12 @@
     "build:pages": "node src/build-pages.ts",
     "build:components": "node src/build-components.ts",
     "build:layout": "node src/build-layout.ts",
+    "build:html": "node src/build-html.ts",
     "test:parser": "node test/parser.test.ts",
     "test:pages": "node test/pages.test.ts",
     "test:components": "node test/components.test.ts",
-    "test:layout": "node test/layout.test.ts"
+    "test:layout": "node test/layout.test.ts",
+    "test:html": "node test/html-renderer.test.ts"
   },
   "engines": {
     "node": ">=22.6.0"
