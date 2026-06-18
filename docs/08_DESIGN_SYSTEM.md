@@ -4,11 +4,49 @@
 목표는 단순히 예쁜 디자인이 아니라, **수십 권의 책을 일관된 품질로 생산**할 수 있는
 CozyBuilder Lab 출판 스타일을 만드는 것이다.
 
-> 본 단계는 **시각 규칙 정의**다.
-> TypeScript 타입 / JSON 스키마 / 파서 / PDF·DOCX 생성 / 렌더러 / 템플릿 엔진은 포함하지 않는다.
-> 구체 픽셀값·폰트 파일·HEX 코드는 형식화 단계에서 확정한다(여기서는 역할·원칙·상대 규칙만).
+> 본 문서는 시각 규칙과 **승인된 디자인 토큰 v0.1**(코비 리뷰 → 코지 확인 완료)을 함께 담는다.
+> 토큰 구현체는 `src/design-tokens/default-tokens.ts`.
 
 관련 문서: [컴포넌트](03_COMPONENTS.md) · [파이프라인](04_PIPELINE.md) · [출력 프로파일](07_OUTPUT_PROFILES.md)
+
+---
+
+## 디자인 토큰 v0.1 (승인됨)
+
+> ✅ 아래 값은 v0.1 MVP 기준으로 **승인 완료**. 구현체: `src/design-tokens/default-tokens.ts`.
+
+### Colors
+| 토큰 | HEX | 역할 |
+| --- | --- | --- |
+| navy | `#1F2D5A` | 기본/구조 |
+| orange | `#F5821F` | 강조 |
+| cyan | `#1FB6C9` | 보조/정보 |
+| ink | `#1A1A1A` | 본문 텍스트 |
+| gray | `#9AA0A6` | 보조선/캡션 |
+| paper | `#FFFFFF` | 배경 |
+
+### Typography
+- Font: `system` (폰트 파일 추후 확정)
+- Scale(px): title 40 · chapter 28 · body 16 · caption 12 · emphasis 18
+- Line height: body 1.7 · heading 1.3
+
+### Spacing (px)
+xs 4 · sm 8 · md 16 · lg 24 · xl 40 · xxl 64
+
+### Radius (px)
+card 12 · image 8
+
+### Card Tone
+- emphasis: warning, result
+- info: prompt, steps, faq
+- neutral: checklist, table, compare, before-after
+
+### Canvas Ratio & Pixel
+| 토큰 | 비율 | 픽셀 |
+| --- | --- | --- |
+| square | 1:1 | 1080 × 1080 |
+| vertical | 9:16 | 1080 × 1920 |
+| detailBanner | 세로 긴 배너 | 1080 × 3240 |
 
 ---
 

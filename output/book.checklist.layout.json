@@ -1,0 +1,49 @@
+{
+  "profile": "ChecklistPDF",
+  "tokensVersion": "v0.1",
+  "canvas": {
+    "square": {
+      "ratio": "1:1",
+      "width": 1080,
+      "height": 1080
+    },
+    "vertical": {
+      "ratio": "9:16",
+      "width": 1080,
+      "height": 1920
+    },
+    "detailBanner": {
+      "ratio": "verticalLong",
+      "width": 1080,
+      "height": 3240
+    }
+  },
+  "pageCount": 1,
+  "componentCount": 1,
+  "pages": [
+    {
+      "pageType": "ChecklistPage",
+      "chapterIndex": 0,
+      "canvas": null,
+      "components": [
+        {
+          "componentId": "cmp-0001",
+          "componentType": "ChecklistCard",
+          "tone": "neutral",
+          "typographyRole": "body",
+          "spacing": "md",
+          "radius": "card",
+          "bounds": null,
+          "component": {
+            "type": "ChecklistCard",
+            "items": [
+              "매일 같은 시간에 할 수 있는가",
+              "5분 안에 시작할 수 있을 만큼 작은가",
+              "실패해도 다음 날 다시 할 수 있는가"
+            ]
+          }
+        }
+      ]
+    }
+  ]
+}

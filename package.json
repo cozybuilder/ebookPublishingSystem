@@ -8,9 +8,11 @@
     "parse": "node src/main.ts",
     "build:pages": "node src/build-pages.ts",
     "build:components": "node src/build-components.ts",
+    "build:layout": "node src/build-layout.ts",
     "test:parser": "node test/parser.test.ts",
     "test:pages": "node test/pages.test.ts",
-    "test:components": "node test/components.test.ts"
+    "test:components": "node test/components.test.ts",
+    "test:layout": "node test/layout.test.ts"
   },
   "engines": {
     "node": ">=22.6.0"

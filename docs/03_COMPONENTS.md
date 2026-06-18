@@ -108,6 +108,31 @@
 
 ---
 
+## 구조 컴포넌트 (자동 페이지용)
+
+> 아래 3종은 입력 블록이 아니라 **메타데이터/챕터 구조에서 파생되는 자동 페이지**
+> (Cover/Chapter/TOC/Copyright)를 구성하기 위한 구조 컴포넌트다. PM 승인으로 정식 반영.
+
+## 15. ChapterHeading
+
+- **역할** : ChapterPage 의 챕터 제목 표시.
+- **입력 데이터** : `number`, `title` (Chapter 에서 파생)
+- **예상 출력** : 챕터 번호 + 제목의 큰 헤딩.
+
+## 16. TableOfContentsList
+
+- **역할** : TableOfContentsPage 의 목차 항목 목록.
+- **입력 데이터** : `entries: { number, title }[]` (전체 Chapter 에서 파생)
+- **예상 출력** : 챕터 번호 + 제목(+ 추후 페이지 번호) 목록.
+
+## 17. CopyrightNotice
+
+- **역할** : CopyrightPage 의 판권 고지.
+- **입력 데이터** : `text` (v0.1 임시 고정 텍스트 — 발행일/ISBN 등 세부 규약은 v0.2)
+- **예상 출력** : 저작권/발행 정보 텍스트 블록.
+
+---
+
 ## 블록 ↔ 컴포넌트 매핑 요약
 
 | 입력 요소 | 컴포넌트 | 입력 데이터 형태 |
@@ -126,6 +151,9 @@
 | `:::warning` | WarningCard | text |
 | `:::result` | ResultCard | text |
 | `:::image` | ImageBlock | id, type, prompt |
+| (Chapter 파생) | ChapterHeading | number, title |
+| (Chapters 파생) | TableOfContentsList | entries[] |
+| (Metadata 파생) | CopyrightNotice | text |
 
 ---
 
