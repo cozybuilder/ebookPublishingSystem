@@ -14,7 +14,8 @@
     "test:pages": "node test/pages.test.ts",
     "test:components": "node test/components.test.ts",
     "test:layout": "node test/layout.test.ts",
-    "test:html": "node test/html-renderer.test.ts"
+    "test:html": "node test/html-renderer.test.ts",
+    "test:theme": "node test/theme-engine.test.ts"
   },
   "engines": {
     "node": ">=22.6.0"

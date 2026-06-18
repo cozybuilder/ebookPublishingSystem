@@ -15,6 +15,24 @@
 
 import type { Component } from '../types/component.ts';
 import type { DesignTokens, LayoutComponent, LayoutPage } from '../types/design.ts';
+import type { StyleRecipe } from '../types/theme.ts';
+
+/**
+ * 렌더러의 기본 스타일 레시피 = 현재 승인된 CozyBuilder Lab(v0.2) 표현.
+ * 테마 엔진의 CozyBuilderLab 테마가 이 값을 그대로 사용한다.
+ * (렌더러는 테마 이름을 모르며, 레시피/토큰이라는 "최종 스타일"만 입력으로 받는다.)
+ */
+export const BASE_RECIPE: StyleRecipe = {
+  pageBackground: 'linear-gradient(180deg, #f1eee7 0%, #ece8df 100%)',
+  pageShadow: true,
+  pageRadius: 22,
+  cardShadow: true,
+  cardTint: true,
+  cardBorder: 'rgba(31,45,90,.10)',
+  accent: true,
+  tableHeaderTinted: true,
+  checkboxRadius: 7,
+};
 
 function esc(s: string): string {
   return s
@@ -28,13 +46,26 @@ function nl2br(s: string): string {
   return esc(s).replace(/\n/g, '<br>');
 }
 
-/** 승인 토큰을 CSS 변수 + 상품형 스타일로 변환 */
-function buildCss(t: DesignTokens): string {
+/** 승인 토큰 + 스타일 레시피를 CSS 변수 + 상품형 스타일로 변환 */
+function buildCss(t: DesignTokens, r: StyleRecipe): string {
   const c = t.colors;
   const ty = t.typography;
   const sp = t.spacing;
   const softStack =
     'Pretendard, "Apple SD Gothic Neo", "Noto Sans KR", "Malgun Gothic", system-ui, sans-serif';
+
+  // 레시피 다이얼 → CSS 값
+  const pageShadow = r.pageShadow ? '0 18px 50px rgba(31,45,90,.10), 0 2px 6px rgba(31,45,90,.05)' : 'none';
+  const cardShadow = r.cardShadow ? '0 6px 18px rgba(31,45,90,.05)' : 'none';
+  const emphasisBg = r.cardTint ? '#fff6ee' : '#fff';
+  const emphasisLine = r.cardTint ? '#fbe0c8' : r.cardBorder;
+  const infoBg = r.cardTint ? '#ecfafc' : '#fff';
+  const infoLine = r.cardTint ? '#cdeef3' : r.cardBorder;
+  const thBg = r.tableHeaderTinted ? 'var(--neutral-bg)' : '#fff';
+  const subtitleAccentDisplay = r.accent ? 'block' : 'none';
+  const stepsBadgeShadow = r.accent ? '0 4px 10px rgba(31,182,201,.35)' : 'none';
+  const rowHover = r.accent ? '#fafbfe' : 'transparent';
+
   return `
 :root {
   --navy: ${c.navy};
@@ -44,14 +75,14 @@ function buildCss(t: DesignTokens): string {
   --gray: ${c.gray};
   --paper: ${c.paper};
 
-  /* 의미 톤별 연한 배경/포인트 (토큰 색에서 파생한 표현값) */
-  --emphasis-bg: #fff6ee;
-  --emphasis-line: #fbe0c8;
-  --info-bg: #ecfafc;
-  --info-line: #cdeef3;
+  /* 의미 톤별 배경/포인트 (레시피가 틴트 on/off 결정) */
+  --emphasis-bg: ${emphasisBg};
+  --emphasis-line: ${emphasisLine};
+  --info-bg: ${infoBg};
+  --info-line: ${infoLine};
   --neutral-bg: #f6f8fc;
   --neutral-line: #e7ecf5;
-  --hairline: rgba(31,45,90,.10);
+  --hairline: ${r.cardBorder};
 
   --font: ${ty.fontFamily === 'system' ? softStack : ty.fontFamily};
   --fs-title: ${ty.scale.title}px;
@@ -77,7 +108,7 @@ function buildCss(t: DesignTokens): string {
 html { -webkit-font-smoothing: antialiased; text-rendering: optimizeLegibility; }
 body {
   margin: 0;
-  background: linear-gradient(180deg, #f1eee7 0%, #ece8df 100%);
+  background: ${r.pageBackground};
   font-family: var(--font);
   color: var(--ink);
   line-height: var(--lh-body);
@@ -93,8 +124,8 @@ body {
   max-width: 100%;
   margin: 0 auto var(--sp-xl);
   padding: 64px 56px;
-  border-radius: 22px;
-  box-shadow: 0 18px 50px rgba(31,45,90,.10), 0 2px 6px rgba(31,45,90,.05);
+  border-radius: ${r.pageRadius}px;
+  box-shadow: ${pageShadow};
 }
 .page-label {
   position: absolute;
@@ -122,7 +153,7 @@ body {
 .ty-caption { font-size: var(--fs-caption); color: var(--gray); margin: 0 0 var(--sp-sm); }
 .ty-emphasis { font-size: var(--fs-emphasis); color: #41506e; font-weight: 600; margin: 0 0 var(--sp-md); }
 
-.subtitle-accent { width: 44px; height: 4px; border-radius: 4px; background: var(--orange); margin: var(--sp-md) 0 var(--sp-lg); }
+.subtitle-accent { display: ${subtitleAccentDisplay}; width: 44px; height: 4px; border-radius: 4px; background: var(--orange); margin: var(--sp-md) 0 var(--sp-lg); }
 
 /* 카드 공통 — 연한 테두리, 부드러운 그림자, 넓은 여백 */
 .card {
@@ -131,7 +162,7 @@ body {
   margin: var(--sp-lg) 0;
   background: #fff;
   border: 1px solid var(--hairline);
-  box-shadow: 0 6px 18px rgba(31,45,90,.05);
+  box-shadow: ${cardShadow};
 }
 .card-label {
   display: inline-flex; align-items: center; gap: 8px;
@@ -158,20 +189,20 @@ body {
 table { width: 100%; border-collapse: collapse; font-size: var(--fs-body); }
 th, td { padding: 14px 18px; text-align: left; }
 th {
-  background: var(--neutral-bg); color: var(--navy);
+  background: ${thBg}; color: var(--navy);
   font-weight: 700; font-size: 13px; letter-spacing: .02em;
   border-bottom: 1px solid var(--neutral-line);
 }
 td { border-bottom: 1px solid #f0f2f7; color: #38415a; }
 tr:last-child td { border-bottom: none; }
-tbody tr:hover { background: #fafbfe; }
+tbody tr:hover { background: ${rowHover}; }
 td:first-child { font-weight: 650; color: var(--navy); }
 
 /* 체크리스트 — 실천 카드 */
 .checklist { list-style: none; padding-left: 0; margin: 0; }
 .checklist li { display: flex; align-items: center; gap: 12px; padding: 12px 0; border-bottom: 1px dashed #eef1f6; font-size: var(--fs-body); color: #2f384d; }
 .checklist li:last-child { border-bottom: none; }
-.cbox { flex: 0 0 auto; width: 22px; height: 22px; border-radius: 7px; border: 2px solid var(--cyan); background: #f3fcfd; }
+.cbox { flex: 0 0 auto; width: 22px; height: 22px; border-radius: ${r.checkboxRadius}px; border: 2px solid var(--cyan); background: #f3fcfd; }
 
 /* Steps — 단계 플로우 */
 .steps { list-style: none; counter-reset: step; margin: 0; padding: 0; }
@@ -184,7 +215,7 @@ td:first-child { font-weight: 650; color: var(--navy); }
   width: 36px; height: 36px; border-radius: 50%;
   background: var(--cyan); color: #fff; font-weight: 700;
   display: flex; align-items: center; justify-content: center;
-  box-shadow: 0 4px 10px rgba(31,182,201,.35);
+  box-shadow: ${stepsBadgeShadow};
 }
 .steps li > span { display: inline-block; padding-top: 7px; }
 
@@ -323,8 +354,13 @@ function renderPage(page: LayoutPage): string {
 </section>`;
 }
 
-export function renderHtml(pages: LayoutPage[], tokens: DesignTokens, docTitle: string): string {
-  const css = buildCss(tokens);
+export function renderHtml(
+  pages: LayoutPage[],
+  tokens: DesignTokens,
+  docTitle: string,
+  recipe: StyleRecipe = BASE_RECIPE,
+): string {
+  const css = buildCss(tokens, recipe);
   const pagesHtml = pages.map(renderPage).join('\n');
   return `<!DOCTYPE html>
 <html lang="ko">
