@@ -1,0 +1,161 @@
+{
+  "profile": "FullBookPDF",
+  "pageCount": 5,
+  "componentCount": 17,
+  "pages": [
+    {
+      "type": "CoverPage",
+      "components": [
+        {
+          "type": "TitleBlock",
+          "text": "하루 30분, 나만의 루틴 만들기"
+        },
+        {
+          "type": "SubtitleBlock",
+          "text": "작은 습관으로 하루의 밀도를 바꾸는 법"
+        },
+        {
+          "type": "AuthorBlock",
+          "text": "CozyBuilder Lab"
+        }
+      ]
+    },
+    {
+      "type": "CopyrightPage",
+      "components": [
+        {
+          "type": "CopyrightNotice",
+          "text": "《하루 30분, 나만의 루틴 만들기》\n© CozyBuilder Lab\nAll rights reserved."
+        }
+      ]
+    },
+    {
+      "type": "TableOfContentsPage",
+      "components": [
+        {
+          "type": "TableOfContentsList",
+          "entries": [
+            {
+              "number": 1,
+              "title": "시작하기 전에"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "type": "ChapterPage",
+      "chapterIndex": 0,
+      "components": [
+        {
+          "type": "ChapterHeading",
+          "number": 1,
+          "title": "시작하기 전에"
+        }
+      ]
+    },
+    {
+      "type": "ContentPage",
+      "chapterIndex": 0,
+      "components": [
+        {
+          "type": "ParagraphBlock",
+          "text": "루틴은 의지가 아니라 설계의 문제다. 큰 목표보다 작은 행동을 반복할 수 있는 구조를 먼저 만들어야 한다. 이 장에서는 루틴을 시작하기 전에 점검할 것들을 다룬다."
+        },
+        {
+          "type": "ImageBlock",
+          "id": "IMG-001",
+          "imageType": "chapter",
+          "prompt": "아침 햇살이 드는 책상 위, 노트와 따뜻한 커피가 놓인 차분한 장면"
+        },
+        {
+          "type": "ChecklistCard",
+          "items": [
+            "매일 같은 시간에 할 수 있는가",
+            "5분 안에 시작할 수 있을 만큼 작은가",
+            "실패해도 다음 날 다시 할 수 있는가"
+          ]
+        },
+        {
+          "type": "TableCard",
+          "columns": [
+            "루틴 단계",
+            "권장 시간",
+            "비고"
+          ],
+          "rows": [
+            [
+              "준비",
+              "5분",
+              "전날 밤 미리 정해두기"
+            ],
+            [
+              "실행",
+              "20분",
+              "정해진 순서대로"
+            ],
+            [
+              "기록",
+              "5분",
+              "한 줄 메모로 충분"
+            ]
+          ]
+        },
+        {
+          "type": "CompareCard",
+          "columns": [
+            "유형",
+            "소요 시간",
+            "난이도"
+          ],
+          "rows": [
+            [
+              "아침 루틴",
+              "20분",
+              "중"
+            ],
+            [
+              "저녁 루틴",
+              "15분",
+              "하"
+            ]
+          ]
+        },
+        {
+          "type": "StepsCard",
+          "items": [
+            "잠들기 전 다음 날 첫 행동을 정해 둔다.",
+            "기상 후 5분 안에 그 행동을 시작한다.",
+            "끝나면 간단히 기록한다."
+          ]
+        },
+        {
+          "type": "BeforeAfterCard",
+          "before": "일어나자마자 휴대폰을 확인하며 정신없이 하루를 시작한다.",
+          "after": "기상 후 정해진 3가지 행동을 순서대로 실행해 하루의 첫 30분을 정리한다."
+        },
+        {
+          "type": "PromptCard",
+          "text": "나는 [직업/상황]이고 하루 [가능한 시간]을 확보할 수 있다.\n이 시간에 실천할 수 있는 작은 루틴 3가지를 난이도 순으로 제안해줘."
+        },
+        {
+          "type": "FAQCard",
+          "pairs": [
+            {
+              "q": "루틴을 빠뜨린 날은 어떻게 하나요?",
+              "a": "자책하지 말고 다음 날 같은 시간에 다시 시작하면 됩니다."
+            }
+          ]
+        },
+        {
+          "type": "WarningCard",
+          "text": "처음부터 완벽한 루틴을 만들려 하지 마라. 작게 시작하고 회복력을 우선하라."
+        },
+        {
+          "type": "ResultCard",
+          "text": "루틴의 핵심은 완벽함이 아니라 다시 시작할 수 있는 구조다."
+        }
+      ]
+    }
+  ]
+}

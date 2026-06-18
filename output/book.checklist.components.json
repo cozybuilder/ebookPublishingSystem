@@ -1,0 +1,21 @@
+{
+  "profile": "ChecklistPDF",
+  "pageCount": 1,
+  "componentCount": 1,
+  "pages": [
+    {
+      "type": "ChecklistPage",
+      "chapterIndex": 0,
+      "components": [
+        {
+          "type": "ChecklistCard",
+          "items": [
+            "매일 같은 시간에 할 수 있는가",
+            "5분 안에 시작할 수 있을 만큼 작은가",
+            "실패해도 다음 날 다시 할 수 있는가"
+          ]
+        }
+      ]
+    }
+  ]
+}
