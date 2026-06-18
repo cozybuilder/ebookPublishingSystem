@@ -1,15 +1,16 @@
 /**
- * Ebook Publishing System — HTML Renderer (v0.1)
+ * Ebook Publishing System — HTML Renderer (v0.2 디자인 개선)
  *
- * LayoutPage 목록 + DesignTokens → 사람이 확인 가능한 HTML 미리보기 문자열.
+ * LayoutPage 목록 + DesignTokens → CozyBuilder Lab 스타일의 전자책 상품 미리보기 HTML.
  *
  * 기준 문서: docs/04_PIPELINE.md [7], docs/08_DESIGN_SYSTEM.md
  *
- * v0.1 범위:
- *  - 의존성 0. 순수 문자열 조립으로 단일 HTML 파일 생성(인라인 <style>).
- *  - 승인된 디자인 토큰을 CSS 변수로 반영(colors/typography/spacing/radius/tone).
- *  - ImageBlock 은 실제 이미지가 아니라 "이미지 슬롯 카드"로 표시.
- *  하지 않는 것: PDF/DOCX/이미지 파일 생성, HTML→PDF 변환, 실제 페이지 넘김 계산.
+ * 디자인 방향(코지 검수 반영):
+ *  - 개발자 문서/관리자 화면 느낌 제거, 부드럽고 고급스러운 상품 톤.
+ *  - 카드형 인포그래픽 느낌 강화(의미별 시각 차이, 넓은 여백, 연한 테두리, 부드러운 그림자).
+ *  - 디자인 토큰 v0.1 값(HEX/크기)은 유지하되 "표현 방식"만 개선.
+ *
+ * 범위 밖: PDF/DOCX/이미지 파일 생성, HTML→PDF 변환, 페이지 넘김 계산, 외부 라이브러리.
  */
 
 import type { Component } from '../types/component.ts';
@@ -27,11 +28,13 @@ function nl2br(s: string): string {
   return esc(s).replace(/\n/g, '<br>');
 }
 
-/** 승인 토큰을 CSS 변수 + 기본 스타일로 변환 */
+/** 승인 토큰을 CSS 변수 + 상품형 스타일로 변환 */
 function buildCss(t: DesignTokens): string {
   const c = t.colors;
   const ty = t.typography;
   const sp = t.spacing;
+  const softStack =
+    '"Pretendard Variable", Pretendard, -apple-system, BlinkMacSystemFont, "Apple SD Gothic Neo", "Noto Sans KR", "Malgun Gothic", "Segoe UI", sans-serif';
   return `
 :root {
   --navy: ${c.navy};
@@ -41,7 +44,16 @@ function buildCss(t: DesignTokens): string {
   --gray: ${c.gray};
   --paper: ${c.paper};
 
-  --font: ${ty.fontFamily === 'system' ? '-apple-system, "Segoe UI", "Malgun Gothic", sans-serif' : ty.fontFamily};
+  /* 의미 톤별 연한 배경/포인트 (토큰 색에서 파생한 표현값) */
+  --emphasis-bg: #fff6ee;
+  --emphasis-line: #fbe0c8;
+  --info-bg: #ecfafc;
+  --info-line: #cdeef3;
+  --neutral-bg: #f6f8fc;
+  --neutral-line: #e7ecf5;
+  --hairline: rgba(31,45,90,.10);
+
+  --font: ${ty.fontFamily === 'system' ? softStack : ty.fontFamily};
   --fs-title: ${ty.scale.title}px;
   --fs-chapter: ${ty.scale.chapter}px;
   --fs-body: ${ty.scale.body}px;
@@ -62,101 +74,164 @@ function buildCss(t: DesignTokens): string {
 }
 
 * { box-sizing: border-box; }
+html { -webkit-font-smoothing: antialiased; text-rendering: optimizeLegibility; }
 body {
   margin: 0;
-  background: #e9ecef;
+  background: linear-gradient(180deg, #f1eee7 0%, #ece8df 100%);
   font-family: var(--font);
   color: var(--ink);
   line-height: var(--lh-body);
+  letter-spacing: -0.01em;
 }
-.book { padding: var(--sp-xl) var(--sp-md); }
+.book { padding: var(--sp-xxl) var(--sp-lg); }
 
-/* PDF 한 면처럼 보이는 페이지 컨테이너 */
+/* 전자책 한 면 */
 .page {
+  position: relative;
   background: var(--paper);
-  width: 820px;
+  width: 840px;
   max-width: 100%;
   margin: 0 auto var(--sp-xl);
-  padding: var(--sp-xxl) var(--sp-xl);
-  box-shadow: 0 2px 12px rgba(0,0,0,.12);
-  border-radius: var(--r-image);
+  padding: 64px 56px;
+  border-radius: 22px;
+  box-shadow: 0 18px 50px rgba(31,45,90,.10), 0 2px 6px rgba(31,45,90,.05);
 }
 .page-label {
-  font-size: var(--fs-caption);
+  position: absolute;
+  top: 22px;
+  right: 28px;
+  font-size: 10px;
   color: var(--gray);
+  letter-spacing: .18em;
   text-transform: uppercase;
-  letter-spacing: .08em;
-  margin-bottom: var(--sp-md);
+  opacity: .65;
 }
 
-/* 타이포 역할 */
-.ty-title    { font-size: var(--fs-title);    line-height: var(--lh-heading); color: var(--navy); font-weight: 800; margin: 0 0 var(--sp-md); }
-.ty-chapter  { font-size: var(--fs-chapter);  line-height: var(--lh-heading); color: var(--navy); font-weight: 700; margin: 0 0 var(--sp-md); }
-.ty-body     { font-size: var(--fs-body);     line-height: var(--lh-body); margin: 0 0 var(--sp-md); }
-.ty-caption  { font-size: var(--fs-caption);  color: var(--gray); margin: 0 0 var(--sp-sm); }
-.ty-emphasis { font-size: var(--fs-emphasis); color: var(--navy); margin: 0 0 var(--sp-sm); }
-
-/* 카드 공통 */
-.card {
-  border-radius: var(--r-card);
-  padding: var(--sp-md);
+/* 타이포 위계 */
+.ty-title {
+  font-size: var(--fs-title); line-height: var(--lh-heading);
+  color: var(--navy); font-weight: 800; letter-spacing: -0.02em;
   margin: 0 0 var(--sp-md);
-  border: 1px solid #e1e4e8;
+}
+.ty-chapter {
+  font-size: var(--fs-chapter); line-height: var(--lh-heading);
+  color: var(--navy); font-weight: 750; letter-spacing: -0.02em;
+  margin: 0 0 var(--sp-sm);
+}
+.ty-body { font-size: var(--fs-body); line-height: var(--lh-body); margin: 0 0 var(--sp-md); color: #2b3346; }
+.ty-caption { font-size: var(--fs-caption); color: var(--gray); margin: 0 0 var(--sp-sm); }
+.ty-emphasis { font-size: var(--fs-emphasis); color: #41506e; font-weight: 600; margin: 0 0 var(--sp-md); }
+
+.subtitle-accent { width: 44px; height: 4px; border-radius: 4px; background: var(--orange); margin: var(--sp-md) 0 var(--sp-lg); }
+
+/* 카드 공통 — 연한 테두리, 부드러운 그림자, 넓은 여백 */
+.card {
+  border-radius: 16px;
+  padding: var(--sp-lg) var(--sp-lg);
+  margin: var(--sp-lg) 0;
   background: #fff;
+  border: 1px solid var(--hairline);
+  box-shadow: 0 6px 18px rgba(31,45,90,.05);
 }
 .card-label {
-  font-size: var(--fs-caption);
-  font-weight: 700;
-  letter-spacing: .06em;
-  text-transform: uppercase;
-  margin-bottom: var(--sp-sm);
+  display: inline-flex; align-items: center; gap: 8px;
+  font-size: 13px; font-weight: 700; letter-spacing: .02em;
+  color: var(--navy);
+  margin: 0 0 var(--sp-md);
+}
+.card-label::before {
+  content: ""; width: 9px; height: 9px; border-radius: 3px; background: var(--navy);
 }
 
-/* 톤 (의미 기반 매핑) */
-.tone-emphasis { border-left: 4px solid var(--orange); }
+/* 의미 톤 — 좌측 굵은 선 대신 연한 배경 + 포인트 */
+.tone-emphasis { background: var(--emphasis-bg); border-color: var(--emphasis-line); }
 .tone-emphasis .card-label { color: var(--orange); }
-.tone-info { border-left: 4px solid var(--cyan); }
-.tone-info .card-label { color: var(--cyan); }
-.tone-neutral { border-left: 4px solid var(--navy); }
+.tone-emphasis .card-label::before { background: var(--orange); }
+.tone-info { background: var(--info-bg); border-color: var(--info-line); }
+.tone-info .card-label { color: #128799; }
+.tone-info .card-label::before { background: var(--cyan); }
+.tone-neutral { background: #fff; }
 .tone-neutral .card-label { color: var(--navy); }
 
-/* 표 */
+/* 표 — 인포그래픽형 */
+.tbl { border: 1px solid var(--neutral-line); border-radius: 14px; overflow: hidden; }
 table { width: 100%; border-collapse: collapse; font-size: var(--fs-body); }
-th, td { border: 1px solid #e1e4e8; padding: var(--sp-sm); text-align: left; }
-th { background: var(--navy); color: var(--paper); }
+th, td { padding: 14px 18px; text-align: left; }
+th {
+  background: var(--neutral-bg); color: var(--navy);
+  font-weight: 700; font-size: 13px; letter-spacing: .02em;
+  border-bottom: 1px solid var(--neutral-line);
+}
+td { border-bottom: 1px solid #f0f2f7; color: #38415a; }
+tr:last-child td { border-bottom: none; }
+tbody tr:hover { background: #fafbfe; }
+td:first-child { font-weight: 650; color: var(--navy); }
 
-/* 리스트류 */
+/* 체크리스트 — 실천 카드 */
 .checklist { list-style: none; padding-left: 0; margin: 0; }
-.checklist li { margin: var(--sp-xs) 0; }
-.steps { margin: 0; padding-left: var(--sp-lg); }
-.toc { list-style: none; padding-left: 0; }
-.toc li { padding: var(--sp-xs) 0; border-bottom: 1px dashed #e1e4e8; }
+.checklist li { display: flex; align-items: center; gap: 12px; padding: 12px 0; border-bottom: 1px dashed #eef1f6; font-size: var(--fs-body); color: #2f384d; }
+.checklist li:last-child { border-bottom: none; }
+.cbox { flex: 0 0 auto; width: 22px; height: 22px; border-radius: 7px; border: 2px solid var(--cyan); background: #f3fcfd; }
 
-/* before/after */
+/* Steps — 단계 플로우 */
+.steps { list-style: none; counter-reset: step; margin: 0; padding: 0; }
+.steps li { counter-increment: step; position: relative; padding: 0 0 var(--sp-lg) 52px; }
+.steps li:not(:last-child)::after {
+  content: ""; position: absolute; left: 17px; top: 36px; bottom: 4px; width: 2px; background: var(--info-line);
+}
+.steps li::before {
+  content: counter(step); position: absolute; left: 0; top: 0;
+  width: 36px; height: 36px; border-radius: 50%;
+  background: var(--cyan); color: #fff; font-weight: 700;
+  display: flex; align-items: center; justify-content: center;
+  box-shadow: 0 4px 10px rgba(31,182,201,.35);
+}
+.steps li > span { display: inline-block; padding-top: 7px; }
+
+/* 목차 */
+.toc { list-style: none; padding-left: 0; margin: 0; }
+.toc li { display: flex; gap: 14px; padding: 14px 4px; border-bottom: 1px solid #f0f2f7; font-size: var(--fs-body); }
+.toc .toc-num { color: var(--orange); font-weight: 800; min-width: 28px; }
+
+/* Before / After */
 .before-after { display: flex; gap: var(--sp-md); }
-.before-after > div { flex: 1; }
-.ba-label { font-weight: 700; font-size: var(--fs-caption); }
+.before-after > div { flex: 1; border-radius: 12px; padding: var(--sp-md); background: #fff; border: 1px solid var(--neutral-line); }
+.ba-before { border-top: 3px solid var(--gray); }
+.ba-after { border-top: 3px solid var(--cyan); }
+.ba-label { font-weight: 700; font-size: 12px; letter-spacing: .04em; text-transform: uppercase; margin-bottom: 6px; }
+.ba-before .ba-label { color: var(--gray); }
+.ba-after .ba-label { color: #128799; }
 
-/* prompt */
-.prompt pre {
-  margin: 0; white-space: pre-wrap; font-family: "SFMono-Regular", Consolas, monospace;
-  font-size: var(--fs-body);
+/* Prompt */
+.prompt { background: #0f1830; border-radius: 12px; padding: var(--sp-md) var(--sp-lg); }
+.prompt pre { margin: 0; white-space: pre-wrap; font-family: "SFMono-Regular", Consolas, monospace; font-size: 14px; color: #d9e2f3; line-height: 1.6; }
+
+/* FAQ */
+.faq-item { padding: var(--sp-sm) 0; border-bottom: 1px solid #eef1f6; }
+.faq-item:last-child { border-bottom: none; }
+.faq-q { font-weight: 700; color: var(--navy); }
+.faq-a { margin: 6px 0 0; color: #475068; }
+
+/* Warning / Result */
+.tone-emphasis[data-type="WarningCard"] .card-label::before { border-radius: 50%; }
+.result-badge { display:inline-flex; align-items:center; gap:8px; }
+.result-badge::before { content: "✓"; display:inline-flex; align-items:center; justify-content:center; width:22px; height:22px; border-radius:50%; background: var(--orange); color:#fff; font-size:13px; font-weight:800; }
+
+/* 이미지 슬롯 — 표지/챕터 이미지 자리 */
+.image-slot { padding: 0; overflow: hidden; border: none; background: transparent; box-shadow: none; }
+.slot-frame {
+  border-radius: 16px;
+  background: linear-gradient(135deg, #eef6f8 0%, #f4f0ff 100%);
+  border: 1px solid var(--info-line);
+  min-height: 180px;
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  gap: 6px; text-align: center; padding: var(--sp-xl);
 }
-
-/* faq */
-.faq-q { font-weight: 700; color: var(--navy); margin-top: var(--sp-sm); }
-.faq-a { margin: var(--sp-xs) 0 var(--sp-sm) var(--sp-md); }
-
-/* image slot */
-.image-slot {
-  border: 2px dashed var(--cyan);
-  border-radius: var(--r-image);
-  background: #f1fbfd;
-  text-align: center;
-}
-.image-slot .slot-tag { font-weight: 700; color: var(--cyan); letter-spacing: .08em; }
-.image-slot .slot-meta { font-size: var(--fs-caption); color: var(--gray); margin-top: var(--sp-xs); }
-.image-slot .slot-prompt { font-size: var(--fs-body); margin-top: var(--sp-sm); }
+.slot-icon { width: 46px; height: 46px; border-radius: 12px; background: #fff; box-shadow: 0 6px 16px rgba(31,45,90,.10); display:flex; align-items:center; justify-content:center; }
+.slot-icon::before { content:""; width: 22px; height: 16px; border-radius: 3px; border: 2px solid var(--cyan); }
+.slot-tag { font-size: 11px; letter-spacing: .18em; color: #128799; font-weight: 700; }
+.slot-meta { font-size: var(--fs-caption); color: var(--gray); margin-top: 2px; }
+.slot-prompt { font-size: var(--fs-body); color: #41506e; margin-top: 8px; max-width: 80%; }
 `.trim();
 }
 
@@ -165,49 +240,49 @@ function renderComponentInner(c: Component): string {
     case 'TitleBlock':
       return `<h1 class="ty-title">${esc(c.text)}</h1>`;
     case 'SubtitleBlock':
-      return `<p class="ty-emphasis">${esc(c.text)}</p>`;
+      return `<div class="subtitle-accent"></div><p class="ty-emphasis">${esc(c.text)}</p>`;
     case 'AuthorBlock':
       return `<p class="ty-caption">${esc(c.text)}</p>`;
     case 'ChapterHeading':
       return `<h2 class="ty-chapter">Chapter ${c.number}. ${esc(c.title)}</h2>`;
     case 'TableOfContentsList':
       return `<ul class="toc">${c.entries
-        .map((e) => `<li><strong>${e.number}.</strong> ${esc(e.title)}</li>`)
+        .map((e) => `<li><span class="toc-num">${e.number}</span><span>${esc(e.title)}</span></li>`)
         .join('')}</ul>`;
     case 'CopyrightNotice':
       return `<div class="ty-caption">${nl2br(c.text)}</div>`;
     case 'ParagraphBlock':
       return `<p class="ty-body">${esc(c.text)}</p>`;
     case 'TableCard':
-      return `<div class="card-label">표</div>${renderTable(c.columns, c.rows)}`;
+      return `<div class="card-label">표</div><div class="tbl">${renderTable(c.columns, c.rows)}</div>`;
     case 'ChecklistCard':
       return `<div class="card-label">체크리스트</div><ul class="checklist">${c.items
-        .map((i) => `<li>☐ ${esc(i)}</li>`)
+        .map((i) => `<li><span class="cbox"></span><span>${esc(i)}</span></li>`)
         .join('')}</ul>`;
     case 'CompareCard':
-      return `<div class="card-label">비교</div>${renderTable(c.columns, c.rows)}`;
+      return `<div class="card-label">비교</div><div class="tbl">${renderTable(c.columns, c.rows)}</div>`;
     case 'BeforeAfterCard':
-      return `<div class="card-label">Before / After</div><div class="before-after"><div><div class="ba-label">Before</div>${esc(
+      return `<div class="card-label">Before / After</div><div class="before-after"><div class="ba-before"><div class="ba-label">Before</div>${esc(
         c.before,
-      )}</div><div><div class="ba-label">After</div>${esc(c.after)}</div></div>`;
+      )}</div><div class="ba-after"><div class="ba-label">After</div>${esc(c.after)}</div></div>`;
     case 'PromptCard':
       return `<div class="card-label">프롬프트</div><div class="prompt"><pre>${esc(c.text)}</pre></div>`;
     case 'StepsCard':
       return `<div class="card-label">단계</div><ol class="steps">${c.items
-        .map((i) => `<li>${esc(i)}</li>`)
+        .map((i) => `<li><span>${esc(i)}</span></li>`)
         .join('')}</ol>`;
     case 'FAQCard':
       return `<div class="card-label">FAQ</div>${c.pairs
-        .map((p) => `<div class="faq-q">Q. ${esc(p.q)}</div><div class="faq-a">A. ${esc(p.a)}</div>`)
+        .map((p) => `<div class="faq-item"><div class="faq-q">Q. ${esc(p.q)}</div><div class="faq-a">A. ${esc(p.a)}</div></div>`)
         .join('')}`;
     case 'WarningCard':
-      return `<div class="card-label">주의</div><div class="ty-body">${esc(c.text)}</div>`;
+      return `<div class="card-label">알아두기</div><div class="ty-body" style="margin:0">${esc(c.text)}</div>`;
     case 'ResultCard':
-      return `<div class="card-label">결과</div><div class="ty-body">${esc(c.text)}</div>`;
+      return `<div class="card-label result-badge">핵심 결과</div><div class="ty-body" style="margin:0">${esc(c.text)}</div>`;
     case 'ImageBlock':
-      return `<div class="slot-tag">IMAGE SLOT</div><div class="slot-meta">id: ${esc(c.id)} · type: ${esc(
-        c.imageType,
-      )}</div><div class="slot-prompt">${esc(c.prompt)}</div>`;
+      return `<div class="slot-frame"><div class="slot-icon"></div><div class="slot-tag">IMAGE SLOT</div><div class="slot-meta">id: ${esc(
+        c.id,
+      )} · type: ${esc(c.imageType)}</div><div class="slot-prompt">${esc(c.prompt)}</div></div>`;
   }
 }
 
@@ -217,7 +292,7 @@ function renderTable(columns: string[], rows: string[][]): string {
   return `<table><thead>${head}</thead><tbody>${body}</tbody></table>`;
 }
 
-/** 카드형 컴포넌트는 .card 래퍼 + 톤 클래스. 텍스트/구조형은 그대로. */
+/** 카드 래퍼를 쓰는 컴포넌트(의미 톤 적용) */
 const CARD_COMPONENTS = new Set<Component['type']>([
   'TableCard',
   'ChecklistCard',
@@ -241,7 +316,7 @@ function renderLayoutComponent(lc: LayoutComponent): string {
 }
 
 function renderPage(page: LayoutPage): string {
-  const body = page.components.map(renderLayoutComponent).join('\n');
+  const body = page.components.map(renderLayoutComponent).join('\n  ');
   return `<section class="page" data-page="${page.pageType}">
   <div class="page-label">${page.pageType}</div>
   ${body}
