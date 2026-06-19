@@ -8,6 +8,7 @@
 import { readFileSync } from 'node:fs';
 import { dirname, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { RELEASE_STEPS, RELEASE_HTML, RELEASE_PNG, RELEASE_PDF } from '../src/release-manifest.ts';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const pkg = JSON.parse(readFileSync(resolve(__dirname, '..', 'package.json'), 'utf8')) as {
@@ -34,22 +35,25 @@ for (const key of ['build:html', 'build:canvas', 'build:assets', 'export:png', '
   check(`스크립트 존재: ${key}`, typeof s[key] === 'string' && s[key].length > 0);
 }
 
-// build:release 구성: html → assets → pdf
+// v2: build:release 는 단일 오케스트레이터(node src/release.ts)
 const rel = s['build:release'] ?? '';
-check('build:release: build:html 포함', rel.includes('build:html'));
-check('build:release: build:assets 포함', rel.includes('build:assets'));
-check('build:release: export:pdf 포함', rel.includes('export:pdf'));
-check('build:release: && 체인(fail-fast)', rel.includes('&&'));
-
-// sparse 는 기본 릴리스에 미포함
+check('build:release: node src/release.ts 호출', rel === 'node src/release.ts');
 check('build:release: sparse 미포함', !rel.includes('sparse'));
 check('build:release:sparse: 별도 스크립트 존재', typeof s['build:release:sparse'] === 'string');
+check('build:release:sparse: sparse 전용', (s['build:release:sparse'] ?? '').includes('sparse'));
+check('build:release:legacy: 기존 체인 보존', (s['build:release:legacy'] ?? '').includes('export:pdf'));
+// 기존 원자 스크립트 유지
+check('build:assets/export:pdf 유지', typeof s['build:assets'] === 'string' && typeof s['export:pdf'] === 'string');
 
-// 단계 순서: html → assets → pdf
-const iHtml = rel.indexOf('build:html');
-const iAssets = rel.indexOf('build:assets');
-const iPdf = rel.indexOf('export:pdf');
-check('build:release: 순서 html→assets→pdf', iHtml >= 0 && iAssets > iHtml && iPdf > iAssets);
+// 매니페스트 구성(오케스트레이터 검증 대상)
+const stepScripts = RELEASE_STEPS.map((x) => x.script);
+check(
+  'RELEASE_STEPS: html→canvas→png→pdf 순서',
+  JSON.stringify(stepScripts) === JSON.stringify(['build:html', 'build:canvas', 'export:png', 'export:pdf']),
+);
+check('RELEASE_PNG: 3종', RELEASE_PNG.length === 3 && RELEASE_PNG.every((f) => f.endsWith('.png')));
+check('RELEASE_PDF: 3종(preview/modern/editorial)', RELEASE_PDF.length === 3 && RELEASE_PDF.every((f) => f.endsWith('.pdf')));
+check('RELEASE_HTML: book/canvas HTML 포함', RELEASE_HTML.includes('book.html') && RELEASE_HTML.includes('canvas.detail.html'));
 
 console.log('\n────────────────────────────');
 if (failures.length === 0) {
