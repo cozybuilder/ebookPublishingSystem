@@ -11,6 +11,8 @@
  */
 
 import type { BlockType } from './ast.ts';
+import type { ComponentType } from './component.ts';
+import type { SelectorPolicy } from '../selector/selector.ts';
 
 // ===== Output Profile =====
 export type ProfileName =
@@ -48,6 +50,11 @@ export interface OutputProfile {
   format: OutputFormat;
   selector: Selector;
   layoutVariant: LayoutVariant;
+  /**
+   * 컴포넌트 큐레이션 정책(선택). 미지정 시 "전체 컴포넌트 사용"(현재 동작 유지).
+   * v1: 구조만 마련. 실제 Book 출력 제한에는 아직 사용하지 않는다.
+   */
+  componentSelector?: SelectorPolicy<ComponentType>;
 }
 
 // ===== Page (AST 외부 파생 구조) =====

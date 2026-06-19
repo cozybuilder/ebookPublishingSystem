@@ -8,10 +8,16 @@
  */
 
 import type { ComponentType } from '../types/component.ts';
+import type { SelectorPolicy, SelectorFallback, SelectorStrategy } from '../selector/selector.ts';
 
 export type CanvasName = 'detail' | 'square' | 'story';
 
 export type FitDensity = 'normal' | 'compact' | 'tight';
+
+// Canvas selector 는 범용 SelectorPolicy 의 ComponentType 특수화다(하위 호환 별칭).
+export type { SelectorStrategy };
+export type CanvasFallback = SelectorFallback<ComponentType>;
+export type CanvasSelector = SelectorPolicy<ComponentType>;
 
 /**
  * 고정 높이 캔버스의 자동 맞춤(auto-fit) 정책.
@@ -26,41 +32,6 @@ export interface FitPolicy {
   density: FitDensity;
   /** 전체 스케일(선택, 1 = 100%) */
   scale?: number;
-}
-
-export type SelectorStrategy = 'priority' | 'marketing' | 'summary' | 'workflow';
-
-/**
- * 캔버스에 담을 컴포넌트를 목적에 맞게 자동 큐레이션하는 정책.
- * 결정론적: 같은 입력이면 같은 출력(점수 동점은 원고 등장 순서로 tie-break).
- */
-/**
- * 후보 부족 시 빈/빈약한 캔버스를 막는 폴백 정책.
- * 1차 선별 결과가 minComponents 미만이면 실행된다.
- */
-export interface CanvasFallback {
-  /** 이 수 미만이면 폴백 실행 */
-  minComponents?: number;
-  /** 폴백에서 허용할 타입(있으면 이 안에서만) */
-  allowTypes?: ComponentType[];
-  /** 폴백에서 우선할 타입 */
-  preferTypes?: ComponentType[];
-  /** 그래도 부족하면 원고 등장순으로 채움 */
-  useFirstAvailable?: boolean;
-}
-
-export interface CanvasSelector {
-  strategy: SelectorStrategy;
-  /** 가산점 대상(우선 포함되도록) */
-  prefer: ComponentType[];
-  /** 감점/제외 대상 */
-  avoid?: ComponentType[];
-  /** 반드시 포함(가능하면 1순위) */
-  require?: ComponentType[];
-  /** 타입별 최대 개수(같은 카드 반복 방지) */
-  maxPerType?: Partial<Record<ComponentType, number>>;
-  /** 후보 부족 시 폴백 */
-  fallback?: CanvasFallback;
 }
 
 export interface CanvasProfile {
