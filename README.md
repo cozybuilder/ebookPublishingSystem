@@ -85,6 +85,13 @@ Markdown 원고를 입력하면 PDF, DOCX, 체크리스트, 인포그래픽, 표
   - **이미지 자산 규약**: `ImageBlock` 의 `id` 로 이미지 파일을 찾아 실삽입(없으면 placeholder).
     탐색 우선순위: `assets/images/<id>.png` → `.jpg` → `.jpeg` → (호환) `assets/<id>.png` → `.jpg` → `.jpeg`.
     예: `assets/images/IMG-001.png`. 이 규약은 향후 PDF/HTML/EPUB/이미지 프롬프트 엔진이 공유.
+- `npm run build:image-prompts` — 원고의 ImageBlock 을 모아 생성용 프롬프트 매니페스트 출력
+  (`output/image-prompts.json` / `output/image-prompts.md`). **실제 AI 생성은 아님**(생성 전 목록).
+  - 각 항목: id / type / prompt / recommendedPath(`assets/images/<id>.png`) / exists·missing /
+    sourcePath / usageHint(cover·chapter·detail·promo·generic).
+  - 자산 존재 여부는 위 이미지 자산 규약(resolveImageAsset)으로 판정 → 매니페스트가 "무엇을 만들어
+    어디에 둘지"를 알려줌. 생성 후 assets/images/<id>.* 에 넣으면 DOCX 등에서 자동 실삽입.
+  - git 비추적(`output/image-prompts.*`).
   - 별도 export 트랙 — git 비추적(`output/*.docx`).
   - print CSS(@page A4 / 배경·색 출력 / break-inside)는 임시 HTML 에만 주입,
     원본 `book.*.html` 은 변경하지 않음

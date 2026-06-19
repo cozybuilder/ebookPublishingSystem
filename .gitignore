@@ -18,5 +18,9 @@ output/canvas.chapter*.html
 output/book.preview.square.html
 output/book.preview.story.html
 
+# 이미지 프롬프트 매니페스트(재생성 가능) — 추적하지 않는다
+output/image-prompts.json
+output/image-prompts.md
+
 # output 폴더는 현재 검증용 산출물(book.ast.json 등)을 추적하기 위해
 # 의도적으로 제외하지 않는다. (이후 단계에서 정책 재검토)
