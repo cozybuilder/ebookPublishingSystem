@@ -52,8 +52,8 @@ function nl2br(s: string): string {
   return esc(s).replace(/\n/g, '<br>');
 }
 
-/** 승인 토큰 + 스타일 레시피를 CSS 변수 + 상품형 스타일로 변환 */
-function buildCss(t: DesignTokens, r: StyleRecipe): string {
+/** 승인 토큰 + 스타일 레시피를 CSS 변수 + 상품형 스타일로 변환 (캔버스에서도 재사용) */
+export function buildCss(t: DesignTokens, r: StyleRecipe): string {
   const c = t.colors;
   const ty = t.typography;
   const sp = t.spacing;
@@ -692,7 +692,7 @@ const CARD_COMPONENTS = new Set<Component['type']>([
   'ImageBlock',
 ]);
 
-function renderLayoutComponent(lc: LayoutComponent): string {
+export function renderLayoutComponent(lc: LayoutComponent): string {
   const inner = renderComponentInner(lc.component);
   if (CARD_COMPONENTS.has(lc.componentType)) {
     const imageCls = lc.componentType === 'ImageBlock' ? ' image-slot' : '';

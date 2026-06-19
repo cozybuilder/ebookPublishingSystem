@@ -1,0 +1,401 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>T — canvas:square</title>
+<style>
+:root {
+  --navy: #1F2D5A;
+  --orange: #F5821F;
+  --cyan: #1FB6C9;
+  --ink: #1A1A1A;
+  --gray: #9AA0A6;
+  --paper: #FFFFFF;
+
+  /* 의미 톤별 배경/포인트 (레시피가 틴트 on/off 결정) */
+  --emphasis-bg: #fff6ee;
+  --emphasis-line: #fbe0c8;
+  --info-bg: #ecfafc;
+  --info-line: #cdeef3;
+  --neutral-bg: #f6f8fc;
+  --neutral-line: #e7ecf5;
+  --hairline: #E6E8EC;
+
+  --font: Pretendard, "Apple SD Gothic Neo", "Noto Sans KR", "Malgun Gothic", system-ui, sans-serif;
+  --fs-title: 40px;
+  --fs-chapter: 28px;
+  --fs-body: 16px;
+  --fs-caption: 12px;
+  --fs-emphasis: 18px;
+  --lh-body: 1.7;
+  --lh-heading: 1.3;
+
+  --sp-xs: 4px;
+  --sp-sm: 8px;
+  --sp-md: 16px;
+  --sp-lg: 24px;
+  --sp-xl: 40px;
+  --sp-xxl: 64px;
+
+  --r-card: 22px;
+  --r-image: 18px;
+}
+
+* { box-sizing: border-box; }
+html { -webkit-font-smoothing: antialiased; text-rendering: optimizeLegibility; }
+body {
+  margin: 0;
+  background: #f1f2f4;
+  font-family: var(--font);
+  color: var(--ink);
+  line-height: var(--lh-body);
+  letter-spacing: -0.01em;
+}
+.book { padding: var(--sp-xxl) var(--sp-lg); }
+
+/* 전자책 한 면 */
+.page {
+  position: relative;
+  background: var(--paper);
+  width: 840px;
+  max-width: 100%;
+  margin: 0 auto var(--sp-xl);
+  padding: 64px 56px;
+  border-radius: 28px;
+  box-shadow: none;
+  border: 1px solid #E6E8EC;
+}
+.page-label {
+  position: absolute;
+  top: 22px;
+  right: 28px;
+  font-size: 10px;
+  color: var(--gray);
+  letter-spacing: .18em;
+  text-transform: uppercase;
+  opacity: .65;
+}
+
+/* 타이포 위계 */
+.ty-title {
+  font-size: var(--fs-title); line-height: var(--lh-heading);
+  color: var(--navy); font-weight: 800; letter-spacing: -0.02em;
+  margin: 0 0 var(--sp-md);
+}
+.ty-chapter {
+  font-size: var(--fs-chapter); line-height: var(--lh-heading);
+  color: var(--navy); font-weight: 750; letter-spacing: -0.02em;
+  margin: 0 0 var(--sp-sm);
+}
+.ty-body { font-size: var(--fs-body); line-height: var(--lh-body); margin: 0 0 var(--sp-md); color: #2b3346; }
+.ty-caption { font-size: var(--fs-caption); color: var(--gray); margin: 0 0 var(--sp-sm); }
+.ty-emphasis { font-size: var(--fs-emphasis); color: #41506e; font-weight: 600; margin: 0 0 var(--sp-md); }
+
+.subtitle-accent { display: block; width: 44px; height: 4px; border-radius: 4px; background: var(--orange); margin: var(--sp-md) 0 var(--sp-lg); }
+
+/* 카드 공통 — 연한 테두리, 부드러운 그림자, 넓은 여백 */
+.card {
+  border-radius: var(--r-card);
+  padding: var(--sp-lg);
+  margin: var(--sp-lg) 0;
+  background: #fff;
+  border: 1px solid var(--hairline);
+  box-shadow: none;
+}
+.card-label {
+  display: inline-flex; align-items: center; gap: 8px;
+  font-size: 13px; font-weight: 700; letter-spacing: .02em;
+  color: var(--navy);
+  margin: 0 0 var(--sp-md);
+}
+.card-label::before {
+  content: ""; width: 9px; height: 9px; border-radius: 3px; background: var(--navy);
+}
+
+/* 의미 톤 — 좌측 굵은 선 대신 연한 배경 + 포인트 */
+.tone-emphasis { background: var(--emphasis-bg); border-color: var(--emphasis-line); }
+.tone-emphasis .card-label { color: var(--orange); }
+.tone-emphasis .card-label::before { background: var(--orange); }
+.tone-info { background: var(--info-bg); border-color: var(--info-line); }
+.tone-info .card-label { color: #128799; }
+.tone-info .card-label::before { background: var(--cyan); }
+.tone-neutral { background: #fff; }
+.tone-neutral .card-label { color: var(--navy); }
+
+/* 표 — 인포그래픽형 */
+.tbl { border: 1px solid var(--neutral-line); border-radius: 14px; overflow: hidden; }
+table { width: 100%; border-collapse: collapse; font-size: var(--fs-body); }
+th, td { padding: 14px 18px; text-align: left; }
+th {
+  background: var(--neutral-bg); color: var(--navy);
+  font-weight: 700; font-size: 13px; letter-spacing: .02em;
+  border-bottom: 1px solid var(--neutral-line);
+}
+td { border-bottom: 1px solid #f0f2f7; color: #38415a; }
+tr:last-child td { border-bottom: none; }
+tbody tr:hover { background: #fafbfe; }
+td:first-child { font-weight: 650; color: var(--navy); }
+
+/* 체크리스트 — 실천 카드 */
+.checklist { list-style: none; padding-left: 0; margin: 0; }
+.checklist li { display: flex; align-items: center; gap: 12px; padding: 12px 0; border-bottom: 1px dashed #eef1f6; font-size: var(--fs-body); color: #2f384d; }
+.checklist li:last-child { border-bottom: none; }
+.cbox { flex: 0 0 auto; width: 22px; height: 22px; border-radius: 8px; border: 2px solid var(--cyan); background: #f3fcfd; }
+
+/* Steps — 단계 플로우 */
+.steps { list-style: none; counter-reset: step; margin: 0; padding: 0; }
+.steps li { counter-increment: step; position: relative; padding: 0 0 var(--sp-lg) 52px; }
+.steps li:not(:last-child)::after {
+  content: ""; position: absolute; left: 17px; top: 36px; bottom: 4px; width: 2px; background: var(--info-line);
+}
+.steps li::before {
+  content: counter(step); position: absolute; left: 0; top: 0;
+  width: 36px; height: 36px; border-radius: 50%; box-sizing: border-box;
+  background: var(--cyan); color: #fff; border: 0; font-weight: 700;
+  display: flex; align-items: center; justify-content: center;
+  box-shadow: 0 4px 10px rgba(31,182,201,.35);
+}
+.steps li > span { display: inline-block; padding-top: 7px; }
+
+/* 목차 */
+.toc { list-style: none; padding-left: 0; margin: 0; }
+.toc li { display: flex; gap: 14px; padding: 14px 4px; border-bottom: 1px solid #f0f2f7; font-size: var(--fs-body); }
+.toc .toc-num { color: var(--orange); font-weight: 800; min-width: 28px; }
+
+/* Before / After */
+.before-after { display: flex; gap: var(--sp-md); }
+.before-after > div { flex: 1; border-radius: 12px; padding: var(--sp-md); background: #fff; border: 1px solid var(--neutral-line); }
+.ba-before { border-top: 3px solid var(--gray); }
+.ba-after { border-top: 3px solid var(--cyan); }
+.ba-label { font-weight: 700; font-size: 12px; letter-spacing: .04em; text-transform: uppercase; margin-bottom: 6px; }
+.ba-before .ba-label { color: var(--gray); }
+.ba-after .ba-label { color: #128799; }
+
+/* Prompt */
+.prompt { background: #0f1830; border-radius: 12px; padding: var(--sp-md) var(--sp-lg); }
+.prompt pre { margin: 0; white-space: pre-wrap; font-family: "SFMono-Regular", Consolas, monospace; font-size: 14px; color: #d9e2f3; line-height: 1.6; }
+
+/* Quote — 기본(Modern Glass 포함 stack 테마): 차분한 인용 카드 */
+.quote { margin: var(--sp-lg) 0; padding: var(--sp-lg) var(--sp-xl); background: #f7f8fb; border: 1px solid var(--hairline); border-left: 3px solid var(--cyan); border-radius: 12px; }
+.quote p { margin: 0; font-size: var(--fs-emphasis); line-height: 1.6; color: #2f3a52; }
+
+/* FAQ */
+.faq-item { padding: var(--sp-sm) 0; border-bottom: 1px solid #eef1f6; }
+.faq-item:last-child { border-bottom: none; }
+.faq-q { font-weight: 700; color: var(--navy); }
+.faq-a { margin: 6px 0 0; color: #475068; }
+
+/* Warning / Result */
+.tone-emphasis[data-type="WarningCard"] .card-label::before { border-radius: 50%; }
+.result-badge { display:inline-flex; align-items:center; gap:8px; }
+.result-badge::before { content: "✓"; display:inline-flex; align-items:center; justify-content:center; width:22px; height:22px; border-radius:50%; background: var(--orange); color:#fff; font-size:13px; font-weight:800; }
+
+/* 이미지 슬롯 — 표지/챕터 이미지 자리 */
+.image-slot { padding: 0; overflow: hidden; border: none; background: transparent; box-shadow: none; }
+.slot-frame {
+  border-radius: 16px;
+  background: linear-gradient(135deg, #eef6f8 0%, #f4f0ff 100%);
+  border: 1px solid var(--info-line);
+  min-height: 180px;
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  gap: 6px; text-align: center; padding: var(--sp-xl);
+}
+.slot-icon { width: 46px; height: 46px; border-radius: 12px; background: #fff; box-shadow: 0 6px 16px rgba(31,45,90,.10); display:flex; align-items:center; justify-content:center; }
+.slot-icon::before { content:""; width: 22px; height: 16px; border-radius: 3px; border: 2px solid var(--cyan); }
+.slot-tag { font-size: 11px; letter-spacing: .18em; color: #128799; font-weight: 700; }
+.slot-meta { font-size: var(--fs-caption); color: var(--gray); margin-top: 2px; }
+.slot-prompt { font-size: var(--fs-body); color: #41506e; margin-top: 8px; max-width: 80%; }
+
+/* ===== 페이지 본문 컨테이너 ===== */
+.page-body.grid-stack { display: block; }
+/* ===== Bento Grid ===== */
+.page-body.grid-bento {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--sp-lg);
+  align-items: stretch;
+}
+.grid-bento > div { margin: 0; }
+.grid-bento > .card { height: 100%; }
+/* 큰 카드(2열 span) */
+.grid-bento > [data-type="TitleBlock"],
+.grid-bento > [data-type="SubtitleBlock"],
+.grid-bento > [data-type="AuthorBlock"],
+.grid-bento > [data-type="ChapterHeading"],
+.grid-bento > [data-type="ParagraphBlock"],
+.grid-bento > [data-type="CopyrightNotice"],
+.grid-bento > [data-type="TableOfContentsList"],
+.grid-bento > [data-type="TableCard"],
+.grid-bento > [data-type="CompareCard"],
+.grid-bento > [data-type="ResultCard"],
+.grid-bento > [data-type="ImageBlock"] { grid-column: 1 / -1; }
+/* 작은 카드(1열 타일): Checklist / Steps / Prompt / FAQ / BeforeAfter / Warning */
+
+/* (1) ChapterHeading — Hero Card */
+.grid-bento [data-type="ChapterHeading"] {
+  position: relative;
+  background: radial-gradient(120% 140% at 0% 0%, #eaf0ff 0%, #ffffff 60%);
+  border: 1px solid #e4e9f5;
+  border-radius: var(--r-card);
+  padding: 64px var(--sp-xl) 56px;
+}
+.grid-bento [data-type="ChapterHeading"]::before {
+  content: "CHAPTER"; display: inline-block;
+  font-size: 12px; font-weight: 800; letter-spacing: .22em; color: var(--cyan);
+  margin-bottom: var(--sp-md);
+}
+.grid-bento [data-type="ChapterHeading"] .ty-chapter {
+  font-size: 44px; line-height: 1.1; letter-spacing: -0.03em; margin: 0;
+}
+
+/* (2) ResultCard — 가장 강한 하이라이트 카드 */
+.grid-bento [data-type="ResultCard"].card {
+  background: linear-gradient(135deg, #fff3e8 0%, #ffe7d2 100%);
+  border: 1px solid #f7d3b1; border-radius: var(--r-card);
+  padding: var(--sp-xl) var(--sp-xl);
+}
+.grid-bento [data-type="ResultCard"] .card-label {
+  font-size: 13px; letter-spacing: .14em; text-transform: uppercase; color: var(--orange);
+}
+.grid-bento [data-type="ResultCard"] .card-label::before {
+  content: "★"; width: 26px; height: 26px; border-radius: 50%;
+  background: var(--orange); color: #fff; display: inline-flex; align-items: center; justify-content: center; font-size: 13px;
+}
+.grid-bento [data-type="ResultCard"] .ty-body {
+  font-size: 26px; line-height: 1.35; font-weight: 750; color: #6a3410; margin-top: var(--sp-sm);
+}
+
+/* (3) ChecklistCard — 실천 카드 묶음 */
+.grid-bento [data-type="ChecklistCard"] .checklist { display: flex; flex-direction: column; gap: 10px; }
+.grid-bento [data-type="ChecklistCard"] .checklist li {
+  border: 1px solid #e7ecf4; border-radius: 12px; background: #fff;
+  padding: 14px 16px; gap: 14px; border-bottom: 1px solid #e7ecf4;
+}
+.grid-bento [data-type="ChecklistCard"] .cbox {
+  width: 26px; height: 26px; border-radius: 8px; border: 0;
+  background: var(--cyan); position: relative;
+}
+.grid-bento [data-type="ChecklistCard"] .cbox::after {
+  content: "✓"; position: absolute; inset: 0; display: flex; align-items: center; justify-content: center;
+  color: #fff; font-size: 15px; font-weight: 800;
+}
+
+/* (4) StepsCard — 플로우 카드 */
+.grid-bento [data-type="StepsCard"] .steps li { padding-left: 60px; padding-bottom: var(--sp-lg); }
+.grid-bento [data-type="StepsCard"] .steps li::before {
+  width: 42px; height: 42px; font-size: 16px;
+  background: linear-gradient(135deg, var(--cyan), #128799); color: #fff; border: 0;
+  box-shadow: 0 6px 14px rgba(31,182,201,.4);
+}
+.grid-bento [data-type="StepsCard"] .steps li:not(:last-child)::after {
+  left: 20px; top: 44px; width: 2px; background: linear-gradient(var(--cyan), transparent);
+}
+.grid-bento [data-type="StepsCard"] .steps li > span {
+  display: block; background: #f7fbfc; border: 1px solid #e1f1f4; border-radius: 12px;
+  padding: 12px 14px; padding-top: 12px;
+}
+
+/* (5) CompareCard — VS 비교 구조 (표를 컬럼형으로 재해석) */
+.grid-bento [data-type="CompareCard"] .tbl { border: 0; }
+.grid-bento [data-type="CompareCard"] table { border-spacing: 10px 0; border-collapse: separate; }
+.grid-bento [data-type="CompareCard"] th {
+  background: #11182b; color: #fff; border-radius: 12px 12px 0 0; text-align: center; font-size: 13px;
+}
+.grid-bento [data-type="CompareCard"] td {
+  background: #fff; border: 1px solid #e7ecf4; text-align: center; border-bottom: 1px solid #e7ecf4;
+}
+.grid-bento [data-type="CompareCard"] td:first-child { font-weight: 800; color: var(--navy); background: #f6f8fc; }
+
+/* (6) TableCard — row card (엑셀 느낌 제거) */
+.grid-bento [data-type="TableCard"] .tbl { border: 0; overflow: visible; }
+.grid-bento [data-type="TableCard"] thead { display: none; }
+.grid-bento [data-type="TableCard"] table,
+.grid-bento [data-type="TableCard"] tbody,
+.grid-bento [data-type="TableCard"] tr,
+.grid-bento [data-type="TableCard"] td { display: block; }
+.grid-bento [data-type="TableCard"] tbody { display: flex; flex-direction: column; gap: 10px; }
+.grid-bento [data-type="TableCard"] tr {
+  border: 1px solid #e7ecf4; border-radius: 12px; background: #fff; padding: 14px 16px;
+  display: flex; flex-wrap: wrap; gap: 6px 18px; align-items: baseline;
+}
+.grid-bento [data-type="TableCard"] td { border: 0; padding: 0; color: #4a5468; }
+.grid-bento [data-type="TableCard"] td:first-child { font-weight: 800; color: var(--navy); font-size: var(--fs-emphasis); width: 100%; }
+
+/* (7) WarningCard — 인사이트 카드(부드럽게) */
+.grid-bento [data-type="WarningCard"].card {
+  background: #fbf6ee; border: 1px solid #efe2cc; border-radius: var(--r-card);
+}
+.grid-bento [data-type="WarningCard"] .card-label { color: #b9772a; }
+.grid-bento [data-type="WarningCard"] .card-label::before {
+  content: "i"; width: 22px; height: 22px; border-radius: 50%;
+  background: #e7a14e; color: #fff; display: inline-flex; align-items: center; justify-content: center;
+  font-style: italic; font-weight: 800; font-size: 13px;
+}
+
+/* (8) ImageBlock — 대표 비주얼 자리 */
+.grid-bento [data-type="ImageBlock"] .slot-frame {
+  min-height: 240px;
+  background: linear-gradient(135deg, #e9f2ff 0%, #f3ecff 50%, #ffeef4 100%);
+  border: 1px solid #e2e6f0; border-radius: var(--r-card);
+}
+.grid-bento [data-type="ImageBlock"] .slot-icon { width: 56px; height: 56px; border-radius: 16px; }
+.grid-bento [data-type="ImageBlock"] .slot-tag { font-size: 12px; color: var(--navy); }
+
+/* (9b) QuoteBlock — 강한 메시지 / SNS 문구 카드 */
+.grid-bento > [data-type="QuoteBlock"] { grid-column: 1 / -1; }
+.grid-bento [data-type="QuoteBlock"] .quote {
+  background: linear-gradient(135deg, #11182b 0%, #1f2d5a 100%);
+  border: 0; border-radius: var(--r-card); padding: var(--sp-xl); text-align: center;
+}
+.grid-bento [data-type="QuoteBlock"] .quote p {
+  color: #fff; font-size: 28px; font-weight: 750; line-height: 1.4; letter-spacing: -0.01em;
+}
+body.canvas-body {
+  margin: 0; padding: 48px; background: #cfd4db;
+  display: flex; flex-direction: column; align-items: center; gap: 48px;
+  font-family: var(--font); color: var(--ink);
+}
+/* 캔버스 영역(캡처 대상) — 배경과 명확히 구분 */
+.canvas {
+  position: relative; background: #ffffff; overflow: hidden;
+  box-shadow: 0 24px 70px rgba(16,24,40,.28); border-radius: 6px;
+}
+/* viewport/preview 기준선 */
+.canvas::before {
+  content: ""; position: absolute; inset: 0; pointer-events: none; z-index: 5;
+  border: 1px dashed rgba(31,45,90,.18); border-radius: 6px;
+}
+.canvas[data-canvas]::after {
+  content: attr(data-spec); position: absolute; top: 10px; left: 14px; z-index: 6;
+  font-size: 11px; letter-spacing: .1em; color: #98a3b4;
+  background: #fff; padding: 2px 8px; border-radius: 6px; border: 1px solid #e7eaef;
+}
+.canvas .page-body { margin: 0; }
+.grid-bento.canvas-single { grid-template-columns: 1fr !important; }
+
+/* 규격 */
+.canvas-detail { width: 860px; padding: 64px 48px; }
+.canvas-square { width: 1080px; height: 1080px; padding: 80px 64px; }
+.canvas-story  { width: 1080px; height: 1920px; padding: 110px 72px; }
+
+/* CTA */
+.canvas-cta { margin-top: 36px; text-align: center; border-top: 1px solid #e7eaef; padding-top: 28px; }
+.canvas-cta strong { display: block; font-size: 24px; font-weight: 800; color: var(--navy); letter-spacing: -0.01em; }
+.canvas-cta span { display: block; margin-top: 6px; font-size: 15px; color: #6b7280; }
+</style>
+</head>
+<body class="canvas-body">
+  <section class="canvas canvas-square" data-canvas="square" data-spec="1080×1080">
+    <div class="page-body grid-bento canvas-single">
+    <div data-id="cmp-0008" data-type="QuoteBlock"><blockquote class="quote"><p>인용문 첫 줄입니다. 인용문 둘째 줄입니다.</p></blockquote></div>
+    <div class="card tone-neutral" data-id="cmp-0010" data-type="ChecklistCard"><div class="card-label">체크리스트</div><ul class="checklist"><li><span class="cbox"></span><span>체크 항목 1</span></li><li><span class="cbox"></span><span>체크 항목 2</span></li></ul></div>
+    <div class="card tone-emphasis" data-id="cmp-0017" data-type="ResultCard"><div class="card-label result-badge">핵심 결과</div><div class="ty-body" style="margin:0">결과 요약 문구</div></div>
+    </div>
+    <div class="canvas-cta">
+      <strong>CozyBuilder Lab</strong>
+      <span>읽히는 전자책을 상품처럼 만듭니다</span>
+    </div>
+  </section>
+</body>
+</html>

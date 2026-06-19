@@ -10,12 +10,14 @@
     "build:components": "node src/build-components.ts",
     "build:layout": "node src/build-layout.ts",
     "build:html": "node src/build-html.ts",
+    "build:canvas": "node src/build-canvas.ts",
     "test:parser": "node test/parser.test.ts",
     "test:pages": "node test/pages.test.ts",
     "test:components": "node test/components.test.ts",
     "test:layout": "node test/layout.test.ts",
     "test:html": "node test/html-renderer.test.ts",
-    "test:theme": "node test/theme-engine.test.ts"
+    "test:theme": "node test/theme-engine.test.ts",
+    "test:canvas": "node test/canvas.test.ts"
   },
   "engines": {
     "node": ">=22.6.0"
