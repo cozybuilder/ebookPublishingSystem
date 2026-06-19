@@ -8,6 +8,14 @@
 
 import { findBrowser, BROWSER_CANDIDATES } from '../src/export/browser.ts';
 import { readPngSize } from '../src/export/png-size.ts';
+import {
+  resolveDetailHeight,
+  isMeasurementValid,
+  DETAIL_MIN_HEIGHT,
+  DETAIL_MAX_HEIGHT,
+  DETAIL_PADDING,
+  DETAIL_FALLBACK_HEIGHT,
+} from '../src/export/detail-height.ts';
 
 let passed = 0;
 const failures: string[] = [];
@@ -68,6 +76,18 @@ const st = readPngSize(fakePng(1080, 1920));
 check('PNG 파싱: 1080×1920', !!st && st.width === 1080 && st.height === 1920, JSON.stringify(st));
 check('PNG 파싱: 비-PNG 버퍼 → null', readPngSize(Buffer.from('not a png')) === null);
 check('PNG 파싱: 너무 짧은 버퍼 → null', readPngSize(Buffer.from([0x89, 0x50])) === null);
+
+// ===== detail auto-height 계산 =====
+check('height: 정상 측정 → +padding', resolveDetailHeight(2245) === 2245 + DETAIL_PADDING);
+check('height: 소수 → 올림 후 padding', resolveDetailHeight(2244.3) === 2245 + DETAIL_PADDING);
+check('height: 최소 clamp', resolveDetailHeight(100) === DETAIL_MIN_HEIGHT);
+check('height: 최대 clamp', resolveDetailHeight(99999) === DETAIL_MAX_HEIGHT);
+check('height: undefined → fallback', resolveDetailHeight(undefined) === DETAIL_FALLBACK_HEIGHT);
+check('height: NaN → fallback', resolveDetailHeight(Number.NaN) === DETAIL_FALLBACK_HEIGHT);
+check('height: 0/음수 → fallback', resolveDetailHeight(0) === DETAIL_FALLBACK_HEIGHT && resolveDetailHeight(-5) === DETAIL_FALLBACK_HEIGHT);
+check('height: 결과 정수', Number.isInteger(resolveDetailHeight(2245.9)));
+check('measurement valid 판정', isMeasurementValid(2245) === true && isMeasurementValid(undefined) === false && isMeasurementValid(0) === false);
+check('상수 sanity(min<max, fallback 범위 내)', DETAIL_MIN_HEIGHT < DETAIL_MAX_HEIGHT && DETAIL_FALLBACK_HEIGHT >= DETAIL_MIN_HEIGHT && DETAIL_FALLBACK_HEIGHT <= DETAIL_MAX_HEIGHT);
 
 console.log('\n────────────────────────────');
 if (failures.length === 0) {

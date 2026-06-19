@@ -29,7 +29,8 @@ Markdown 원고를 입력하면 PDF, DOCX, 체크리스트, 인포그래픽, 표
   - 산출: `output/canvas.detail.png` / `canvas.square.png`(1080×1080) / `canvas.story.png`(1080×1920)
   - 브라우저 탐지: `CHROME_PATH` 환경변수 우선 → Windows 기본 Chrome → Edge
     - override 예: `set CHROME_PATH=C:\Program Files\Google\Chrome\Application\chrome.exe`
-  - detail 은 v1에서 전체 페이지(가변 높이)를 window 높이 기준으로 캡처(아래 한계 참고)
+  - detail 은 콘텐츠 높이를 headless 로 측정(2-pass: scrollHeight → `<title>` → 재캡처)해
+    자동 높이로 캡처(+40px 여유, 범위 1200–12000px clamp). 측정 실패 시 fallback 2600px + 경고.
   - PNG 는 재생성 가능한 산출물이라 git 추적 제외(`output/*.png`)
 - 그 외: `build:pages` / `build:components` / `build:layout`, `parse`
 

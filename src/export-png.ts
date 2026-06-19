@@ -14,12 +14,13 @@
  */
 
 import { execFileSync } from 'node:child_process';
-import { existsSync, statSync, mkdtempSync, rmSync } from 'node:fs';
+import { existsSync, statSync, mkdtempSync, rmSync, readFileSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { dirname, resolve } from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import { findBrowser, browserNotFoundMessage } from './export/browser.ts';
 import { readPngSizeFromFile } from './export/png-size.ts';
+import { resolveDetailHeight, isMeasurementValid } from './export/detail-height.ts';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const projectRoot = resolve(__dirname, '..');
@@ -39,7 +40,7 @@ const TARGETS: Target[] = [
   { name: 'story', width: 1080, height: 1920 },
 ];
 
-function capture(browser: string, htmlPath: string, pngPath: string, t: Target, userDataDir: string): void {
+function capture(browser: string, htmlPath: string, pngPath: string, width: number, height: number, userDataDir: string): void {
   const url = pathToFileURL(htmlPath).href;
   const args = [
     '--headless=new',
@@ -49,11 +50,46 @@ function capture(browser: string, htmlPath: string, pngPath: string, t: Target, 
     '--no-first-run',
     '--no-default-browser-check',
     `--user-data-dir=${userDataDir}`,
-    `--window-size=${t.width},${t.height}`,
+    `--window-size=${width},${height}`,
     `--screenshot=${pngPath}`,
     url,
   ];
   execFileSync(browser, args, { stdio: 'ignore' });
+}
+
+/**
+ * detail HTML 의 실제 콘텐츠 높이를 측정한다(2-pass).
+ * 측정 스크립트를 주입한 임시 HTML 을 --dump-dom 으로 로드해 <title> 에 기록된
+ * scrollHeight 를 파싱한다. 실패 시 undefined(→ 호출부에서 fallback).
+ */
+function measureDetailHeight(browser: string, htmlPath: string, userDataDir: string): number | undefined {
+  try {
+    const html = readFileSync(htmlPath, 'utf8');
+    const inject =
+      "<script>window.addEventListener('load',function(){document.title=String(Math.ceil(document.documentElement.scrollHeight));});</script>";
+    const measured = html.includes('</body>') ? html.replace('</body>', `${inject}</body>`) : html + inject;
+    const tmpHtml = resolve(userDataDir, 'measure-detail.html');
+    writeFileSync(tmpHtml, measured, 'utf8');
+    const url = pathToFileURL(tmpHtml).href;
+    const dom = execFileSync(
+      browser,
+      [
+        '--headless=new',
+        '--disable-gpu',
+        '--no-first-run',
+        '--no-default-browser-check',
+        `--user-data-dir=${userDataDir}`,
+        '--virtual-time-budget=3000',
+        '--dump-dom',
+        url,
+      ],
+      { encoding: 'utf8', stdio: ['ignore', 'pipe', 'ignore'] },
+    );
+    const m = dom.match(/<title>(\d+)<\/title>/);
+    return m ? Number(m[1]) : undefined;
+  } catch {
+    return undefined;
+  }
 }
 
 function main(): void {
@@ -78,7 +114,21 @@ function main(): void {
         failed++;
         continue;
       }
-      capture(browser, htmlPath, pngPath, t, userDataDir);
+
+      // detail(가변): 콘텐츠 높이 측정 → 자동 높이. 그 외: 고정 규격.
+      let captureHeight = t.height;
+      let note = '';
+      if (t.fullPage) {
+        const measured = measureDetailHeight(browser, htmlPath, userDataDir);
+        captureHeight = resolveDetailHeight(measured);
+        if (isMeasurementValid(measured)) {
+          note = ` (auto-height: measured=${measured}, export=${captureHeight})`;
+        } else {
+          note = ` (⚠ 측정 실패 → fallback height=${captureHeight})`;
+        }
+      }
+
+      capture(browser, htmlPath, pngPath, t.width, captureHeight, userDataDir);
       if (!existsSync(pngPath) || statSync(pngPath).size === 0) {
         console.error(`  ✗ ${t.name}: PNG 생성 실패`);
         failed++;
@@ -87,7 +137,6 @@ function main(): void {
       const size = readPngSizeFromFile(pngPath);
       const bytes = statSync(pngPath).size;
       const dim = size ? `${size.width}×${size.height}` : 'unknown';
-      const note = t.fullPage ? ' (전체 페이지 캡처: 높이 가변, window 높이 기준)' : '';
       console.log(`  ✓ ${t.name}: ${pngPath}  (${dim}, ${bytes} bytes)${note}`);
     }
   } finally {
