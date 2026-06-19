@@ -14,7 +14,7 @@ import { mapComponents } from '../src/component-mapper/component-mapper.ts';
 import { applyLayout } from '../src/layout-engine/layout-engine.ts';
 import { renderHtml } from '../src/html-renderer/html-renderer.ts';
 import { select } from '../src/selector/selector.ts';
-import { scopePages, pageScopeLabel } from '../src/page-builder/page-scope.ts';
+import { scopePages, limitContent, rangeBlockLimit, isStructureComponent, pageScopeLabel } from '../src/page-builder/page-scope.ts';
 import { FullBookPDF, KmongPreviewPDF } from '../src/page-builder/profiles.ts';
 import { DEFAULT_TOKENS } from '../src/design-tokens/default-tokens.ts';
 import type { ComponentType, ComponentPage } from '../src/types/component.ts';
@@ -39,9 +39,10 @@ const book = parseBook(readFileSync(samplePath, 'utf8'));
 // build-html.render() 와 동일한 로직(인메모리 재현)
 function renderProfile(profile: typeof FullBookPDF): { html: string; count: number } {
   if (profile.componentSelector) {
-    // build-html.render() 와 동일: Page Selector → Component Selector
+    // build-html.render() 와 동일: Page range → blockLimit → Component Selector
     const scoped = scopePages(buildPages(book, profile), profile.selector);
-    const flat = mapComponents(book, scoped).flatMap((p) => p.components);
+    const limited = limitContent(mapComponents(book, scoped), rangeBlockLimit(profile.selector));
+    const flat = limited.flatMap((p) => p.components);
     const policy = profile.componentSelector;
     const primaryAllow = new Set<ComponentType>([...policy.prefer, ...(policy.require ?? [])]);
     const r = select(flat, (c) => c.type, policy, { cap: flat.length, primaryAllow });
@@ -84,8 +85,8 @@ check('preview: ParagraphBlock 제외', !allComponentTypes.includes('ParagraphBl
 const preview2 = renderProfile(KmongPreviewPDF);
 check('preview: 결정론(동일 출력)', preview.html === preview2.html);
 
-// preview 에 page-scope 마커도 존재(요청 7)
-check('preview: data-page-scope 존재', preview.html.includes('data-page-scope="range:ch1-1"'));
+// preview 에 page-scope 마커(blockLimit 포함)도 존재(요청 6·7)
+check('preview: data-page-scope(blockLimit 포함)', preview.html.includes('data-page-scope="range:ch1-1:block6"'));
 
 // ===== Page Scope (2챕터 fixture) =====
 const book2 = parseBook(readFileSync(resolve(__dirname, '..', 'samples', 'preview-scope.md'), 'utf8'));
@@ -119,6 +120,33 @@ check(
 // scope 'all' 은 전체 페이지 유지(미제한)
 const allKept = scopePages(allPages2, { scope: 'all' });
 check("PageScope scope:'all' → 전체 페이지 유지", allKept.length === allPages2.length);
+
+// ===== blockLimit v2 =====
+// book2 챕터1 콘텐츠: paragraph, result, quote (3개) + ChapterHeading(구조)
+const ch1Pages = scopePages(allPages2, { scope: 'range', from: { chapter: 1 }, to: { chapter: 1, blockLimit: 2 } });
+const ch1CompPages = mapComponents(book2, ch1Pages);
+const limited2 = limitContent(ch1CompPages, 2);
+const limitedFlat = limited2.flatMap((p) => p.components);
+const contentOnly = limitedFlat.filter((c) => !isStructureComponent(c.type));
+check('blockLimit: 콘텐츠 2개로 제한', contentOnly.length === 2, `got ${contentOnly.length}`);
+check('blockLimit: ChapterHeading 보존(잘리지 않음)', limitedFlat.some((c) => c.type === 'ChapterHeading'));
+check(
+  'blockLimit: 메타/구조가 카운트 오염 안 함(콘텐츠만 2)',
+  limitedFlat.filter((c) => isStructureComponent(c.type)).length >= 1 && contentOnly.length === 2,
+);
+// blockLimit 미지정 → 변화 없음
+const noLimit = limitContent(ch1CompPages, undefined);
+check(
+  'blockLimit 미지정 → 콘텐츠 제한 없음(기존 range 동작)',
+  noLimit.flatMap((p) => p.components).length === ch1CompPages.flatMap((p) => p.components).length,
+);
+// blockLimit 이후 componentSelector 적용 순서 확인(결과 ⊆ 제한된 소스)
+const limitedTypes = new Set(limitedFlat.map((c) => c.type));
+const rLimited = select(limitedFlat, (c) => c.type, KmongPreviewPDF.componentSelector!, {
+  cap: limitedFlat.length,
+  primaryAllow: new Set(KmongPreviewPDF.componentSelector!.prefer) as never,
+});
+check('blockLimit → componentSelector 순서(결과가 제한 소스 내)', rLimited.items.every((c) => limitedTypes.has(c.type)));
 
 console.log('\n────────────────────────────');
 if (failures.length === 0) {
