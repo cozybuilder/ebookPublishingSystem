@@ -86,7 +86,13 @@ Markdown 원고를 입력하면 PDF, DOCX, 체크리스트, 인포그래픽, 표
     selector → book-selector → isolation (격리 검증은 항상 마지막)
   - 하나라도 실패하면 전체 실패.
 - **출력 격리**: 테스트는 `tmp/test-output/`에만 기록하며 실제 `output/`은 건드리지 않는다.
-  (`npm run test:isolation`이 해시로 보증, `npm run clean:test-output`으로 정리)
+  (`npm run test:isolation`이 해시로 보증)
+
+### 정리(clean)
+- `npm run clean:assets` — `output/` 의 재생성 산출물 삭제(*.png / *.pdf / canvas.chapter*.html /
+  canvas.sparse.*). 추적 canonical HTML(book.* / canvas.detail·square·story.html)은 보존. output 밖 미접촉.
+- `npm run clean:test-output` — `tmp/test-output/` 삭제.
+- `npm run clean:all` — 위 둘 일괄.
 
 ## CI (GitHub Actions)
 

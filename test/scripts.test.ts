@@ -10,6 +10,7 @@ import { dirname, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { RELEASE_STEPS, RELEASE_HTML, RELEASE_PNG, RELEASE_PDF } from '../src/release-manifest.ts';
 import { HTML_RULES, PNG_RULES, PDF_RULES, checkHtml, checkPng, checkPdf } from '../src/release-validation.ts';
+import { isDisposableArtifact, CANONICAL_HTML } from '../src/clean-assets.ts';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const pkg = JSON.parse(readFileSync(resolve(__dirname, '..', 'package.json'), 'utf8')) as {
@@ -104,6 +105,23 @@ check('HTML_RULES: RELEASE_HTML 전부 커버', RELEASE_HTML.every((f) => HTML_R
 check('PNG_RULES: RELEASE_PNG 전부 커버', RELEASE_PNG.every((f) => PNG_RULES.some((r) => r.file === f)));
 check('PDF_RULES: RELEASE_PDF 전부 커버(5종)', PDF_RULES.length === 5 && RELEASE_PDF.every((f) => PDF_RULES.some((r) => r.file === f)));
 check('PDF_RULES: preview 50KB / 나머지 100KB', PDF_RULES.find((r) => r.file === 'book.preview.pdf')!.minBytes === 50 * 1024 && PDF_RULES.filter((r) => r.file !== 'book.preview.pdf').every((r) => r.minBytes === 100 * 1024));
+
+// ===== Clean Assets: 삭제 대상 판별 =====
+check('clean:assets 스크립트 존재', (s['clean:assets'] ?? '').includes('clean-assets'));
+check('clean:test-output 존재', (s['clean:test-output'] ?? '').includes('tmp/test-output'));
+check('clean:all = assets + test-output', (s['clean:all'] ?? '').includes('clean:assets') && (s['clean:all'] ?? '').includes('clean:test-output'));
+
+// 삭제 대상(true)
+for (const f of ['canvas.detail.png', 'book.modern.pdf', 'canvas.chapter1.detail.html', 'canvas.chapter12.detail.html', 'canvas.sparse.detail.html', 'canvas.sparse.square.html', 'book.preview.png']) {
+  check(`disposable: ${f}`, isDisposableArtifact(f) === true);
+}
+// 보존 대상(false) — canonical HTML / JSON
+for (const f of ['book.html', 'book.modern.html', 'book.bento.html', 'book.editorial.html', 'book.dashboard.html', 'book.preview.html', 'canvas.detail.html', 'canvas.square.html', 'canvas.story.html', 'book.ast.json']) {
+  check(`preserve(canonical): ${f}`, isDisposableArtifact(f) === false);
+}
+check('CANONICAL_HTML: book/canvas 핵심 포함', CANONICAL_HTML.has('book.html') && CANONICAL_HTML.has('canvas.story.html'));
+// 무관 파일은 삭제 대상 아님(방어)
+check('disposable: 무관 .md 아님', isDisposableArtifact('readme.md') === false);
 
 console.log('\n────────────────────────────');
 if (failures.length === 0) {

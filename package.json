@@ -40,7 +40,9 @@
     "test:scripts": "node test/scripts.test.ts",
     "test:chapter-canvas": "node test/chapter-canvas.test.ts",
     "test:isolation": "node test/output-isolation.test.ts",
-    "clean:test-output": "node -e \"require('node:fs').rmSync('tmp/test-output',{recursive:true,force:true})\""
+    "clean:test-output": "node -e \"require('node:fs').rmSync('tmp/test-output',{recursive:true,force:true})\"",
+    "clean:assets": "node src/clean-assets.ts",
+    "clean:all": "npm run clean:assets && npm run clean:test-output"
   },
   "engines": {
     "node": ">=22.6.0"
