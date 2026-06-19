@@ -718,11 +718,13 @@ export function renderHtml(
   docTitle: string,
   recipe: StyleRecipe = BASE_RECIPE,
   componentSelectorName?: string,
+  pageScopeName?: string,
 ): string {
   const css = buildCss(tokens, recipe);
   const pagesHtml = pages.map((p) => renderPage(p, recipe)).join('\n');
-  // componentSelector 가 적용된 출력에만 마커를 남긴다(full book 에는 없음).
+  // selector 가 적용된 출력에만 마커를 남긴다(full book 에는 없음).
   const selAttr = componentSelectorName ? ` data-component-selector="${componentSelectorName}"` : '';
+  const scopeAttr = pageScopeName ? ` data-page-scope="${pageScopeName}"` : '';
   return `<!DOCTYPE html>
 <html lang="ko">
 <head>
@@ -733,7 +735,7 @@ export function renderHtml(
 ${css}
 </style>
 </head>
-<body${selAttr}>
+<body${selAttr}${scopeAttr}>
 <main class="book">
 ${pagesHtml}
 </main>

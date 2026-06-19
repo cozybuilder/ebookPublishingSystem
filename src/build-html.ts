@@ -16,6 +16,7 @@ import { dirname, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { parseBook } from './parser/parser.ts';
 import { buildPages } from './page-builder/page-builder.ts';
+import { scopePages, pageScopeLabel } from './page-builder/page-scope.ts';
 import { mapComponents } from './component-mapper/component-mapper.ts';
 import { applyLayout } from './layout-engine/layout-engine.ts';
 import { renderHtml } from './html-renderer/html-renderer.ts';
@@ -44,20 +45,23 @@ function parseThemeArg(): string | undefined {
 }
 
 function render(book: Book, profile: OutputProfile, theme: ResolvedTheme, docTitle: string): string {
-  const compPages = mapComponents(book, buildPages(book, profile));
-
-  // componentSelector 가 지정된 프로파일만 컴포넌트 선별(미지정 → 기존 전체 출력 경로 유지).
+  // componentSelector 가 지정된 프로파일만 선별 경로(미지정 → 기존 전체 출력 경로 유지).
   if (profile.componentSelector) {
-    const policy = profile.componentSelector;
+    // [순서] Page Selector → Component Selector
+    const scoped = scopePages(buildPages(book, profile), profile.selector); // 1) 페이지 범위 제한(챕터 윈도우)
+    const compPages = mapComponents(book, scoped);
     const flat = compPages.flatMap((p) => p.components);
+
+    const policy = profile.componentSelector; // 2) 컴포넌트 큐레이션
     const primaryAllow = new Set<ComponentType>([...policy.prefer, ...(policy.require ?? [])]);
     const r = select(flat, (c) => c.type, policy, { cap: flat.length, primaryAllow });
     const page: ComponentPage = { type: 'ContentPage', components: r.items };
     const layout = applyLayout([page], theme.tokens);
-    return renderHtml(layout, theme.tokens, docTitle, theme.recipe, policy.strategy);
+    return renderHtml(layout, theme.tokens, docTitle, theme.recipe, policy.strategy, pageScopeLabel(profile.selector));
   }
 
-  const layout = applyLayout(compPages, theme.tokens);
+  // 기존 전체 출력 경로(변화 없음)
+  const layout = applyLayout(mapComponents(book, buildPages(book, profile)), theme.tokens);
   return renderHtml(layout, theme.tokens, docTitle, theme.recipe);
 }
 
