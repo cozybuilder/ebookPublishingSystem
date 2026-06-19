@@ -46,6 +46,7 @@ const MODERN_GLASS_RECIPE: StyleRecipe = {
   tableStyle: 'open',
   badgeStyle: 'outline',
   gridStyle: 'stack',
+  variant: 'none',
 };
 
 /**
@@ -68,6 +69,30 @@ const BENTO_RECIPE: StyleRecipe = {
   tableStyle: 'lined',
   badgeStyle: 'solid', // 강한 숫자 배지
   gridStyle: 'bento', // 벤토 그리드
+  variant: 'none',
+};
+
+/**
+ * Editorial (v3) — premium magazine / digital report 방향.
+ * 긴 글을 읽기 편한 넓은 여백, 세리프 제목 위계, 기사형 요약/표/주석.
+ * Bento보다 차분하고 Modern보다 출판물스럽다.
+ */
+const EDITORIAL_RECIPE: StyleRecipe = {
+  pageBackground: '#efece5', // 따뜻한 종이 톤
+  pageShadow: true, // 인쇄된 지면 느낌(은은한 그림자)
+  pageRadius: 6, // 낮은 라운드(출판물)
+  cardShadow: false,
+  cardTint: false,
+  cardBorder: '#e3ded5', // 따뜻한 hairline
+  accent: false, // 차분하게
+  tableHeaderTinted: false,
+  checkboxRadius: 3,
+  density: 'spacious', // 읽기 위한 넓은 여백
+  cardStyle: 'soft',
+  tableStyle: 'lined',
+  badgeStyle: 'outline',
+  gridStyle: 'stack',
+  variant: 'editorial', // Editorial 전용 CSS 활성
 };
 
 /** CozyBuilder Lab(v2 레거시) = 렌더러 기본 표현 그대로 */
@@ -84,6 +109,12 @@ const MINIMAL_RECIPE: StyleRecipe = {
   accent: false,
   tableHeaderTinted: false,
   checkboxRadius: 2,
+  density: 'comfortable',
+  cardStyle: 'soft',
+  tableStyle: 'lined',
+  badgeStyle: 'outline',
+  gridStyle: 'stack',
+  variant: 'none',
 };
 
 // ----- 테마 정의 -----
@@ -106,6 +137,16 @@ const Bento: Theme = {
     radius: { card: 22, image: 18 },
   },
   recipe: BENTO_RECIPE,
+};
+
+const Editorial: Theme = {
+  name: 'Editorial',
+  label: 'Editorial',
+  // 출판물 느낌의 낮은 라운드 (base 색/타이포/간격 상속)
+  tokenOverride: {
+    radius: { card: 8, image: 6 },
+  },
+  recipe: EDITORIAL_RECIPE,
 };
 
 const CozyBuilderLab: Theme = {
@@ -131,6 +172,7 @@ const Minimal: Theme = {
 export const THEMES: ThemeRegistry = {
   ModernGlass,
   Bento,
+  Editorial,
   CozyBuilderLab, // v2 레거시(유지)
   Minimal, // v2 레거시(유지)
 };
@@ -180,6 +222,8 @@ const NAME_ALIAS: Record<string, ThemeName> = {
   modern: 'ModernGlass',
   glass: 'ModernGlass',
   bento: 'Bento',
+  editorial: 'Editorial',
+  magazine: 'Editorial',
   cozybuilderlab: 'CozyBuilderLab',
   cozy: 'CozyBuilderLab',
   minimal: 'Minimal',

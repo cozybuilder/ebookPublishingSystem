@@ -37,6 +37,7 @@ export const BASE_RECIPE: StyleRecipe = {
   tableStyle: 'lined',
   badgeStyle: 'solid',
   gridStyle: 'stack',
+  variant: 'none',
 };
 
 function esc(s: string): string {
@@ -286,6 +287,7 @@ td:first-child { font-weight: 650; color: var(--navy); }
 /* ===== 페이지 본문 컨테이너 ===== */
 .page-body.grid-stack { display: block; }
 ${r.gridStyle === 'bento' ? BENTO_V2_CSS : ''}
+${r.variant === 'editorial' ? EDITORIAL_CSS : ''}
 `.trim();
 }
 
@@ -429,6 +431,89 @@ const BENTO_V2_CSS = `
 .grid-bento [data-type="ImageBlock"] .slot-tag { font-size: 12px; color: var(--navy); }
 `.trim();
 
+/**
+ * Editorial — 프리미엄 매거진 / 디지털 리포트 스타일.
+ * 모든 규칙은 .var-editorial 스코프로 격리 → 다른 테마에는 출력조차 되지 않는다.
+ * (variant === 'editorial' 일 때만 buildCss 가 이 블록을 포함)
+ */
+const EDITORIAL_CSS = `
+/* ===== Editorial 읽기 컬럼 ===== */
+.page-body.var-editorial { max-width: 680px; margin: 0 auto; }
+.var-editorial > div { margin-bottom: var(--sp-lg); }
+
+/* 매거진 세리프 제목 */
+.var-editorial .ty-title,
+.var-editorial .ty-chapter {
+  font-family: Georgia, "Noto Serif KR", "Apple SD Gothic Neo", serif; letter-spacing: -0.01em;
+}
+
+/* (7) 본문 가독성 강화 */
+.var-editorial [data-type="ParagraphBlock"] .ty-body {
+  font-size: 18px; line-height: 1.95; color: #2c2a26; letter-spacing: .01em; margin: 0 0 var(--sp-lg);
+}
+
+/* (6) ChapterHeading — 매거진 특집 시작 */
+.var-editorial [data-type="ChapterHeading"] {
+  text-align: center; padding: var(--sp-xxl) 0 var(--sp-xl); border-bottom: 1px solid #e3ded5;
+}
+.var-editorial [data-type="ChapterHeading"]::before {
+  content: "FEATURE"; display: block; font-size: 11px; letter-spacing: .34em; color: #b0855a;
+  font-weight: 700; margin-bottom: var(--sp-md);
+}
+.var-editorial [data-type="ChapterHeading"] .ty-chapter { font-size: 46px; line-height: 1.15; margin: 0; }
+
+/* (8) QuoteBlock — 잡지 인용문 (QuoteBlock 컴포넌트 도입 시 적용; 현재 미사용) */
+.var-editorial [data-type="QuoteBlock"] {
+  font-family: Georgia, "Noto Serif KR", serif; font-size: 28px; line-height: 1.5; font-style: italic;
+  color: var(--navy); border-left: 3px solid var(--orange); padding-left: var(--sp-lg); margin: var(--sp-xl) 0;
+}
+
+/* (9) ResultCard — 기사 하단 핵심 요약 박스 */
+.var-editorial [data-type="ResultCard"].card {
+  background: #fbfaf7; border: 1px solid #e3ded5; border-top: 3px solid var(--navy);
+  border-radius: 4px; padding: var(--sp-lg) var(--sp-xl);
+}
+.var-editorial [data-type="ResultCard"] .card-label {
+  letter-spacing: .18em; text-transform: uppercase; color: var(--navy); font-size: 12px;
+}
+.var-editorial [data-type="ResultCard"] .card-label::before { display: none; }
+.var-editorial [data-type="ResultCard"] .ty-body {
+  font-family: Georgia, "Noto Serif KR", serif; font-size: 20px; line-height: 1.6; color: #2c2a26;
+}
+
+/* (10) Checklist / Steps — 차분한 실행 가이드 */
+.var-editorial [data-type="ChecklistCard"].card,
+.var-editorial [data-type="StepsCard"].card {
+  border: 0; border-top: 1px solid #e3ded5; border-radius: 0; background: transparent; padding: var(--sp-lg) 0;
+}
+.var-editorial [data-type="ChecklistCard"] .cbox { border-color: #b0855a; background: transparent; border-radius: 3px; }
+.var-editorial [data-type="StepsCard"] .steps li::before {
+  background: transparent; color: var(--navy); border: 1px solid #c9c2b4; box-shadow: none;
+}
+.var-editorial [data-type="StepsCard"] .steps li:not(:last-child)::after { background: #e3ded5; }
+
+/* (11) Table / Compare — 리포트 표 */
+.var-editorial .tbl { border: 0; border-top: 2px solid var(--navy); border-bottom: 1px solid #d8d2c6; border-radius: 0; }
+.var-editorial th {
+  background: transparent; color: var(--navy); border-bottom: 1px solid #c9c2b4;
+  text-transform: uppercase; font-size: 12px; letter-spacing: .06em;
+}
+.var-editorial td { border-bottom: 1px solid #ece7dd; }
+
+/* (12) WarningCard — 편집자 주 / 주의 메모 */
+.var-editorial [data-type="WarningCard"].card {
+  background: transparent; border: 0; border-left: 2px solid #b0855a; border-radius: 0;
+  padding: 4px 0 4px var(--sp-lg); font-style: italic; color: #5a5347;
+}
+.var-editorial [data-type="WarningCard"] .card-label { color: #b0855a; font-style: normal; }
+.var-editorial [data-type="WarningCard"] .card-label::before { display: none; }
+
+/* (13) ImageBlock — 잡지 이미지 캡션 영역 */
+.var-editorial [data-type="ImageBlock"] .slot-frame { background: #efece5; border: 0; border-radius: 4px; min-height: 220px; }
+.var-editorial [data-type="ImageBlock"] .slot-prompt { font-style: italic; color: #6a6356; font-size: 14px; }
+.var-editorial [data-type="ImageBlock"] .slot-tag { color: #b0855a; }
+`.trim();
+
 function renderComponentInner(c: Component): string {
   switch (c.type) {
     case 'TitleBlock':
@@ -511,9 +596,10 @@ function renderLayoutComponent(lc: LayoutComponent): string {
 
 function renderPage(page: LayoutPage, recipe: StyleRecipe): string {
   const body = page.components.map(renderLayoutComponent).join('\n  ');
+  const variantCls = recipe.variant && recipe.variant !== 'none' ? ` var-${recipe.variant}` : '';
   return `<section class="page" data-page="${page.pageType}">
   <div class="page-label">${page.pageType}</div>
-  <div class="page-body grid-${recipe.gridStyle}">
+  <div class="page-body grid-${recipe.gridStyle}${variantCls}">
   ${body}
   </div>
 </section>`;

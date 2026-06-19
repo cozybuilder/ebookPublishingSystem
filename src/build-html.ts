@@ -81,6 +81,14 @@ function main(): void {
   // Bento 검수용 명시 출력(항상 생성)
   const bento = resolveThemeByName('Bento');
   write(out('book.bento.html'), render(book, FullBookPDF, bento, `${title} (Bento)`), '[FullBookPDF / Bento]');
+
+  // Editorial 검수용 명시 출력(항상 생성)
+  const editorial = resolveThemeByName('Editorial');
+  write(
+    out('book.editorial.html'),
+    render(book, FullBookPDF, editorial, `${title} (Editorial)`),
+    '[FullBookPDF / Editorial]',
+  );
 }
 
 main();

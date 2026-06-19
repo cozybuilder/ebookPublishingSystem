@@ -116,6 +116,25 @@ check('Bento v2: ImageBlock 대표 비주얼', bentoHtml.includes('[data-type="I
 check('무유출: Modern 에 grid-bento 규칙 없음', !modernHtml.includes('grid-bento'));
 check('무유출: Modern 에 Bento hero eyebrow 없음', !modernHtml.includes('content: "CHAPTER"'));
 
+// --- Editorial 표현 ---
+check('Editorial 테마 선택 가능', getTheme('Editorial').name === 'Editorial');
+check('theme name 정규화(editorial)', normalizeThemeName('Editorial') === 'Editorial');
+const editorial = resolveThemeByName('Editorial');
+const editorialHtml = renderHtml(layout, editorial.tokens, 'editorial', editorial.recipe);
+check('렌더 가능: Editorial HTML 생성', editorialHtml.includes('<section class="page"'));
+check('Editorial: var-editorial 스코프 활성', editorialHtml.includes('page-body grid-stack var-editorial'));
+check('Editorial: 매거진 특집(FEATURE eyebrow)', editorialHtml.includes('content: "FEATURE"'));
+check('Editorial: 읽기 컬럼(max-width 680px)', editorialHtml.includes('.page-body.var-editorial { max-width: 680px'));
+check('Editorial: 세리프 제목', editorialHtml.includes('Noto Serif KR'));
+check('Editorial ≠ Modern', editorialHtml !== modernHtml);
+check('Editorial ≠ Bento', editorialHtml !== bentoHtml);
+
+// Editorial 무유출: Modern / Bento 에 Editorial 규칙 없음
+check('무유출: Modern 에 var-editorial 규칙 없음', !modernHtml.includes('var-editorial'));
+check('무유출: Modern 에 FEATURE eyebrow 없음', !modernHtml.includes('content: "FEATURE"'));
+check('무유출: Bento 에 var-editorial 규칙 없음', !bentoHtml.includes('var-editorial'));
+check('무유출: Bento 에 FEATURE eyebrow 없음', !bentoHtml.includes('content: "FEATURE"'));
+
 // --- 기존 html 후크 유지(회귀 방지) ---
 check('Modern: tone 클래스 유지', modernHtml.includes('tone-emphasis'));
 check('Modern: Navy HEX 유지', modernHtml.includes('#1F2D5A'));
