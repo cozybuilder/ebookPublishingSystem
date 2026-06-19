@@ -37,4 +37,9 @@ export const RELEASE_HTML: string[] = [
 export const RELEASE_PNG: string[] = ['canvas.detail.png', 'canvas.square.png', 'canvas.story.png'];
 
 /** 존재 + size>0 + %PDF 헤더 확인 대상 */
-export const RELEASE_PDF: string[] = ['book.preview.pdf', 'book.modern.pdf', 'book.editorial.pdf'];
+export const RELEASE_PDF: string[] = [
+  'book.preview.pdf',
+  'book.modern.pdf',
+  'book.editorial.pdf',
+  'book.dashboard.pdf',
+];

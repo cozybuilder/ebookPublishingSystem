@@ -8,10 +8,15 @@
 import { readFileSync } from 'node:fs';
 
 /**
- * PDF 변환 대상(v1: preview → modern → editorial 순).
- * Bento/Dashboard 는 page-break 보정 후순위 — 아직 미포함.
+ * PDF 변환 대상(preview → modern → editorial → dashboard 순).
+ * Bento 는 grid/print 보정 난도가 높아 후순위 — 아직 미포함.
  */
-export const PDF_TARGETS: string[] = ['book.preview.html', 'book.modern.html', 'book.editorial.html'];
+export const PDF_TARGETS: string[] = [
+  'book.preview.html',
+  'book.modern.html',
+  'book.editorial.html',
+  'book.dashboard.html',
+];
 
 /**
  * PDF 변환용 print CSS (v1).
@@ -33,8 +38,8 @@ export const PRINT_CSS = `
     margin: 0 auto !important;
     width: auto !important;
   }
-  .card, table, blockquote, .quote, .slot-frame,
-  [data-type="ChapterHeading"], [data-type="ResultCard"], [data-type="ImageBlock"] {
+  .card, table, blockquote, .quote, .slot-frame, .steps li, .faq-item,
+  [data-type="ChapterHeading"], [data-type="ResultCard"], [data-type="WarningCard"], [data-type="ImageBlock"] {
     break-inside: avoid;
     page-break-inside: avoid;
   }
