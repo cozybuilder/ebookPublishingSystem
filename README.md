@@ -159,6 +159,12 @@ Markdown 원고를 입력하면 PDF, DOCX, 체크리스트, 인포그래픽, 표
 - 목차(toc)는 EPUB 연계를 위해 구조로 보존. 향후 frontmatter YAML(`---` 메타블록) 도입 시
   resolveFrontMatterMeta override 로 확장 가능.
 
+## 출시 전 검수
+
+- **v1.0 릴리스(상품 업로드) 전에는 반드시 [docs/RELEASE_CHECKLIST.md](docs/RELEASE_CHECKLIST.md) 를 따라 검수한다.**
+  자동 게이트(`npm test` + `npm run build:release`)로 깨진/빈/규격 오류를 막은 뒤, 체크리스트의
+  원고·Front Matter·HTML·PDF·DOCX·EPUB·이미지·매니페스트·최종 업로드 항목을 육안으로 확인한다.
+
 ## 최상위 기준 문서
 
 - `docs/00_PROJECT_CONSTITUTION.md`

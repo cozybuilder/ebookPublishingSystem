@@ -193,6 +193,49 @@ const missingFacts = readEpubFacts(buildZip(goodEntries.slice(0, 3))); // contai
 check('checkEpub: 필수 entry 누락', checkEpub(epubRule, { exists: true, size: missingFacts.entryNames.length * 100 + 5000 }, missingFacts).some((r) => r.startsWith('entry 누락:')));
 check('checkEpub: size 미달', checkEpub({ ...epubRule, minBytes: 1_000_000 }, { exists: true, size: 10 }, goodFacts).some((r) => r.startsWith('size<')));
 
+// ===== Release Checklist 문서 =====
+let checklist = '';
+try {
+  checklist = readFileSync(resolve(__dirname, '..', 'docs', 'RELEASE_CHECKLIST.md'), 'utf8');
+} catch {
+  checklist = '';
+}
+check('docs/RELEASE_CHECKLIST.md 존재', checklist.length > 0);
+// 자동 게이트 + 필수 산출물 키워드
+for (const kw of [
+  'npm test',
+  'npm run build:release',
+  'output/book.html',
+  'book.modern.pdf',
+  'book.editorial.pdf',
+  'book.dashboard.pdf',
+  'book.bento.pdf',
+  'book.docx',
+  'book.epub',
+  'image-prompts',
+  'missingCount',
+  'assets/images',
+  'book.preview.pdf',
+  'canvas.detail.png',
+  'canvas.square.png',
+  'canvas.story.png',
+  'Front Matter',
+  '목차',
+  '판권',
+  '저자',
+  '면책',
+]) {
+  check(`RELEASE_CHECKLIST 키워드 포함: ${kw}`, checklist.includes(kw));
+}
+// 검수 영역(섹션) 키워드
+for (const sec of ['원고', 'HTML', 'PDF', 'DOCX', 'EPUB', '최종']) {
+  check(`RELEASE_CHECKLIST 섹션 키워드: ${sec}`, checklist.includes(sec));
+}
+// README 가 체크리스트를 링크
+const readme = readFileSync(resolve(__dirname, '..', 'README.md'), 'utf8');
+check('README: RELEASE_CHECKLIST 링크', readme.includes('docs/RELEASE_CHECKLIST.md'));
+check('README: v1.0 릴리스 전 검수 명시', readme.includes('v1.0') && readme.includes('검수'));
+
 console.log('\n────────────────────────────');
 if (failures.length === 0) {
   console.log(`✓ 전체 통과 — ${passed}개 검증 성공`);
