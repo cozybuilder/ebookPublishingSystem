@@ -73,6 +73,15 @@ Markdown 원고를 입력하면 PDF, DOCX, 체크리스트, 인포그래픽, 표
 - **출력 격리**: 테스트는 `tmp/test-output/`에만 기록하며 실제 `output/`은 건드리지 않는다.
   (`npm run test:isolation`이 해시로 보증, `npm run clean:test-output`으로 정리)
 
+## CI (GitHub Actions)
+
+- `.github/workflows/ci.yml` — push / pull_request 시 자동 실행(러너: `windows-latest`, Node 24).
+- 단계: checkout → setup-node → `npm install` → `npm test` → `npm run build:release`.
+- `build:release` 는 브라우저 기반 PNG/PDF 생성 + 산출물 품질 검증까지 수행하는 **릴리스 게이트**.
+- 브라우저: windows-latest 에 Chrome/Edge 기본 설치 → 표준 경로 자동 탐지로 동작.
+  - 탐지 실패 시 워크플로 `Build release` 스텝에 `env: CHROME_PATH: <경로>` 를 지정(주석 참고).
+- 산출물(`output/*.png` / `output/*.pdf`)은 gitignore — v1 은 게이트 목적이라 artifact 업로드 안 함.
+
 ## 최상위 기준 문서
 
 - `docs/00_PROJECT_CONSTITUTION.md`
