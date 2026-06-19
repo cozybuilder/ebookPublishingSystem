@@ -11,6 +11,7 @@ import { fileURLToPath } from 'node:url';
 import { RELEASE_STEPS, RELEASE_HTML, RELEASE_PNG, RELEASE_PDF } from '../src/release-manifest.ts';
 import { HTML_RULES, PNG_RULES, PDF_RULES, checkHtml, checkPng, checkPdf } from '../src/release-validation.ts';
 import { isDisposableArtifact, CANONICAL_HTML } from '../src/clean-assets.ts';
+import { previewPromoHtmlName, previewPromoPngName, PREVIEW_PROMO_SPECS } from '../src/canvas/preview-promo-names.ts';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const pkg = JSON.parse(readFileSync(resolve(__dirname, '..', 'package.json'), 'utf8')) as {
@@ -50,6 +51,18 @@ check('build:assets/export:pdf 유지', typeof s['build:assets'] === 'string' &&
 // 보조 산출물 스크립트 존재(별도 선택)
 check('export:png:preview 존재(--preview)', (s['export:png:preview'] ?? '').includes('--preview'));
 check('export:png:chapters 존재(--chapters)', (s['export:png:chapters'] ?? '').includes('--chapters'));
+check('build:canvas:preview 존재', typeof s['build:canvas:preview'] === 'string');
+check('export:png:preview-promo 존재(--preview-promo)', (s['export:png:preview-promo'] ?? '').includes('--preview-promo'));
+// preview promo 파일명/규격
+check('previewPromoHtmlName(square)', previewPromoHtmlName('square') === 'book.preview.square.html');
+check('previewPromoPngName(story)', previewPromoPngName('story') === 'book.preview.story.png');
+check('PREVIEW_PROMO_SPECS: square 1080×1080 / story 1080×1920', PREVIEW_PROMO_SPECS.find((x) => x.kind === 'square')!.width === 1080 && PREVIEW_PROMO_SPECS.find((x) => x.kind === 'story')!.height === 1920);
+// preview promo HTML 은 disposable(비추적), 단 book.preview.html(canonical)은 보존
+check('disposable: book.preview.square.html', isDisposableArtifact('book.preview.square.html') === true);
+check('disposable: book.preview.story.html', isDisposableArtifact('book.preview.story.html') === true);
+check('preserve: book.preview.html (canonical)', isDisposableArtifact('book.preview.html') === false);
+// build:release 미포함
+check('build:release: preview-promo 미포함', !rel.includes('preview-promo') && !rel.includes('canvas:preview'));
 // build:release 는 preview/chapters PNG 미포함(별도 선택 산출물)
 check('build:release: preview/chapters 미포함', !rel.includes('preview') && !rel.includes('chapter'));
 
@@ -59,6 +72,7 @@ check('build:marketing-assets 존재', mkt.length > 0);
 check('build:marketing-assets: build:html 포함', mkt.includes('build:html'));
 check('build:marketing-assets: chapters 캔버스+PNG 포함', mkt.includes('build:canvas:chapters') && mkt.includes('export:png:chapters'));
 check('build:marketing-assets: preview PNG 포함', mkt.includes('export:png:preview'));
+check('build:marketing-assets: preview promo 캔버스+PNG 포함', mkt.includes('build:canvas:preview') && mkt.includes('export:png:preview-promo'));
 check('build:marketing-assets: PDF 미포함', !mkt.includes('export:pdf'));
 check('build:marketing-assets: sparse 미포함', !mkt.includes('sparse'));
 check('build:marketing-assets: release 미참조', !mkt.includes('build:release'));

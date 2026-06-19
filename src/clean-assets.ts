@@ -46,6 +46,7 @@ export function isDisposableArtifact(file: string): boolean {
   if (file.endsWith('.pdf')) return true;
   if (/^canvas\.chapter\d+\.detail\.html$/.test(file)) return true;
   if (/^canvas\.sparse\..*\.html$/.test(file)) return true;
+  if (/^book\.preview\.(square|story)\.html$/.test(file)) return true; // preview promo 캔버스
   return false;
 }
 

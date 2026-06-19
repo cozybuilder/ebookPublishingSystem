@@ -56,9 +56,12 @@ Markdown 원고를 입력하면 PDF, DOCX, 체크리스트, 인포그래픽, 표
   - PDF preview(다운로드/미리보기 파일)와 역할 구분: PNG 는 상세페이지에 붙이는 이미지
   - 별도 선택 산출물 — `build:release`/CI 게이트 미포함, git 비추적(`output/*.png`)
 - `npm run build:chapter-assets` — 챕터 캔버스+PNG 일괄
+- `npm run build:canvas:preview` + `npm run export:png:preview-promo` — preview 선별 컴포넌트 기반
+  SNS 홍보 이미지: `book.preview.square.png`(1080×1080) · `book.preview.story.png`(1080×1920).
 - **`npm run build:marketing-assets`** — 크몽 상세페이지/홍보용 보조 이미지 일괄
-  (= build:html → build:canvas:chapters → export:png:chapters → export:png:preview)
+  (= build:html → 챕터 캔버스/PNG → preview PNG → preview promo 캔버스/PNG)
   - 산출: `canvas.chapter{N}.detail.png` (챕터별) + `book.preview.png`
+    + `book.preview.square.png` + `book.preview.story.png`
   - PDF / sparse / release 기본 산출물은 미포함. CI 게이트에도 미포함.
   - 챕터별 상세 이미지는 **별도 선택 산출물** — `build:release` 기본에는 미포함, CI 게이트에도 미포함.
   - 챕터 HTML/PNG 는 git 비추적(`output/canvas.chapter*.html` / `*.png`)

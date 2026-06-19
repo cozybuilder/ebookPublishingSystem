@@ -23,6 +23,7 @@ import { readPngSizeFromFile } from './export/png-size.ts';
 import { resolveDetailHeight, isMeasurementValid } from './export/detail-height.ts';
 import { parsePrefix } from './export/args.ts';
 import { chapterOrdinalFromHtml, chapterDetailPngName } from './canvas/chapter-names.ts';
+import { PREVIEW_PROMO_SPECS, previewPromoHtmlName, previewPromoPngName } from './canvas/preview-promo-names.ts';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const projectRoot = resolve(__dirname, '..');
@@ -138,8 +139,39 @@ function main(): void {
     return;
   }
 
+  // --preview-promo 모드: book.preview.square/story.html → png (고정 규격 SNS)
+  if (process.argv.includes('--preview-promo')) {
+    const userDataDir = mkdtempSync(resolve(tmpdir(), 'ebook-png-pp-'));
+    console.log('✓ PNG Export (preview-promo)');
+    console.log(`  브라우저 : ${browser}`);
+    let failed = 0;
+    try {
+      for (const spec of PREVIEW_PROMO_SPECS) {
+        const htmlPath = out(previewPromoHtmlName(spec.kind));
+        const pngPath = out(previewPromoPngName(spec.kind));
+        if (!existsSync(htmlPath)) {
+          console.error(`  ✗ preview-${spec.kind}: HTML 없음 — 먼저 npm run build:canvas:preview`);
+          failed++;
+          continue;
+        }
+        capture(browser, htmlPath, pngPath, spec.width, spec.height, userDataDir);
+        if (!existsSync(pngPath) || statSync(pngPath).size === 0) {
+          console.error(`  ✗ preview-${spec.kind}: PNG 생성 실패`);
+          failed++;
+          continue;
+        }
+        const size = readPngSizeFromFile(pngPath);
+        console.log(`  ✓ preview-${spec.kind}: ${pngPath}  (${size ? `${size.width}×${size.height}` : '?'}, ${statSync(pngPath).size} bytes)`);
+      }
+    } finally {
+      rmSync(userDataDir, { recursive: true, force: true });
+    }
+    if (failed > 0) process.exitCode = 1;
+    return;
+  }
+
   // --preview 모드: book.preview.html → book.preview.png (가변 높이, width 860 / 상세페이지 삽입용)
-  if (process.argv.includes('--preview')) {
+  if (process.argv.includes('--preview') && !process.argv.includes('--preview-promo')) {
     const userDataDir = mkdtempSync(resolve(tmpdir(), 'ebook-png-pv-'));
     console.log('✓ PNG Export (preview)');
     console.log(`  브라우저 : ${browser}`);
