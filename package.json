@@ -12,6 +12,8 @@
     "build:html": "node src/build-html.ts",
     "build:canvas": "node src/build-canvas.ts",
     "build:canvas:sparse": "node src/build-canvas-sparse.ts",
+    "test": "node test/parser.test.ts && node test/pages.test.ts && node test/components.test.ts && node test/layout.test.ts && node test/html-renderer.test.ts && node test/theme-engine.test.ts && node test/canvas.test.ts && node test/selector.test.ts && node test/book-selector-integration.test.ts && node test/output-isolation.test.ts",
+    "test:all": "npm test",
     "test:parser": "node test/parser.test.ts",
     "test:pages": "node test/pages.test.ts",
     "test:components": "node test/components.test.ts",

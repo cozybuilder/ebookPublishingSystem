@@ -16,6 +16,25 @@ Markdown 원고를 입력하면 PDF, DOCX, 체크리스트, 인포그래픽, 표
 
 - **v0.1** — 초기 구조 세팅 단계
 
+## 실행 규칙
+
+빌드 도구 없이 Node 24의 TypeScript 타입 스트리핑으로 `.ts`를 직접 실행한다(의존성 0).
+
+### 산출물 생성 (실제 `output/`)
+- `npm run build:html` — 책 HTML 5종 + 미리보기(`book.preview.html`)
+- `npm run build:canvas` — 캔버스 detail/square/story
+- `npm run build:canvas:sparse` — 폴백 검증용 sparse 캔버스
+- 그 외: `build:pages` / `build:components` / `build:layout`, `parse`
+
+### 테스트
+- **개발 중**: 필요한 개별 테스트만 (`npm run test:parser` 등)
+- **커밋 전**: `npm test` (= `npm run test:all`) — 전체 일괄 실행
+  - 순서: parser → pages → components → layout → html → theme → canvas →
+    selector → book-selector → isolation (격리 검증은 항상 마지막)
+  - 하나라도 실패하면 전체 실패.
+- **출력 격리**: 테스트는 `tmp/test-output/`에만 기록하며 실제 `output/`은 건드리지 않는다.
+  (`npm run test:isolation`이 해시로 보증, `npm run clean:test-output`으로 정리)
+
 ## 최상위 기준 문서
 
 - `docs/00_PROJECT_CONSTITUTION.md`
