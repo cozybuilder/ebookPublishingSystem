@@ -49,12 +49,46 @@ body.canvas-body {
 .canvas-cta { margin-top: 36px; text-align: center; border-top: 1px solid #e7eaef; padding-top: 28px; }
 .canvas-cta strong { display: block; font-size: 24px; font-weight: 800; color: var(--navy); letter-spacing: -0.01em; }
 .canvas-cta span { display: block; margin-top: 6px; font-size: 15px; color: #6b7280; }
+
+/* ===== Auto-Fit: density 별 표현 (고정 높이 캔버스) ===== */
+/* compact: 패딩/간격/폰트 약간 축소 */
+.canvas-fit-compact .grid-bento { gap: 16px; }
+.canvas-fit-compact .card { padding: 20px 22px; }
+.canvas-fit-compact [data-type="ResultCard"] .ty-body { font-size: 22px; line-height: 1.3; }
+.canvas-fit-compact [data-type="ChapterHeading"] .ty-chapter { font-size: 36px; }
+.canvas-fit-compact [data-type="QuoteBlock"] .quote p { font-size: 24px; }
+
+/* tight: 더 강한 축소 */
+.canvas-fit-tight .grid-bento { gap: 12px; }
+.canvas-fit-tight .card { padding: 16px 18px; }
+.canvas-fit-tight [data-type="ResultCard"] .ty-body { font-size: 19px; line-height: 1.25; }
+.canvas-fit-tight [data-type="ChapterHeading"] .ty-chapter { font-size: 30px; }
+.canvas-fit-tight [data-type="QuoteBlock"] .quote p { font-size: 20px; }
+
+/* ===== 긴 텍스트 안전 처리 (외부 라이브러리 없이 CSS만) ===== */
+/* 고정 높이 캔버스에서 긴 문장은 의도된 말줄임으로 보이게 한다 */
+.canvas-fit .canvas-clamp,
+.canvas-fit [data-type="ResultCard"] .ty-body,
+.canvas-fit [data-type="QuoteBlock"] .quote p,
+.canvas-fit [data-type="ParagraphBlock"] .ty-body {
+  display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 5;
+  overflow: hidden; max-height: 9.5em;
+}
+.canvas-fit-tight [data-type="ResultCard"] .ty-body,
+.canvas-fit-tight [data-type="QuoteBlock"] .quote p { -webkit-line-clamp: 4; }
+/* 체크리스트가 너무 길면 카드 자체를 넘치지 않게 */
+.canvas-fit [data-type="ChecklistCard"] .checklist { max-height: none; }
+
+/* flow: 가변 높이(detail) — 클램프/높이 제한 없음 */
+.canvas-fit-flow .card { }
 `.trim();
 
 function pickComponents(all: LayoutComponent[], profile: CanvasProfile): LayoutComponent[] {
   const allowed = new Set<string>(profile.pick);
   let sel = all.filter((c) => allowed.has(c.componentType));
-  if (typeof profile.limit === 'number') sel = sel.slice(0, profile.limit);
+  // auto-fit: fit.maxComponents 와 profile.limit 중 더 엄격한 값으로 제한
+  const cap = Math.min(profile.fit.maxComponents, profile.limit ?? Infinity);
+  if (Number.isFinite(cap)) sel = sel.slice(0, cap);
   return sel;
 }
 
@@ -70,7 +104,11 @@ export function renderCanvas(
   const selected = pickComponents(all, profile);
   const inner = selected.map(renderLayoutComponent).join('\n    ');
   const singleCls = profile.singleColumn ? ' canvas-single' : '';
-  const spec = `${profile.width}×${profile.height ?? 'auto'}`;
+
+  // auto-fit 마커: 고정 높이는 density, 가변(detail)은 flow
+  const fitKey = profile.fit.mode === 'flow' ? 'flow' : profile.fit.density;
+  const fitClass = `canvas-fit canvas-fit-${fitKey}`;
+  const spec = `${profile.width}×${profile.height ?? 'auto'} · ${fitKey.toUpperCase()}`;
 
   return `<!DOCTYPE html>
 <html lang="ko">
@@ -84,7 +122,7 @@ ${CANVAS_CSS}
 </style>
 </head>
 <body class="canvas-body">
-  <section class="canvas canvas-${profile.name}" data-canvas="${profile.name}" data-spec="${spec}">
+  <section class="canvas canvas-${profile.name} ${fitClass}" data-canvas="${profile.name}" data-fit="${fitKey}" data-spec="${spec}">
     <div class="page-body grid-bento${singleCls}">
     ${inner}
     </div>

@@ -57,14 +57,26 @@ check('canvas.square.html 생성', readFileSync(out('canvas.square.html'), 'utf8
 check('canvas.story.html 생성', readFileSync(out('canvas.story.html'), 'utf8').length > 0);
 
 // canvas wrapper/class
-check('detail: canvas wrapper/class', detail.includes('class="canvas canvas-detail"') && detail.includes('data-canvas="detail"'));
-check('square: canvas wrapper/class', square.includes('class="canvas canvas-square"'));
-check('story: canvas wrapper/class', story.includes('class="canvas canvas-story"'));
+check('detail: canvas wrapper/class', detail.includes('class="canvas canvas-detail ') && detail.includes('data-canvas="detail"'));
+check('square: canvas wrapper/class', square.includes('class="canvas canvas-square ') && square.includes('data-canvas="square"'));
+check('story: canvas wrapper/class', story.includes('class="canvas canvas-story ') && story.includes('data-canvas="story"'));
 
-// 규격 마커
-check('detail: 860px 규격', detail.includes('.canvas-detail { width: 860px') && detail.includes('data-spec="860×auto"'));
-check('square: 1080×1080 규격', square.includes('.canvas-square { width: 1080px; height: 1080px') && square.includes('data-spec="1080×1080"'));
-check('story: 1080×1920 규격', story.includes('.canvas-story  { width: 1080px; height: 1920px') && story.includes('data-spec="1080×1920"'));
+// 규격 마커 (v2: density 포함)
+check('detail: 860px 규격', detail.includes('.canvas-detail { width: 860px') && detail.includes('data-spec="860×auto · FLOW"'));
+check('square: 1080×1080 규격', square.includes('.canvas-square { width: 1080px; height: 1080px') && square.includes('data-spec="1080×1080 · COMPACT"'));
+check('story: 1080×1920 규격', story.includes('.canvas-story  { width: 1080px; height: 1920px') && story.includes('data-spec="1080×1920 · COMPACT"'));
+
+// auto-fit class / data attribute
+check('square: data-fit + canvas-fit-compact', square.includes('data-fit="compact"') && square.includes('canvas-fit canvas-fit-compact'));
+check('story: data-fit + canvas-fit-compact', story.includes('data-fit="compact"') && story.includes('canvas-fit canvas-fit-compact'));
+check('detail: data-fit=flow (auto-fit 비대상)', detail.includes('data-fit="flow"') && detail.includes('canvas-fit-flow'));
+
+// density CSS 마커
+check('CSS: compact density 규칙', square.includes('.canvas-fit-compact .card'));
+check('CSS: tight density 규칙 존재', square.includes('.canvas-fit-tight .card'));
+
+// 긴 텍스트 안전 처리(line-clamp/max-height/overflow)
+check('CSS: 긴 텍스트 말줄임(-webkit-line-clamp)', square.includes('-webkit-line-clamp') && square.includes('overflow: hidden') && square.includes('max-height'));
 
 // Bento 스타일 재사용 + 기준선 + CTA
 check('Bento 스타일 재사용(grid-bento)', detail.includes('grid-bento') && detail.includes('.grid-bento'));
@@ -72,14 +84,14 @@ check('square/story 단일 컬럼', square.includes('grid-bento canvas-single') 
 check('CTA 하드코딩 포함', story.includes('CozyBuilder Lab') && story.includes('읽히는 전자책을 상품처럼 만듭니다'));
 check('preview 기준선(.canvas::before)', detail.includes('.canvas::before'));
 
-// 선별 배치: square 는 핵심 1~3개(limit 3)
+// 선별 배치(v2: 더 엄격) — square ≤ 2
 const squareCardCount = (square.match(/data-id="cmp-/g) ?? []).length;
-check('square: 핵심 컴포넌트 3개 이하', squareCardCount > 0 && squareCardCount <= 3, `got ${squareCardCount}`);
+check('square: v2 더 엄격(2개 이하)', squareCardCount > 0 && squareCardCount <= 2, `got ${squareCardCount}`);
 // story 는 2개 이하(ChapterHeading + ResultCard)
 const storyCardCount = (story.match(/data-id="cmp-/g) ?? []).length;
-check('story: 2개 이하', storyCardCount > 0 && storyCardCount <= 2, `got ${storyCardCount}`);
-// detail 은 본문보다 적은 선별(전체 컴포넌트 수보다 작음)
-check('detail: 선별 배치(전체보다 적음)', (detail.match(/data-id="cmp-/g) ?? []).length < all.length);
+check('story: ChapterHeading+ResultCard 중심(2개 이하)', storyCardCount > 0 && storyCardCount <= 2, `got ${storyCardCount}`);
+// detail 은 고정 높이 auto-fit 비대상 → square 보다 많은 컴포넌트
+check('detail: auto-fit 비대상(컴포넌트 더 많음)', (detail.match(/data-id="cmp-/g) ?? []).length > squareCardCount);
 
 // book.*.html 미접촉(이 테스트는 canvas.* 만 씀)
 check('book.* 비접촉(이 테스트는 canvas.* 만 생성)', true);
