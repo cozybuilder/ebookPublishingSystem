@@ -9,6 +9,7 @@ import { readFileSync } from 'node:fs';
 import { dirname, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { RELEASE_STEPS, RELEASE_HTML, RELEASE_PNG, RELEASE_PDF } from '../src/release-manifest.ts';
+import { HTML_RULES, PNG_RULES, PDF_RULES, checkHtml, checkPng, checkPdf } from '../src/release-validation.ts';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const pkg = JSON.parse(readFileSync(resolve(__dirname, '..', 'package.json'), 'utf8')) as {
@@ -54,6 +55,31 @@ check(
 check('RELEASE_PNG: 3종', RELEASE_PNG.length === 3 && RELEASE_PNG.every((f) => f.endsWith('.png')));
 check('RELEASE_PDF: 5종(preview/modern/editorial/dashboard/bento)', RELEASE_PDF.length === 5 && RELEASE_PDF.includes('book.dashboard.pdf') && RELEASE_PDF.includes('book.bento.pdf') && RELEASE_PDF.every((f) => f.endsWith('.pdf')));
 check('RELEASE_HTML: book/canvas HTML 포함', RELEASE_HTML.includes('book.html') && RELEASE_HTML.includes('canvas.detail.html'));
+
+// ===== Release Validation v2 (순수 검증 함수) =====
+// HTML: 존재+size+마커
+check('checkHtml: 정상 통과', checkHtml({ file: 'x', minBytes: 100, markers: ['grid-bento'] }, { exists: true, size: 500 }, '<div class="grid-bento">').length === 0);
+check('checkHtml: 없음', checkHtml({ file: 'x', minBytes: 100, markers: [] }, { exists: false, size: 0 }, '').includes('없음'));
+check('checkHtml: size 미달', checkHtml({ file: 'x', minBytes: 1000, markers: [] }, { exists: true, size: 10 }, 'x').some((r) => r.startsWith('size<')));
+check('checkHtml: 마커 누락', checkHtml({ file: 'x', minBytes: 1, markers: ['var-editorial'] }, { exists: true, size: 50 }, 'no marker').some((r) => r.includes('마커 누락')));
+
+// PNG: 규격
+check('checkPng: square 1080×1080 통과', checkPng({ file: 'x', minBytes: 1, width: 1080, height: 1080 }, { exists: true, size: 9000 }, { width: 1080, height: 1080 }).length === 0);
+check('checkPng: 규격 불일치', checkPng({ file: 'x', minBytes: 1, width: 1080, height: 1080 }, { exists: true, size: 9000 }, { width: 800, height: 800 }).length === 2);
+check('checkPng: detail minHeight 통과', checkPng({ file: 'x', minBytes: 1, width: 860, minHeight: 1200 }, { exists: true, size: 9000 }, { width: 860, height: 2285 }).length === 0);
+check('checkPng: detail minHeight 미달', checkPng({ file: 'x', minBytes: 1, width: 860, minHeight: 1200 }, { exists: true, size: 9000 }, { width: 860, height: 800 }).some((r) => r.startsWith('height<')));
+check('checkPng: 헤더 아님', checkPng({ file: 'x', minBytes: 1, width: 1080, height: 1080 }, { exists: true, size: 9000 }, null).includes('PNG 헤더 아님'));
+
+// PDF: size + 헤더
+check('checkPdf: 정상 통과', checkPdf({ file: 'x', minBytes: 50 }, { exists: true, size: 60000 }, true).length === 0);
+check('checkPdf: size 미달', checkPdf({ file: 'x', minBytes: 100000 }, { exists: true, size: 10 }, true).some((r) => r.startsWith('size<')));
+check('checkPdf: %PDF 아님', checkPdf({ file: 'x', minBytes: 1 }, { exists: true, size: 60000 }, false).includes('%PDF 헤더 아님'));
+
+// 규칙 커버리지: manifest 와 일치
+check('HTML_RULES: RELEASE_HTML 전부 커버', RELEASE_HTML.every((f) => HTML_RULES.some((r) => r.file === f)));
+check('PNG_RULES: RELEASE_PNG 전부 커버', RELEASE_PNG.every((f) => PNG_RULES.some((r) => r.file === f)));
+check('PDF_RULES: RELEASE_PDF 전부 커버(5종)', PDF_RULES.length === 5 && RELEASE_PDF.every((f) => PDF_RULES.some((r) => r.file === f)));
+check('PDF_RULES: preview 50KB / 나머지 100KB', PDF_RULES.find((r) => r.file === 'book.preview.pdf')!.minBytes === 50 * 1024 && PDF_RULES.filter((r) => r.file !== 'book.preview.pdf').every((r) => r.minBytes === 100 * 1024));
 
 console.log('\n────────────────────────────');
 if (failures.length === 0) {

@@ -28,7 +28,8 @@ Markdown 원고를 입력하면 PDF, DOCX, 체크리스트, 인포그래픽, 표
 - **최종 릴리스: `npm run build:release`** — 단일 오케스트레이터(`src/release.ts`)
   - 4단계 순서 실행: `[1/4] Build HTML → [2/4] Build Canvas → [3/4] Export PNG → [4/4] Export PDF`
   - 단계 실패 시 어느 단계인지 출력 후 즉시 종료(exit 1).
-  - 성공 시 산출물 존재/size/PNG·PDF 헤더 검증 + 산출물 요약 출력.
+  - 성공 시 산출물 **품질 검증**(존재 + 최소 size + HTML 마커 + PNG 규격(1080² / 1080×1920 /
+    detail 860×≥1200) + PDF %PDF 헤더·최소 size) 후 요약 출력. 깨진/빈/규격 오류 산출물은 exit 1.
   - sparse 자산(fallback 검증 fixture)은 릴리스에 미포함. 필요 시 `npm run build:release:sparse` 별도 실행.
   - 기존 체인 방식은 `npm run build:release:legacy` 로 보존.
 

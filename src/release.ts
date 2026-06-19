@@ -15,7 +15,16 @@ import { dirname, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { readPngSize } from './export/png-size.ts';
 import { isPdfBuffer } from './export/pdf-helpers.ts';
-import { RELEASE_STEPS, RELEASE_HTML, RELEASE_PNG, RELEASE_PDF } from './release-manifest.ts';
+import { RELEASE_STEPS } from './release-manifest.ts';
+import {
+  HTML_RULES,
+  PNG_RULES,
+  PDF_RULES,
+  checkHtml,
+  checkPng,
+  checkPdf,
+  type FileFact,
+} from './release-validation.ts';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const projectRoot = resolve(__dirname, '..');
@@ -33,45 +42,65 @@ function runStep(index: number, total: number, label: string, script: string): v
 
 interface Issue {
   file: string;
-  reason: string;
+  reasons: string[];
 }
 
+function fact(file: string): FileFact {
+  const p = out(file);
+  return existsSync(p) ? { exists: true, size: statSync(p).size } : { exists: false, size: 0 };
+}
+function content(file: string): string {
+  try {
+    return readFileSync(out(file), 'utf8');
+  } catch {
+    return '';
+  }
+}
+function pngOf(file: string): { width: number; height: number } | null {
+  try {
+    return readPngSize(readFileSync(out(file)).subarray(0, 24));
+  } catch {
+    return null;
+  }
+}
+function pdfOf(file: string): boolean {
+  try {
+    return isPdfBuffer(readFileSync(out(file)).subarray(0, 8));
+  } catch {
+    return false;
+  }
+}
+
+/** 강화된 검증: 존재 + size 임계 + 마커/규격/헤더 */
 function verify(): Issue[] {
   const issues: Issue[] = [];
-
-  for (const f of RELEASE_HTML) {
-    if (!existsSync(out(f))) issues.push({ file: f, reason: '없음' });
+  for (const rule of HTML_RULES) {
+    const reasons = checkHtml(rule, fact(rule.file), content(rule.file));
+    if (reasons.length) issues.push({ file: rule.file, reasons });
   }
-  for (const f of RELEASE_PNG) {
-    const p = out(f);
-    if (!existsSync(p)) issues.push({ file: f, reason: '없음' });
-    else if (statSync(p).size === 0) issues.push({ file: f, reason: 'size 0' });
-    else if (!readPngSize(readFileSync(p).subarray(0, 24))) issues.push({ file: f, reason: 'PNG 헤더 아님' });
+  for (const rule of PNG_RULES) {
+    const reasons = checkPng(rule, fact(rule.file), pngOf(rule.file));
+    if (reasons.length) issues.push({ file: rule.file, reasons });
   }
-  for (const f of RELEASE_PDF) {
-    const p = out(f);
-    if (!existsSync(p)) issues.push({ file: f, reason: '없음' });
-    else if (statSync(p).size === 0) issues.push({ file: f, reason: 'size 0' });
-    else if (!isPdfBuffer(readFileSync(p).subarray(0, 8))) issues.push({ file: f, reason: '%PDF 헤더 아님' });
+  for (const rule of PDF_RULES) {
+    const reasons = checkPdf(rule, fact(rule.file), pdfOf(rule.file));
+    if (reasons.length) issues.push({ file: rule.file, reasons });
   }
   return issues;
 }
 
 function summarize(): void {
-  const line = (f: string, withSize: boolean): string => {
-    const p = out(f);
-    if (!existsSync(p)) return `    ✗ ${f} (없음)`;
-    if (!withSize) return `    - ${f}`;
-    return `    - ${f} (${statSync(p).size} bytes)`;
-  };
   console.log('\n────────────────────────────');
-  console.log('✓ 릴리스 산출물 요약');
-  console.log('  HTML:');
-  for (const f of RELEASE_HTML) console.log(line(f, false));
-  console.log('  PNG:');
-  for (const f of RELEASE_PNG) console.log(line(f, true));
-  console.log('  PDF:');
-  for (const f of RELEASE_PDF) console.log(line(f, true));
+  console.log('✓ 릴리스 산출물 요약 (검증 통과)');
+  console.log(`  HTML: ${HTML_RULES.length}종 OK`);
+  for (const r of HTML_RULES) console.log(`    - ${r.file}`);
+  console.log(`  PNG: ${PNG_RULES.length}종 OK`);
+  for (const r of PNG_RULES) {
+    const s = pngOf(r.file);
+    console.log(`    - ${r.file} (${s ? `${s.width}×${s.height}` : '?'}, ${fact(r.file).size} bytes)`);
+  }
+  console.log(`  PDF: ${PDF_RULES.length}종 OK`);
+  for (const r of PDF_RULES) console.log(`    - ${r.file} (${fact(r.file).size} bytes)`);
 }
 
 function main(): void {
@@ -82,7 +111,7 @@ function main(): void {
   const issues = verify();
   if (issues.length > 0) {
     console.error('\n✗ 산출물 검증 실패:');
-    for (const it of issues) console.error(`    - ${it.file}: ${it.reason}`);
+    for (const it of issues) console.error(`    - ${it.file}: ${it.reasons.join(', ')}`);
     process.exit(1);
   }
 
