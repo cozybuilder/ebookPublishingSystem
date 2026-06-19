@@ -196,6 +196,28 @@ check('fallback: avoid 타입 제외 유지(WarningCard 없음)', !rAvoid.compon
 const rSquare2 = selectComponents(sparseSquare, SQUARE_CANVAS);
 check('fallback: 결정론(동일 입력 동일 출력)', JSON.stringify(rSquare.components.map((c) => c.componentId)) === JSON.stringify(rSquare2.components.map((c) => c.componentId)));
 
+// ===== Sparse Sample (폴백 통합 검증) =====
+const sparsePath = resolve(projectRoot, 'samples', 'canvas-sparse.md');
+const sparseBook = parseBook(readFileSync(sparsePath, 'utf8'));
+const sparseLayout = applyLayout(mapComponents(sparseBook, buildPages(sparseBook, FullBookPDF)), bento.tokens);
+const sparseAll = sparseLayout.flatMap((p) => p.components);
+
+const spDetail = renderCanvas(sparseAll, bento.tokens, bento.recipe, DETAIL_CANVAS, 'S');
+const spSquare = renderCanvas(sparseAll, bento.tokens, bento.recipe, SQUARE_CANVAS, 'S');
+const spStory = renderCanvas(sparseAll, bento.tokens, bento.recipe, STORY_CANVAS, 'S');
+
+check('sparse square: data-fallback="true"', spSquare.includes('data-fallback="true"'));
+check('sparse story: data-fallback="true"', spStory.includes('data-fallback="true"'));
+check('sparse square: data-picked 비어있지 않음', !spSquare.includes('data-picked=""') && picked(spSquare).length > 0);
+check('sparse story: data-picked 비어있지 않음', !spStory.includes('data-picked=""') && picked(spStory).length > 0);
+check('sparse square: 폴백으로 ChapterHeading 채움', picked(spSquare).includes('ChapterHeading'));
+check('sparse story: 빈 캔버스 아님', picked(spStory).length >= 1);
+check('sparse detail: 본문 존재(빈약해도 렌더)', picked(spDetail).length > 0);
+
+// rich(input/book.md 가 아니라 parser-sample) 기준은 fallback=false 유지(회귀)
+check('rich square: fallback=false 유지', square.includes('data-fallback="false"'));
+check('rich story: fallback=false 유지', story.includes('data-fallback="false"'));
+
 // book.*.html 미접촉(이 테스트는 canvas.* 만 씀)
 check('book.* 비접촉(이 테스트는 canvas.* 만 생성)', true);
 

@@ -11,6 +11,7 @@
     "build:layout": "node src/build-layout.ts",
     "build:html": "node src/build-html.ts",
     "build:canvas": "node src/build-canvas.ts",
+    "build:canvas:sparse": "node src/build-canvas-sparse.ts",
     "test:parser": "node test/parser.test.ts",
     "test:pages": "node test/pages.test.ts",
     "test:components": "node test/components.test.ts",
