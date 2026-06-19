@@ -292,6 +292,7 @@ td:first-child { font-weight: 650; color: var(--navy); }
 .page-body.grid-stack { display: block; }
 ${r.gridStyle === 'bento' ? BENTO_V2_CSS : ''}
 ${r.variant === 'editorial' ? EDITORIAL_CSS : ''}
+${r.variant === 'dashboard' ? DASHBOARD_CSS : ''}
 `.trim();
 }
 
@@ -529,6 +530,93 @@ const EDITORIAL_CSS = `
 .var-editorial [data-type="ImageBlock"] .slot-frame { background: #efece5; border: 0; border-radius: 4px; min-height: 220px; }
 .var-editorial [data-type="ImageBlock"] .slot-prompt { font-style: italic; color: #6a6356; font-size: 14px; }
 .var-editorial [data-type="ImageBlock"] .slot-tag { color: #b0855a; }
+`.trim();
+
+/**
+ * Dashboard — SaaS dashboard / Notion database / Linear board 방향.
+ * 체크리스트·표·단계·결과·비교 중심의 운영 문서. 차분하지만 정보 밀도 높음.
+ * 모든 규칙은 .var-dashboard 스코프로 격리 → 다른 테마엔 출력조차 되지 않는다.
+ * (variant === 'dashboard' 일 때만 buildCss 가 이 블록을 포함)
+ */
+const DASHBOARD_CSS = `
+/* ===== Dashboard 기본 면 ===== */
+.var-dashboard { --panel: #ffffff; --line: #e7eaef; --muted: #6b7280; --ok: #1f9d57; }
+.var-dashboard > div { margin-bottom: var(--sp-md); }
+.var-dashboard .card { box-shadow: 0 1px 2px rgba(16,24,40,.04); border-color: var(--line); }
+.var-dashboard .card-label { font-size: 12px; letter-spacing: .04em; text-transform: uppercase; color: var(--muted); }
+
+/* (1) ChapterHeading — 대시보드 페이지 헤더 */
+.var-dashboard [data-type="ChapterHeading"] {
+  border-bottom: 1px solid var(--line); padding: 0 0 var(--sp-md); margin-bottom: var(--sp-md);
+}
+.var-dashboard [data-type="ChapterHeading"]::before {
+  content: "SECTION"; display: inline-block; font-size: 11px; font-weight: 700; letter-spacing: .14em;
+  color: #fff; background: var(--navy); border-radius: 5px; padding: 3px 8px; margin-bottom: 10px;
+}
+.var-dashboard [data-type="ChapterHeading"] .ty-chapter { font-size: 26px; margin: 0; }
+
+/* (2) ResultCard — KPI 카드 */
+.var-dashboard [data-type="ResultCard"].card {
+  background: linear-gradient(180deg, #f8fbff 0%, #ffffff 100%);
+  border: 1px solid #d8e6f7; border-left: 4px solid var(--cyan); border-radius: 12px;
+}
+.var-dashboard [data-type="ResultCard"] .card-label { color: var(--cyan); }
+.var-dashboard [data-type="ResultCard"] .card-label::before { content: "KPI"; background: var(--cyan); color:#fff; width:auto; height:auto; border-radius:4px; padding:2px 6px; font-size:10px; font-weight:800; }
+.var-dashboard [data-type="ResultCard"] .ty-body { font-size: 22px; font-weight: 750; color: var(--navy); margin-top: 6px; }
+
+/* (3) ChecklistCard — task / todo 패널 */
+.var-dashboard [data-type="ChecklistCard"] .card-label::after { content: " · TODO"; color: var(--muted); }
+.var-dashboard [data-type="ChecklistCard"] .checklist { display: flex; flex-direction: column; gap: 6px; }
+.var-dashboard [data-type="ChecklistCard"] .checklist li {
+  border: 1px solid var(--line); border-radius: 8px; background: #fbfcfe; padding: 10px 12px; gap: 12px;
+}
+.var-dashboard [data-type="ChecklistCard"] .cbox { width: 20px; height: 20px; border-radius: 6px; border: 2px solid #c4ccd6; background: #fff; }
+
+/* (4) StepsCard — workflow / pipeline */
+.var-dashboard [data-type="StepsCard"] .steps li::before {
+  border-radius: 7px; width: 34px; height: 34px; background: var(--navy); color: #fff; border: 0; box-shadow: none; font-size: 14px;
+}
+.var-dashboard [data-type="StepsCard"] .steps li:not(:last-child)::after { left: 16px; background: #cdd5e0; }
+.var-dashboard [data-type="StepsCard"] .steps li > span {
+  display: block; background: #f7f9fc; border: 1px solid var(--line); border-radius: 8px; padding: 10px 12px;
+}
+
+/* (5) CompareCard — decision matrix */
+.var-dashboard [data-type="CompareCard"] .card-label::after { content: " · DECISION MATRIX"; color: var(--muted); }
+.var-dashboard [data-type="CompareCard"] .tbl { border: 1px solid var(--line); border-radius: 10px; }
+.var-dashboard [data-type="CompareCard"] th { background: #eef2f8; color: var(--navy); border-bottom: 1px solid var(--line); }
+.var-dashboard [data-type="CompareCard"] td { border-bottom: 1px solid #eef1f5; }
+.var-dashboard [data-type="CompareCard"] td:first-child { font-weight: 700; color: var(--navy); background: #f8fafc; }
+
+/* (6) TableCard — database table */
+.var-dashboard [data-type="TableCard"] .tbl { border: 1px solid var(--line); border-radius: 10px; }
+.var-dashboard [data-type="TableCard"] th { background: #f3f5f9; color: var(--muted); text-transform: uppercase; font-size: 11px; letter-spacing: .06em; border-bottom: 1px solid var(--line); }
+.var-dashboard [data-type="TableCard"] td { border-bottom: 1px solid #eef1f5; }
+.var-dashboard [data-type="TableCard"] tbody tr:nth-child(even) td { background: #fafbfd; }
+
+/* (7) WarningCard — risk / alert 패널 */
+.var-dashboard [data-type="WarningCard"].card {
+  background: #fff8f1; border: 1px solid #f3dcc2; border-left: 4px solid var(--orange); border-radius: 10px;
+}
+.var-dashboard [data-type="WarningCard"] .card-label { color: var(--orange); }
+.var-dashboard [data-type="WarningCard"] .card-label::before { content: "!"; background: var(--orange); color: #fff; width: 18px; height: 18px; border-radius: 5px; display: inline-flex; align-items: center; justify-content: center; font-weight: 800; font-size: 12px; }
+
+/* (8) QuoteBlock — insight / note 패널 */
+.var-dashboard [data-type="QuoteBlock"] .quote {
+  background: #f6f8fb; border: 1px solid var(--line); border-left: 4px solid var(--navy); border-radius: 10px; padding: var(--sp-md) var(--sp-lg);
+}
+.var-dashboard [data-type="QuoteBlock"] .quote::before {
+  content: "NOTE"; display: block; font-size: 10px; font-weight: 800; letter-spacing: .14em; color: var(--muted); margin-bottom: 6px;
+}
+.var-dashboard [data-type="QuoteBlock"] .quote p { font-size: var(--fs-body); font-style: normal; color: #374151; }
+
+/* (9) ImageBlock — dashboard widget / preview */
+.var-dashboard [data-type="ImageBlock"] .slot-frame {
+  background: repeating-linear-gradient(45deg, #f4f6fa, #f4f6fa 12px, #eef1f6 12px, #eef1f6 24px);
+  border: 1px solid var(--line); border-radius: 10px; min-height: 200px;
+}
+.var-dashboard [data-type="ImageBlock"] .slot-tag { content: ""; color: var(--muted); }
+.var-dashboard [data-type="ImageBlock"] .slot-tag::after { content: " · WIDGET"; }
 `.trim();
 
 function renderComponentInner(c: Component): string {

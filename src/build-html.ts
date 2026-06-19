@@ -89,6 +89,14 @@ function main(): void {
     render(book, FullBookPDF, editorial, `${title} (Editorial)`),
     '[FullBookPDF / Editorial]',
   );
+
+  // Dashboard 검수용 명시 출력(항상 생성)
+  const dashboard = resolveThemeByName('Dashboard');
+  write(
+    out('book.dashboard.html'),
+    render(book, FullBookPDF, dashboard, `${title} (Dashboard)`),
+    '[FullBookPDF / Dashboard]',
+  );
 }
 
 main();

@@ -135,6 +135,27 @@ check('무유출: Modern 에 FEATURE eyebrow 없음', !modernHtml.includes('cont
 check('무유출: Bento 에 var-editorial 규칙 없음', !bentoHtml.includes('var-editorial'));
 check('무유출: Bento 에 FEATURE eyebrow 없음', !bentoHtml.includes('content: "FEATURE"'));
 
+// --- Dashboard 표현 ---
+check('Dashboard 테마 선택 가능', getTheme('Dashboard').name === 'Dashboard');
+check('theme name 정규화(report → Dashboard)', normalizeThemeName('report') === 'Dashboard');
+check('theme name 정규화(ops → Dashboard)', normalizeThemeName('OPS') === 'Dashboard');
+const dashboard = resolveThemeByName('Dashboard');
+const dashboardHtml = renderHtml(layout, dashboard.tokens, 'dashboard', dashboard.recipe);
+check('렌더 가능: Dashboard HTML 생성', dashboardHtml.includes('<section class="page"'));
+check('Dashboard: var-dashboard 스코프 활성', dashboardHtml.includes('page-body grid-stack var-dashboard'));
+check('Dashboard: ChapterHeading SECTION 헤더', dashboardHtml.includes('content: "SECTION"'));
+check('Dashboard: ResultCard KPI 카드', dashboardHtml.includes('content: "KPI"'));
+check('Dashboard: WarningCard risk 패널', dashboardHtml.includes('[data-type="WarningCard"].card'));
+check('Dashboard: QuoteBlock NOTE 패널', dashboardHtml.includes('content: "NOTE"'));
+check('Dashboard: TableCard database table', dashboardHtml.includes('[data-type="TableCard"] .tbl'));
+check('Dashboard ≠ Modern/Bento/Editorial', dashboardHtml !== modernHtml && dashboardHtml !== bentoHtml && dashboardHtml !== editorialHtml);
+
+// Dashboard 무유출
+check('무유출: Modern 에 var-dashboard 없음', !modernHtml.includes('var-dashboard'));
+check('무유출: Bento 에 var-dashboard 없음', !bentoHtml.includes('var-dashboard'));
+check('무유출: Editorial 에 var-dashboard 없음', !editorialHtml.includes('var-dashboard'));
+check('무유출: Modern 에 SECTION 헤더 없음', !modernHtml.includes('content: "SECTION"'));
+
 // --- QuoteBlock 테마별 스타일 ---
 check('Quote: 공통 마크업(blockquote.quote)', modernHtml.includes('<blockquote class="quote">'));
 check('Modern Glass: 기본 인용 스타일(.quote 규칙)', modernHtml.includes('.quote {'));

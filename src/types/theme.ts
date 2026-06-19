@@ -18,7 +18,7 @@ import type { ProfileName } from './output.ts';
 /** 깊은 부분 적용 (override diff 표현용) — 타입 전용(런타임 영향 없음) */
 export type DeepPartial<T> = T extends object ? { [K in keyof T]?: DeepPartial<T[K]> } : T;
 
-export type ThemeName = 'ModernGlass' | 'Bento' | 'Editorial' | 'CozyBuilderLab' | 'Minimal';
+export type ThemeName = 'ModernGlass' | 'Bento' | 'Editorial' | 'Dashboard' | 'CozyBuilderLab' | 'Minimal';
 
 /** base DesignTokens 에 덮어쓸 차분(diff). 지정하지 않은 값은 base 상속. */
 export type ThemeOverride = DeepPartial<DesignTokens>;
@@ -50,7 +50,7 @@ export interface StyleRecipe {
   // v3(Editorial 등) 테마 전용 표현 스코프 마커.
   // 'none' 이외 값이면 page-body 에 var-<variant> 클래스가 붙고,
   // 렌더러가 해당 variant 의 전용 CSS만 조건부로 출력한다(테마 간 무유출).
-  variant: 'none' | 'editorial';
+  variant: 'none' | 'editorial' | 'dashboard';
 }
 
 export interface Theme {

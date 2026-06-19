@@ -95,6 +95,28 @@ const EDITORIAL_RECIPE: StyleRecipe = {
   variant: 'editorial', // Editorial 전용 CSS 활성
 };
 
+/**
+ * Dashboard (v3) — SaaS dashboard / Notion database / Linear board 방향.
+ * 체크리스트·표·단계·결과·비교 중심 운영 문서. 차분하지만 정보 밀도 높음.
+ */
+const DASHBOARD_RECIPE: StyleRecipe = {
+  pageBackground: '#eef1f5', // 옅은 운영 화면 배경
+  pageShadow: false,
+  pageRadius: 12,
+  cardShadow: false,
+  cardTint: false,
+  cardBorder: '#e7eaef',
+  accent: true, // 상태/배지 표현 활성
+  tableHeaderTinted: true,
+  checkboxRadius: 6,
+  density: 'comfortable', // 정보 밀도 높게(여백 과하지 않게)
+  cardStyle: 'soft',
+  tableStyle: 'lined',
+  badgeStyle: 'solid',
+  gridStyle: 'stack',
+  variant: 'dashboard', // Dashboard 전용 CSS 활성
+};
+
 /** CozyBuilder Lab(v2 레거시) = 렌더러 기본 표현 그대로 */
 const COZY_RECIPE: StyleRecipe = { ...BASE_RECIPE };
 
@@ -149,6 +171,15 @@ const Editorial: Theme = {
   recipe: EDITORIAL_RECIPE,
 };
 
+const Dashboard: Theme = {
+  name: 'Dashboard',
+  label: 'Dashboard',
+  tokenOverride: {
+    radius: { card: 12, image: 10 },
+  },
+  recipe: DASHBOARD_RECIPE,
+};
+
 const CozyBuilderLab: Theme = {
   name: 'CozyBuilderLab',
   label: 'CozyBuilder Lab',
@@ -173,6 +204,7 @@ export const THEMES: ThemeRegistry = {
   ModernGlass,
   Bento,
   Editorial,
+  Dashboard,
   CozyBuilderLab, // v2 레거시(유지)
   Minimal, // v2 레거시(유지)
 };
@@ -224,6 +256,9 @@ const NAME_ALIAS: Record<string, ThemeName> = {
   bento: 'Bento',
   editorial: 'Editorial',
   magazine: 'Editorial',
+  dashboard: 'Dashboard',
+  report: 'Dashboard',
+  ops: 'Dashboard',
   cozybuilderlab: 'CozyBuilderLab',
   cozy: 'CozyBuilderLab',
   minimal: 'Minimal',
