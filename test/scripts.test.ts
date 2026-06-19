@@ -46,6 +46,12 @@ check('build:release:legacy: 기존 체인 보존', (s['build:release:legacy'] ?
 // 기존 원자 스크립트 유지
 check('build:assets/export:pdf 유지', typeof s['build:assets'] === 'string' && typeof s['export:pdf'] === 'string');
 
+// 보조 산출물 스크립트 존재(별도 선택)
+check('export:png:preview 존재(--preview)', (s['export:png:preview'] ?? '').includes('--preview'));
+check('export:png:chapters 존재(--chapters)', (s['export:png:chapters'] ?? '').includes('--chapters'));
+// build:release 는 preview/chapters PNG 미포함(별도 선택 산출물)
+check('build:release: preview/chapters 미포함', !rel.includes('preview') && !rel.includes('chapter'));
+
 // 매니페스트 구성(오케스트레이터 검증 대상)
 const stepScripts = RELEASE_STEPS.map((x) => x.script);
 check(

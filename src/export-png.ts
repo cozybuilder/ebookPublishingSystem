@@ -138,6 +138,27 @@ function main(): void {
     return;
   }
 
+  // --preview 모드: book.preview.html → book.preview.png (가변 높이, width 860 / 상세페이지 삽입용)
+  if (process.argv.includes('--preview')) {
+    const userDataDir = mkdtempSync(resolve(tmpdir(), 'ebook-png-pv-'));
+    console.log('✓ PNG Export (preview)');
+    console.log(`  브라우저 : ${browser}`);
+    let failed = 0;
+    try {
+      const htmlPath = out('book.preview.html');
+      if (!existsSync(htmlPath)) {
+        console.error('  ✗ preview: book.preview.html 없음 — 먼저 npm run build:html');
+        failed = 1;
+      } else if (!exportDetail(browser, htmlPath, out('book.preview.png'), 'preview', userDataDir)) {
+        failed = 1;
+      }
+    } finally {
+      rmSync(userDataDir, { recursive: true, force: true });
+    }
+    if (failed > 0) process.exitCode = 1;
+    return;
+  }
+
   // --chapters 모드: 챕터별 detail HTML → PNG (기존 detail/square/story 와 분리)
   if (process.argv.includes('--chapters')) {
     const userDataDir = mkdtempSync(resolve(tmpdir(), 'ebook-png-ch-'));
