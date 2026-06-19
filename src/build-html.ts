@@ -22,6 +22,7 @@ import { applyLayout } from './layout-engine/layout-engine.ts';
 import { renderHtml } from './html-renderer/html-renderer.ts';
 import { FullBookPDF, ChecklistPDF, KmongPreviewPDF } from './page-builder/profiles.ts';
 import { previewComponents } from './preview-components.ts';
+import { withFrontMatterPages } from './front-matter/front-matter-apply.ts';
 import {
   normalizeThemeName,
   resolveThemeByName,
@@ -61,7 +62,13 @@ function render(book: Book, profile: OutputProfile, theme: ResolvedTheme, docTit
     );
   }
 
-  // 기존 전체 출력 경로(변화 없음)
+  // FullBook: Front Matter(표지/판권/목차/저자 소개/면책) + 본문 (기본 ON)
+  if (profile.name === 'FullBookPDF') {
+    const layout = applyLayout(withFrontMatterPages(book), theme.tokens);
+    return renderHtml(layout, theme.tokens, docTitle, theme.recipe);
+  }
+
+  // 그 외(예: ChecklistPDF) — Front Matter 미적용, 기존 경로 유지
   const layout = applyLayout(mapComponents(book, buildPages(book, profile)), theme.tokens);
   return renderHtml(layout, theme.tokens, docTitle, theme.recipe);
 }

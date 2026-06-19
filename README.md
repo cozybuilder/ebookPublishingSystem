@@ -142,10 +142,13 @@ Markdown 원고를 입력하면 PDF, DOCX, 체크리스트, 인포그래픽, 표
   - title: book.md 첫 `#` 또는 `Untitled Ebook`
   - author: `CozyBuilder` (원고 author 우선) / publisher·brand: `CozyBuilder Lab` / year: 현재 연도
   - disclaimer / authorBio: 기본 문구
-- Front Matter 컴포넌트(표지→판권→목차→저자 소개→면책)는 `prependFrontMatter()` 로 본문 컴포넌트
-  앞에 붙는다(본문 순서 보존). 목차(toc)는 EPUB 연계를 위해 구조로 보존.
-- v1 은 매니페스트 산출 + prepend 헬퍼 제공(기존 build:html/export 파이프라인 무회귀).
-  향후 frontmatter YAML(`---` 메타블록) 도입 시 resolveFrontMatterMeta override 로 확장 가능.
+- **기본 출력에 포함(기본 ON)**: `book.html` 및 테마별 HTML(modern/bento/editorial/dashboard),
+  이들로부터 만드는 PDF, 그리고 `book.docx` 는 앞에 표지→판권→목차→저자 소개→면책이 붙고 본문이 이어진다.
+  (page-builder 자동 앞페이지를 Front Matter 산출로 대체 — 중복 없음.)
+- **제외**: 캔버스/마케팅 이미지(canvas.*, preview promo), `book.preview.*`(요약 미리보기),
+  `book.checklist.*`, Image Prompt 매니페스트 — 본문/요약 중심 유지.
+- 목차(toc)는 EPUB 연계를 위해 구조로 보존. 향후 frontmatter YAML(`---` 메타블록) 도입 시
+  resolveFrontMatterMeta override 로 확장 가능.
 
 ## 최상위 기준 문서
 

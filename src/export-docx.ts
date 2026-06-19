@@ -10,11 +10,9 @@ import { readFileSync, writeFileSync, mkdirSync, statSync } from 'node:fs';
 import { dirname, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { parseBook } from './parser/parser.ts';
-import { buildPages } from './page-builder/page-builder.ts';
-import { mapComponents } from './component-mapper/component-mapper.ts';
 import { renderDocx, type ImageResolver } from './docx/docx-renderer.ts';
 import { resolveImageAsset } from './assets/image-asset-resolver.ts';
-import { FullBookPDF } from './page-builder/profiles.ts';
+import { withFrontMatterComponents } from './front-matter/front-matter-apply.ts';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const projectRoot = resolve(__dirname, '..');
@@ -30,7 +28,8 @@ const imageResolver: ImageResolver = (block) => {
 
 function main(): void {
   const book = parseBook(readFileSync(inputPath, 'utf8'));
-  const components = mapComponents(book, buildPages(book, FullBookPDF)).flatMap((p) => p.components);
+  // Front Matter(표지/판권/목차/저자 소개/면책) + 본문 (기본 ON)
+  const components = withFrontMatterComponents(book);
   const docx = renderDocx(components, book.metadata.title, imageResolver);
 
   mkdirSync(dirname(outPath), { recursive: true });
