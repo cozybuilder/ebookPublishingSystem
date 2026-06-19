@@ -20,6 +20,21 @@ Markdown 원고를 입력하면 PDF, DOCX, 체크리스트, 인포그래픽, 표
 
 빌드 도구 없이 Node 24의 TypeScript 타입 스트리핑으로 `.ts`를 직접 실행한다(의존성 0).
 
+### 운영 흐름
+- 개발 검증: `npm test`
+- HTML만: `npm run build:html`
+- 캔버스+PNG: `npm run build:assets`
+- PDF만: `npm run export:pdf`
+- **최종 릴리스: `npm run build:release`** (= build:html → build:assets → export:pdf)
+  - sparse 자산(fallback 검증 fixture)은 릴리스에 미포함. 필요 시 `npm run build:release:sparse` 별도 실행.
+
+### 릴리스 산출물 (`npm run build:release`)
+- HTML: `book.html` · `book.modern.html` · `book.bento.html` · `book.editorial.html` ·
+  `book.dashboard.html` · `book.preview.html` · `canvas.detail.html` · `canvas.square.html` · `canvas.story.html`
+  (+ `book.checklist.html`)
+- PNG: `canvas.detail.png` · `canvas.square.png` · `canvas.story.png` (git 비추적)
+- PDF: `book.preview.pdf` · `book.modern.pdf` · `book.editorial.pdf` (git 비추적)
+
 ### 산출물 생성 (실제 `output/`)
 - `npm run build:html` — 책 HTML 5종 + 미리보기(`book.preview.html`)
 - `npm run build:canvas` — 캔버스 detail/square/story
