@@ -14,7 +14,7 @@
  */
 
 import { execFileSync } from 'node:child_process';
-import { existsSync, statSync, mkdtempSync, rmSync, readFileSync, writeFileSync } from 'node:fs';
+import { existsSync, statSync, mkdtempSync, rmSync, readFileSync, writeFileSync, readdirSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { dirname, resolve } from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
@@ -22,6 +22,7 @@ import { findBrowser, browserNotFoundMessage } from './export/browser.ts';
 import { readPngSizeFromFile } from './export/png-size.ts';
 import { resolveDetailHeight, isMeasurementValid } from './export/detail-height.ts';
 import { parsePrefix } from './export/args.ts';
+import { chapterOrdinalFromHtml, chapterDetailPngName } from './canvas/chapter-names.ts';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const projectRoot = resolve(__dirname, '..');
@@ -93,11 +94,62 @@ function measureDetailHeight(browser: string, htmlPath: string, userDataDir: str
   }
 }
 
+/** detail(가변 높이) HTML 1개를 PNG 로 캡처. 성공 여부 반환. */
+function exportDetail(browser: string, htmlPath: string, pngPath: string, label: string, userDataDir: string): boolean {
+  const measured = measureDetailHeight(browser, htmlPath, userDataDir);
+  const captureHeight = resolveDetailHeight(measured);
+  capture(browser, htmlPath, pngPath, 860, captureHeight, userDataDir);
+  if (!existsSync(pngPath) || statSync(pngPath).size === 0) {
+    console.error(`  ✗ ${label}: PNG 생성 실패`);
+    return false;
+  }
+  const size = readPngSizeFromFile(pngPath);
+  const dim = size ? `${size.width}×${size.height}` : 'unknown';
+  const note = isMeasurementValid(measured) ? `measured=${measured}` : '⚠ 측정 실패 fallback';
+  console.log(`  ✓ ${label}: ${pngPath}  (${dim}, ${statSync(pngPath).size} bytes, ${note})`);
+  return true;
+}
+
+/** --chapters: output/canvas.chapterN.detail.html 전부를 PNG 로 변환 */
+function exportChapters(browser: string, userDataDir: string): number {
+  const outputDir = resolve(projectRoot, 'output');
+  const files = readdirSync(outputDir)
+    .map((f) => ({ f, ord: chapterOrdinalFromHtml(f) }))
+    .filter((x): x is { f: string; ord: number } => x.ord !== null)
+    .sort((a, b) => a.ord - b.ord);
+
+  if (files.length === 0) {
+    console.error('  ✗ 챕터 상세 HTML 없음 — 먼저 npm run build:canvas:chapters');
+    return 1;
+  }
+  let failed = 0;
+  for (const { f, ord } of files) {
+    const ok = exportDetail(browser, resolve(outputDir, f), resolve(outputDir, chapterDetailPngName(ord)), `chapter${ord}`, userDataDir);
+    if (!ok) failed++;
+  }
+  return failed;
+}
+
 function main(): void {
   const browser = findBrowser();
   if (!browser) {
     console.error(browserNotFoundMessage());
     process.exitCode = 1;
+    return;
+  }
+
+  // --chapters 모드: 챕터별 detail HTML → PNG (기존 detail/square/story 와 분리)
+  if (process.argv.includes('--chapters')) {
+    const userDataDir = mkdtempSync(resolve(tmpdir(), 'ebook-png-ch-'));
+    console.log('✓ PNG Export (chapters)');
+    console.log(`  브라우저 : ${browser}`);
+    let failed = 0;
+    try {
+      failed = exportChapters(browser, userDataDir);
+    } finally {
+      rmSync(userDataDir, { recursive: true, force: true });
+    }
+    if (failed > 0) process.exitCode = 1;
     return;
   }
 
