@@ -8,6 +8,7 @@
 
 import { findBrowser, BROWSER_CANDIDATES } from '../src/export/browser.ts';
 import { readPngSize } from '../src/export/png-size.ts';
+import { parsePrefix } from '../src/export/args.ts';
 import {
   resolveDetailHeight,
   isMeasurementValid,
@@ -88,6 +89,14 @@ check('height: 0/음수 → fallback', resolveDetailHeight(0) === DETAIL_FALLBAC
 check('height: 결과 정수', Number.isInteger(resolveDetailHeight(2245.9)));
 check('measurement valid 판정', isMeasurementValid(2245) === true && isMeasurementValid(undefined) === false && isMeasurementValid(0) === false);
 check('상수 sanity(min<max, fallback 범위 내)', DETAIL_MIN_HEIGHT < DETAIL_MAX_HEIGHT && DETAIL_FALLBACK_HEIGHT >= DETAIL_MIN_HEIGHT && DETAIL_FALLBACK_HEIGHT <= DETAIL_MAX_HEIGHT);
+
+// ===== --prefix 파싱 =====
+check('prefix: 미지정 → ""', parsePrefix(['node', 'x']) === '');
+check('prefix: sparse → "sparse."', parsePrefix(['--prefix', 'sparse']) === 'sparse.');
+check('prefix: "sparse." → 그대로', parsePrefix(['--prefix', 'sparse.']) === 'sparse.');
+check('prefix: 값 없음 → ""', parsePrefix(['--prefix']) === '');
+check('prefix: 다음 인자가 플래그 → ""', parsePrefix(['--prefix', '--other']) === '');
+check('prefix: 빈문자 → ""', parsePrefix(['--prefix', '']) === '');
 
 console.log('\n────────────────────────────');
 if (failures.length === 0) {

@@ -24,6 +24,9 @@ Markdown 원고를 입력하면 PDF, DOCX, 체크리스트, 인포그래픽, 표
 - `npm run build:html` — 책 HTML 5종 + 미리보기(`book.preview.html`)
 - `npm run build:canvas` — 캔버스 detail/square/story
 - `npm run build:canvas:sparse` — 폴백 검증용 sparse 캔버스
+- **`npm run build:assets`** — 캔버스 HTML 생성 + PNG export 일괄(= build:canvas → export:png)
+- **`npm run build:assets:sparse`** — sparse 캔버스 + PNG 일괄(= build:canvas:sparse → export:png:sparse)
+- `npm run export:png:sparse` — `output/canvas.sparse.*.png` (= `export-png --prefix sparse`)
 - `npm run export:png` — 캔버스 HTML → PNG (시스템 Chrome/Edge headless, 의존성 0)
   - 사전: `npm run build:canvas` 로 HTML 생성
   - 산출: `output/canvas.detail.png` / `canvas.square.png`(1080×1080) / `canvas.story.png`(1080×1920)

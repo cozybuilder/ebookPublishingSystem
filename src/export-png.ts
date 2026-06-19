@@ -21,6 +21,7 @@ import { fileURLToPath, pathToFileURL } from 'node:url';
 import { findBrowser, browserNotFoundMessage } from './export/browser.ts';
 import { readPngSizeFromFile } from './export/png-size.ts';
 import { resolveDetailHeight, isMeasurementValid } from './export/detail-height.ts';
+import { parsePrefix } from './export/args.ts';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const projectRoot = resolve(__dirname, '..');
@@ -100,17 +101,18 @@ function main(): void {
     return;
   }
 
+  const prefix = parsePrefix(process.argv); // '' | 'sparse.'
   const userDataDir = mkdtempSync(resolve(tmpdir(), 'ebook-png-'));
-  console.log('✓ PNG Export (headless)');
+  console.log(`✓ PNG Export (headless${prefix ? `, prefix="${prefix}"` : ''})`);
   console.log(`  브라우저 : ${browser}`);
 
   let failed = 0;
   try {
     for (const t of TARGETS) {
-      const htmlPath = out(`canvas.${t.name}.html`);
-      const pngPath = out(`canvas.${t.name}.png`);
+      const htmlPath = out(`canvas.${prefix}${t.name}.html`);
+      const pngPath = out(`canvas.${prefix}${t.name}.png`);
       if (!existsSync(htmlPath)) {
-        console.error(`  ✗ ${t.name}: HTML 없음 (${htmlPath}) — 먼저 npm run build:canvas`);
+        console.error(`  ✗ ${prefix}${t.name}: HTML 없음 (${htmlPath}) — 먼저 build:canvas${prefix ? ':sparse' : ''}`);
         failed++;
         continue;
       }
@@ -130,14 +132,14 @@ function main(): void {
 
       capture(browser, htmlPath, pngPath, t.width, captureHeight, userDataDir);
       if (!existsSync(pngPath) || statSync(pngPath).size === 0) {
-        console.error(`  ✗ ${t.name}: PNG 생성 실패`);
+        console.error(`  ✗ ${prefix}${t.name}: PNG 생성 실패`);
         failed++;
         continue;
       }
       const size = readPngSizeFromFile(pngPath);
       const bytes = statSync(pngPath).size;
       const dim = size ? `${size.width}×${size.height}` : 'unknown';
-      console.log(`  ✓ ${t.name}: ${pngPath}  (${dim}, ${bytes} bytes)${note}`);
+      console.log(`  ✓ ${prefix}${t.name}: ${pngPath}  (${dim}, ${bytes} bytes)${note}`);
     }
   } finally {
     rmSync(userDataDir, { recursive: true, force: true });
