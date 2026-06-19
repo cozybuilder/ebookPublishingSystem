@@ -25,7 +25,15 @@ import { resolveThemeByName } from './theme-engine/theme-engine.ts';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const projectRoot = resolve(__dirname, '..');
-const inputPath = resolve(projectRoot, 'input', 'book.md');
+// 기본 input/book.md, --input <상대경로> 로 다른 원고(예: 다챕터 샘플) 지정 가능.
+function resolveInput(): string {
+  const i = process.argv.indexOf('--input');
+  if (i >= 0 && process.argv[i + 1] && !process.argv[i + 1].startsWith('--')) {
+    return resolve(projectRoot, process.argv[i + 1]);
+  }
+  return resolve(projectRoot, 'input', 'book.md');
+}
+const inputPath = resolveInput();
 const out = (name: string) => resolve(projectRoot, 'output', name);
 
 function main(): void {

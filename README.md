@@ -98,6 +98,17 @@ Markdown 원고를 입력하면 PDF, DOCX, 체크리스트, 인포그래픽, 표
 - `npm run clean:test-output` — `tmp/test-output/` 삭제.
 - `npm run clean:all` — 위 둘 일괄.
 
+## 다챕터 통합 샘플
+
+- `samples/book-multichapter.md` — 3챕터 + 주요 컴포넌트(Quote/Result/Checklist/Steps/Compare/
+  Table/Warning/Image) 전체를 담은 통합 검수용 원고. **실제 상품 원고 검수 전** 파이프라인
+  (page scope / blockLimit / componentSelector / chapter detail / preview / canvas selector)을
+  다챕터 조건에서 확인하는 용도.
+- 자동 검증: `npm run test:multichapter` (in-memory, output/ 미접촉) — `npm test` 에 포함.
+- 수동 챕터 이미지 빌드: `npm run build:sample:multi`
+  (= `build-chapter-canvas --input samples/book-multichapter.md` → `output/canvas.chapter1~3.detail.html`).
+  - input/book.md / canonical output 은 변경하지 않음. 챕터 HTML/PNG 는 git 비추적.
+
 ## CI (GitHub Actions)
 
 - `.github/workflows/ci.yml` — push / pull_request 시 자동 실행(러너: `windows-latest`, Node 24).
