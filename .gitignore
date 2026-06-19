@@ -6,8 +6,9 @@ node_modules
 # 테스트 전용 산출물(실제 output/ 와 분리) — 추적하지 않는다
 tmp/
 
-# 생성 가능한 PNG 산출물(npm run export:png 으로 재생성) — 추적하지 않는다
+# 생성 가능한 PNG/PDF 산출물(export 로 재생성) — 추적하지 않는다
 output/*.png
+output/*.pdf
 
 # output 폴더는 현재 검증용 산출물(book.ast.json 등)을 추적하기 위해
 # 의도적으로 제외하지 않는다. (이후 단계에서 정책 재검토)

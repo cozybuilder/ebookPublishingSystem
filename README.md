@@ -35,6 +35,13 @@ Markdown 원고를 입력하면 PDF, DOCX, 체크리스트, 인포그래픽, 표
   - detail 은 콘텐츠 높이를 headless 로 측정(2-pass: scrollHeight → `<title>` → 재캡처)해
     자동 높이로 캡처(+40px 여유, 범위 1200–12000px clamp). 측정 실패 시 fallback 2600px + 경고.
   - PNG 는 재생성 가능한 산출물이라 git 추적 제외(`output/*.png`)
+- `npm run export:pdf` — book HTML → PDF (시스템 Chrome/Edge `--print-to-pdf`, 의존성 0)
+  - 사전: `npm run build:html`
+  - v1 대상: `output/book.preview.pdf`, `output/book.modern.pdf`
+    (Bento/Dashboard 는 page-break 보정 후순위 — v1 미포함)
+  - print CSS(@page A4 / 배경·색 출력 / break-inside)는 임시 HTML 에만 주입,
+    원본 `book.*.html` 은 변경하지 않음
+  - PDF 는 재생성 가능 산출물이라 git 추적 제외(`output/*.pdf`)
 - 그 외: `build:pages` / `build:components` / `build:layout`, `parse`
 
 ### 테스트

@@ -13,6 +13,7 @@
     "build:canvas": "node src/build-canvas.ts",
     "build:canvas:sparse": "node src/build-canvas-sparse.ts",
     "export:png": "node src/export-png.ts",
+    "export:pdf": "node src/export-pdf.ts",
     "export:png:sparse": "node src/export-png.ts --prefix sparse",
     "build:assets": "npm run build:canvas && npm run export:png",
     "build:assets:sparse": "npm run build:canvas:sparse && npm run export:png:sparse",
