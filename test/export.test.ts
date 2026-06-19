@@ -8,7 +8,7 @@
 
 import { findBrowser, BROWSER_CANDIDATES } from '../src/export/browser.ts';
 import { readPngSize } from '../src/export/png-size.ts';
-import { parsePrefix } from '../src/export/args.ts';
+import { parsePrefix, parseExportPngArgs } from '../src/export/args.ts';
 import { injectPrintCss, htmlToPdfName, isPdfBuffer, PRINT_CSS, PDF_TARGETS } from '../src/export/pdf-helpers.ts';
 import {
   resolveDetailHeight,
@@ -98,6 +98,34 @@ check('prefix: "sparse." → 그대로', parsePrefix(['--prefix', 'sparse.']) ==
 check('prefix: 값 없음 → ""', parsePrefix(['--prefix']) === '');
 check('prefix: 다음 인자가 플래그 → ""', parsePrefix(['--prefix', '--other']) === '');
 check('prefix: 빈문자 → ""', parsePrefix(['--prefix', '']) === '');
+
+// ===== parseExportPngArgs (모드 파싱) =====
+function mode(argv: string[]) {
+  return parseExportPngArgs(['node', 'export-png.ts', ...argv]);
+}
+const mCanvas = mode([]);
+check('mode: 기본 canvas, prefix ""', mCanvas.kind === 'canvas' && mCanvas.kind === 'canvas' && mCanvas.prefix === '');
+const mSparse = mode(['--prefix', 'sparse']);
+check('mode: --prefix sparse → canvas prefix "sparse."', mSparse.kind === 'canvas' && mSparse.prefix === 'sparse.');
+const mSparseDot = mode(['--prefix', 'sparse.']);
+check('mode: --prefix sparse. → "sparse."', mSparseDot.kind === 'canvas' && mSparseDot.prefix === 'sparse.');
+check('mode: --chapters', mode(['--chapters']).kind === 'chapters');
+check('mode: --preview', mode(['--preview']).kind === 'preview');
+check('mode: --preview-promo', mode(['--preview-promo']).kind === 'preview-promo');
+
+function throws(argv: string[]): boolean {
+  try {
+    mode(argv);
+    return false;
+  } catch {
+    return true;
+  }
+}
+check('mode 오류: --chapters + --preview', throws(['--chapters', '--preview']));
+check('mode 오류: --preview + --preview-promo', throws(['--preview', '--preview-promo']));
+check('mode 오류: --preview + --prefix', throws(['--preview', '--prefix', 'sparse']));
+check('mode 오류: --chapters + --prefix', throws(['--chapters', '--prefix', 'x']));
+check('mode 정상: --prefix 단독은 canvas', mode(['--prefix', 'sparse']).kind === 'canvas');
 
 // ===== PDF export 순수 함수 =====
 // print CSS 주입(임시 HTML 대상) — 원본 문자열 불변 검증

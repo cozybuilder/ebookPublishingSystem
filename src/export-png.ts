@@ -21,7 +21,7 @@ import { fileURLToPath, pathToFileURL } from 'node:url';
 import { findBrowser, browserNotFoundMessage } from './export/browser.ts';
 import { readPngSizeFromFile } from './export/png-size.ts';
 import { resolveDetailHeight, isMeasurementValid } from './export/detail-height.ts';
-import { parsePrefix } from './export/args.ts';
+import { parseExportPngArgs } from './export/args.ts';
 import { chapterOrdinalFromHtml, chapterDetailPngName } from './canvas/chapter-names.ts';
 import { PREVIEW_PROMO_SPECS, previewPromoHtmlName, previewPromoPngName } from './canvas/preview-promo-names.ts';
 
@@ -131,6 +131,72 @@ function exportChapters(browser: string, userDataDir: string): number {
   return failed;
 }
 
+/** 기본 canvas 모드: detail(가변)/square/story 고정 규격. */
+function exportCanvas(browser: string, prefix: string, userDataDir: string): number {
+  let failed = 0;
+  for (const t of TARGETS) {
+    const htmlPath = out(`canvas.${prefix}${t.name}.html`);
+    const pngPath = out(`canvas.${prefix}${t.name}.png`);
+    if (!existsSync(htmlPath)) {
+      console.error(`  ✗ ${prefix}${t.name}: HTML 없음 (${htmlPath}) — 먼저 build:canvas${prefix ? ':sparse' : ''}`);
+      failed++;
+      continue;
+    }
+    let captureHeight = t.height;
+    let note = '';
+    if (t.fullPage) {
+      const measured = measureDetailHeight(browser, htmlPath, userDataDir);
+      captureHeight = resolveDetailHeight(measured);
+      note = isMeasurementValid(measured)
+        ? ` (auto-height: measured=${measured}, export=${captureHeight})`
+        : ` (⚠ 측정 실패 → fallback height=${captureHeight})`;
+    }
+    capture(browser, htmlPath, pngPath, t.width, captureHeight, userDataDir);
+    if (!existsSync(pngPath) || statSync(pngPath).size === 0) {
+      console.error(`  ✗ ${prefix}${t.name}: PNG 생성 실패`);
+      failed++;
+      continue;
+    }
+    const size = readPngSizeFromFile(pngPath);
+    const dim = size ? `${size.width}×${size.height}` : 'unknown';
+    console.log(`  ✓ ${prefix}${t.name}: ${pngPath}  (${dim}, ${statSync(pngPath).size} bytes)${note}`);
+  }
+  return failed;
+}
+
+/** --preview: book.preview.html → book.preview.png (가변 높이) */
+function exportPreview(browser: string, userDataDir: string): number {
+  const htmlPath = out('book.preview.html');
+  if (!existsSync(htmlPath)) {
+    console.error('  ✗ preview: book.preview.html 없음 — 먼저 npm run build:html');
+    return 1;
+  }
+  return exportDetail(browser, htmlPath, out('book.preview.png'), 'preview', userDataDir) ? 0 : 1;
+}
+
+/** --preview-promo: book.preview.square/story.html → png (고정 규격 SNS) */
+function exportPreviewPromo(browser: string, userDataDir: string): number {
+  let failed = 0;
+  for (const spec of PREVIEW_PROMO_SPECS) {
+    const htmlPath = out(previewPromoHtmlName(spec.kind));
+    const pngPath = out(previewPromoPngName(spec.kind));
+    if (!existsSync(htmlPath)) {
+      console.error(`  ✗ preview-${spec.kind}: HTML 없음 — 먼저 npm run build:canvas:preview`);
+      failed++;
+      continue;
+    }
+    capture(browser, htmlPath, pngPath, spec.width, spec.height, userDataDir);
+    if (!existsSync(pngPath) || statSync(pngPath).size === 0) {
+      console.error(`  ✗ preview-${spec.kind}: PNG 생성 실패`);
+      failed++;
+      continue;
+    }
+    const size = readPngSizeFromFile(pngPath);
+    console.log(`  ✓ preview-${spec.kind}: ${pngPath}  (${size ? `${size.width}×${size.height}` : '?'}, ${statSync(pngPath).size} bytes)`);
+  }
+  return failed;
+}
+
 function main(): void {
   const browser = findBrowser();
   if (!browser) {
@@ -139,112 +205,36 @@ function main(): void {
     return;
   }
 
-  // --preview-promo 모드: book.preview.square/story.html → png (고정 규격 SNS)
-  if (process.argv.includes('--preview-promo')) {
-    const userDataDir = mkdtempSync(resolve(tmpdir(), 'ebook-png-pp-'));
-    console.log('✓ PNG Export (preview-promo)');
-    console.log(`  브라우저 : ${browser}`);
-    let failed = 0;
-    try {
-      for (const spec of PREVIEW_PROMO_SPECS) {
-        const htmlPath = out(previewPromoHtmlName(spec.kind));
-        const pngPath = out(previewPromoPngName(spec.kind));
-        if (!existsSync(htmlPath)) {
-          console.error(`  ✗ preview-${spec.kind}: HTML 없음 — 먼저 npm run build:canvas:preview`);
-          failed++;
-          continue;
-        }
-        capture(browser, htmlPath, pngPath, spec.width, spec.height, userDataDir);
-        if (!existsSync(pngPath) || statSync(pngPath).size === 0) {
-          console.error(`  ✗ preview-${spec.kind}: PNG 생성 실패`);
-          failed++;
-          continue;
-        }
-        const size = readPngSizeFromFile(pngPath);
-        console.log(`  ✓ preview-${spec.kind}: ${pngPath}  (${size ? `${size.width}×${size.height}` : '?'}, ${statSync(pngPath).size} bytes)`);
-      }
-    } finally {
-      rmSync(userDataDir, { recursive: true, force: true });
-    }
-    if (failed > 0) process.exitCode = 1;
+  let mode;
+  try {
+    mode = parseExportPngArgs(process.argv);
+  } catch (e) {
+    console.error(`  ✗ 인자 오류: ${(e as Error).message}`);
+    process.exitCode = 1;
     return;
   }
 
-  // --preview 모드: book.preview.html → book.preview.png (가변 높이, width 860 / 상세페이지 삽입용)
-  if (process.argv.includes('--preview') && !process.argv.includes('--preview-promo')) {
-    const userDataDir = mkdtempSync(resolve(tmpdir(), 'ebook-png-pv-'));
-    console.log('✓ PNG Export (preview)');
-    console.log(`  브라우저 : ${browser}`);
-    let failed = 0;
-    try {
-      const htmlPath = out('book.preview.html');
-      if (!existsSync(htmlPath)) {
-        console.error('  ✗ preview: book.preview.html 없음 — 먼저 npm run build:html');
-        failed = 1;
-      } else if (!exportDetail(browser, htmlPath, out('book.preview.png'), 'preview', userDataDir)) {
-        failed = 1;
-      }
-    } finally {
-      rmSync(userDataDir, { recursive: true, force: true });
-    }
-    if (failed > 0) process.exitCode = 1;
-    return;
-  }
-
-  // --chapters 모드: 챕터별 detail HTML → PNG (기존 detail/square/story 와 분리)
-  if (process.argv.includes('--chapters')) {
-    const userDataDir = mkdtempSync(resolve(tmpdir(), 'ebook-png-ch-'));
-    console.log('✓ PNG Export (chapters)');
-    console.log(`  브라우저 : ${browser}`);
-    let failed = 0;
-    try {
-      failed = exportChapters(browser, userDataDir);
-    } finally {
-      rmSync(userDataDir, { recursive: true, force: true });
-    }
-    if (failed > 0) process.exitCode = 1;
-    return;
-  }
-
-  const prefix = parsePrefix(process.argv); // '' | 'sparse.'
+  const label =
+    mode.kind === 'canvas' ? `headless${mode.prefix ? `, prefix="${mode.prefix}"` : ''}` : mode.kind;
   const userDataDir = mkdtempSync(resolve(tmpdir(), 'ebook-png-'));
-  console.log(`✓ PNG Export (headless${prefix ? `, prefix="${prefix}"` : ''})`);
+  console.log(`✓ PNG Export (${label})`);
   console.log(`  브라우저 : ${browser}`);
 
   let failed = 0;
   try {
-    for (const t of TARGETS) {
-      const htmlPath = out(`canvas.${prefix}${t.name}.html`);
-      const pngPath = out(`canvas.${prefix}${t.name}.png`);
-      if (!existsSync(htmlPath)) {
-        console.error(`  ✗ ${prefix}${t.name}: HTML 없음 (${htmlPath}) — 먼저 build:canvas${prefix ? ':sparse' : ''}`);
-        failed++;
-        continue;
-      }
-
-      // detail(가변): 콘텐츠 높이 측정 → 자동 높이. 그 외: 고정 규격.
-      let captureHeight = t.height;
-      let note = '';
-      if (t.fullPage) {
-        const measured = measureDetailHeight(browser, htmlPath, userDataDir);
-        captureHeight = resolveDetailHeight(measured);
-        if (isMeasurementValid(measured)) {
-          note = ` (auto-height: measured=${measured}, export=${captureHeight})`;
-        } else {
-          note = ` (⚠ 측정 실패 → fallback height=${captureHeight})`;
-        }
-      }
-
-      capture(browser, htmlPath, pngPath, t.width, captureHeight, userDataDir);
-      if (!existsSync(pngPath) || statSync(pngPath).size === 0) {
-        console.error(`  ✗ ${prefix}${t.name}: PNG 생성 실패`);
-        failed++;
-        continue;
-      }
-      const size = readPngSizeFromFile(pngPath);
-      const bytes = statSync(pngPath).size;
-      const dim = size ? `${size.width}×${size.height}` : 'unknown';
-      console.log(`  ✓ ${prefix}${t.name}: ${pngPath}  (${dim}, ${bytes} bytes)${note}`);
+    switch (mode.kind) {
+      case 'canvas':
+        failed = exportCanvas(browser, mode.prefix, userDataDir);
+        break;
+      case 'chapters':
+        failed = exportChapters(browser, userDataDir);
+        break;
+      case 'preview':
+        failed = exportPreview(browser, userDataDir);
+        break;
+      case 'preview-promo':
+        failed = exportPreviewPromo(browser, userDataDir);
+        break;
     }
   } finally {
     rmSync(userDataDir, { recursive: true, force: true });
