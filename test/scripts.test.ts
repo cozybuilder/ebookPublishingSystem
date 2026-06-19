@@ -8,8 +8,9 @@
 import { readFileSync } from 'node:fs';
 import { dirname, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { RELEASE_STEPS, RELEASE_HTML, RELEASE_PNG, RELEASE_PDF, RELEASE_DOCX } from '../src/release-manifest.ts';
-import { HTML_RULES, PNG_RULES, PDF_RULES, DOCX_RULES, checkHtml, checkPng, checkPdf, checkDocx, isZipBuffer } from '../src/release-validation.ts';
+import { RELEASE_STEPS, RELEASE_HTML, RELEASE_PNG, RELEASE_PDF, RELEASE_DOCX, RELEASE_EPUB } from '../src/release-manifest.ts';
+import { HTML_RULES, PNG_RULES, PDF_RULES, DOCX_RULES, EPUB_RULES, checkHtml, checkPng, checkPdf, checkDocx, checkEpub, readEpubFacts, isZipBuffer } from '../src/release-validation.ts';
+import { buildZip } from '../src/docx/docx-package.ts';
 import { isDisposableArtifact, CANONICAL_HTML } from '../src/clean-assets.ts';
 import { previewPromoHtmlName, previewPromoPngName, PREVIEW_PROMO_SPECS } from '../src/canvas/preview-promo-names.ts';
 
@@ -88,9 +89,10 @@ check('build:marketing-assets: 순서 html→canvas:chapters→png:chapters→pr
 // 매니페스트 구성(오케스트레이터 검증 대상)
 const stepScripts = RELEASE_STEPS.map((x) => x.script);
 check(
-  'RELEASE_STEPS: html→canvas→png→pdf→docx 순서',
-  JSON.stringify(stepScripts) === JSON.stringify(['build:html', 'build:canvas', 'export:png', 'export:pdf', 'export:docx']),
+  'RELEASE_STEPS: html→canvas→png→pdf→docx→epub 순서',
+  JSON.stringify(stepScripts) === JSON.stringify(['build:html', 'build:canvas', 'export:png', 'export:pdf', 'export:docx', 'export:epub']),
 );
+check('RELEASE_STEPS: epub 가 docx 다음 마지막', stepScripts[stepScripts.length - 1] === 'export:epub' && stepScripts.indexOf('export:epub') === stepScripts.indexOf('export:docx') + 1);
 check('RELEASE_PNG: 3종', RELEASE_PNG.length === 3 && RELEASE_PNG.every((f) => f.endsWith('.png')));
 check('RELEASE_PDF: 5종(preview/modern/editorial/dashboard/bento)', RELEASE_PDF.length === 5 && RELEASE_PDF.includes('book.dashboard.pdf') && RELEASE_PDF.includes('book.bento.pdf') && RELEASE_PDF.every((f) => f.endsWith('.pdf')));
 check('RELEASE_HTML: book/canvas HTML 포함', RELEASE_HTML.includes('book.html') && RELEASE_HTML.includes('canvas.detail.html'));
@@ -149,6 +151,47 @@ check('export:docx 스크립트 존재', (s['export:docx'] ?? '').includes('expo
 check('disposable: book.docx', isDisposableArtifact('book.docx') === true);
 // 무관 파일은 삭제 대상 아님(방어)
 check('disposable: 무관 .md 아님', isDisposableArtifact('readme.md') === false);
+
+// ===== Release EPUB 통합 =====
+check('RELEASE_EPUB: book.epub', RELEASE_EPUB.length === 1 && RELEASE_EPUB[0] === 'book.epub');
+check('export:epub 스크립트 존재', (s['export:epub'] ?? '').includes('export-epub'));
+check('disposable: book.epub', isDisposableArtifact('book.epub') === true);
+const epubRule = EPUB_RULES.find((r) => r.file === 'book.epub')!;
+check('EPUB_RULES: book.epub 규칙 존재', !!epubRule);
+check('EPUB_RULES: requiredEntries 핵심 포함', ['mimetype', 'META-INF/container.xml', 'OEBPS/content.opf', 'OEBPS/nav.xhtml', 'OEBPS/styles/book.css', 'OEBPS/text/front-matter.xhtml', 'OEBPS/text/chapter-001.xhtml'].every((e) => epubRule.requiredEntries.includes(e)));
+check('EPUB_RULES: RELEASE_EPUB 전부 커버', RELEASE_EPUB.every((f) => EPUB_RULES.some((r) => r.file === f)));
+
+// readEpubFacts: 실제 STORE ZIP(mimetype 첫 entry)에서 사실 추출
+const goodEntries = [
+  { name: 'mimetype', data: Buffer.from('application/epub+zip', 'ascii') },
+  { name: 'META-INF/container.xml', data: Buffer.from('<container/>', 'utf8') },
+  { name: 'OEBPS/content.opf', data: Buffer.from('<package/>', 'utf8') },
+  { name: 'OEBPS/nav.xhtml', data: Buffer.from('<html/>', 'utf8') },
+  { name: 'OEBPS/styles/book.css', data: Buffer.from('body{}', 'utf8') },
+  { name: 'OEBPS/text/front-matter.xhtml', data: Buffer.from('<html/>', 'utf8') },
+  { name: 'OEBPS/text/chapter-001.xhtml', data: Buffer.from('<html/>', 'utf8') },
+];
+const goodEpub = buildZip(goodEntries);
+const goodFacts = readEpubFacts(goodEpub);
+check('readEpubFacts: PK 인식', goodFacts.isZip === true);
+check('readEpubFacts: 첫 entry mimetype', goodFacts.firstEntry === 'mimetype');
+check('readEpubFacts: mimetype STORE', goodFacts.mimetypeStored === true);
+check('readEpubFacts: mimetype 내용', goodFacts.mimetypeContent === 'application/epub+zip');
+check('readEpubFacts: 모든 entry 이름 추출', epubRule.requiredEntries.every((e) => goodFacts.entryNames.includes(e)));
+check('checkEpub: 정상 통과(구조)', checkEpub({ ...epubRule, minBytes: 1 }, { exists: true, size: goodEpub.length }, goodFacts).length === 0);
+
+// readEpubFacts: mimetype 이 첫 entry 가 아닌 경우
+const reordered = buildZip([goodEntries[1], goodEntries[0], ...goodEntries.slice(2)]);
+const reFacts = readEpubFacts(reordered);
+check('readEpubFacts: 첫 entry 가 mimetype 아님 감지', reFacts.firstEntry !== 'mimetype');
+check('checkEpub: mimetype 첫 entry 아님', checkEpub(epubRule, { exists: true, size: reordered.length }, reFacts).includes('mimetype 이 첫 entry 아님'));
+
+// checkEpub: 없음 / PK 아님 / 필수 entry 누락 (순수 facts)
+check('checkEpub: 없음', checkEpub(epubRule, { exists: false, size: 0 }, goodFacts).includes('없음'));
+check('checkEpub: PK 아님', checkEpub(epubRule, { exists: true, size: 5000 }, { isZip: false, entryNames: [], firstEntry: null, mimetypeContent: null, mimetypeStored: false }).includes('PK(ZIP) 시그니처 아님'));
+const missingFacts = readEpubFacts(buildZip(goodEntries.slice(0, 3))); // container/opf 만, nav/css/front/chapter 누락
+check('checkEpub: 필수 entry 누락', checkEpub(epubRule, { exists: true, size: missingFacts.entryNames.length * 100 + 5000 }, missingFacts).some((r) => r.startsWith('entry 누락:')));
+check('checkEpub: size 미달', checkEpub({ ...epubRule, minBytes: 1_000_000 }, { exists: true, size: 10 }, goodFacts).some((r) => r.startsWith('size<')));
 
 console.log('\n────────────────────────────');
 if (failures.length === 0) {

@@ -1,8 +1,8 @@
 /**
  * Ebook Publishing System — Release Orchestrator (v2)
  *
- * build:html → build:canvas → export:png → export:pdf 를 단일 Node 프로세스에서
- * 순서대로 실행하고, 단계 로그 / 실패 처리 / 산출물 검증·요약을 출력한다.
+ * build:html → build:canvas → export:png → export:pdf → export:docx → export:epub 를 단일
+ * Node 프로세스에서 순서대로 실행하고, 단계 로그 / 실패 처리 / 산출물 검증·요약을 출력한다.
  *
  * 실행: npm run build:release  (= node src/release.ts)
  * 산출물은 기존과 동일(각 npm 스크립트 재사용). sparse 는 포함하지 않는다.
@@ -21,10 +21,13 @@ import {
   PNG_RULES,
   PDF_RULES,
   DOCX_RULES,
+  EPUB_RULES,
   checkHtml,
   checkPng,
   checkPdf,
   checkDocx,
+  checkEpub,
+  readEpubFacts,
   isZipBuffer,
   type FileFact,
 } from './release-validation.ts';
@@ -80,6 +83,13 @@ function zipOf(file: string): boolean {
     return false;
   }
 }
+function epubFactsOf(file: string): ReturnType<typeof readEpubFacts> {
+  try {
+    return readEpubFacts(readFileSync(out(file)));
+  } catch {
+    return { isZip: false, entryNames: [], firstEntry: null, mimetypeContent: null, mimetypeStored: false };
+  }
+}
 
 /** 강화된 검증: 존재 + size 임계 + 마커/규격/헤더 */
 function verify(): Issue[] {
@@ -100,6 +110,10 @@ function verify(): Issue[] {
     const reasons = checkDocx(rule, fact(rule.file), zipOf(rule.file));
     if (reasons.length) issues.push({ file: rule.file, reasons });
   }
+  for (const rule of EPUB_RULES) {
+    const reasons = checkEpub(rule, fact(rule.file), epubFactsOf(rule.file));
+    if (reasons.length) issues.push({ file: rule.file, reasons });
+  }
   return issues;
 }
 
@@ -117,10 +131,15 @@ function summarize(): void {
   for (const r of PDF_RULES) console.log(`    - ${r.file} (${fact(r.file).size} bytes)`);
   console.log(`  DOCX: ${DOCX_RULES.length}종 OK`);
   for (const r of DOCX_RULES) console.log(`    - ${r.file} (${fact(r.file).size} bytes)`);
+  console.log(`  EPUB: ${EPUB_RULES.length}종 OK`);
+  for (const r of EPUB_RULES) {
+    const f = epubFactsOf(r.file);
+    console.log(`    - ${r.file} (${fact(r.file).size} bytes, entry ${f.entryNames.length}개, mimetype 첫 entry)`);
+  }
 }
 
 function main(): void {
-  console.log('=== Release Orchestrator (HTML → Canvas → PNG → PDF) ===');
+  console.log('=== Release Orchestrator (HTML → Canvas → PNG → PDF → DOCX → EPUB) ===');
   const total = RELEASE_STEPS.length;
   RELEASE_STEPS.forEach((step, i) => runStep(i + 1, total, step.label, step.script));
 

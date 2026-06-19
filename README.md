@@ -26,10 +26,11 @@ Markdown 원고를 입력하면 PDF, DOCX, 체크리스트, 인포그래픽, 표
 - 캔버스+PNG: `npm run build:assets`
 - PDF만: `npm run export:pdf`
 - **최종 릴리스: `npm run build:release`** — 단일 오케스트레이터(`src/release.ts`)
-  - 5단계 순서 실행: `[1/5] Build HTML → [2/5] Build Canvas → [3/5] Export PNG → [4/5] Export PDF → [5/5] Export DOCX`
+  - 6단계 순서 실행: `[1/6] Build HTML → [2/6] Build Canvas → [3/6] Export PNG → [4/6] Export PDF → [5/6] Export DOCX → [6/6] Export EPUB`
   - 단계 실패 시 어느 단계인지 출력 후 즉시 종료(exit 1).
   - 성공 시 산출물 **품질 검증**(존재 + 최소 size + HTML 마커 + PNG 규격(1080² / 1080×1920 /
-    detail 860×≥1200) + PDF %PDF 헤더·최소 size + DOCX PK(ZIP) 시그니처·최소 size) 후 요약 출력.
+    detail 860×≥1200) + PDF %PDF 헤더·최소 size + DOCX PK(ZIP) 시그니처·최소 size +
+    EPUB OCF 구조(PK·mimetype 첫 entry·STORE·`application/epub+zip`·필수 entry 존재)) 후 요약 출력.
     깨진/빈/규격 오류 산출물은 exit 1.
   - sparse 자산(fallback 검증 fixture)은 릴리스에 미포함. 필요 시 `npm run build:release:sparse` 별도 실행.
   - 기존 체인 방식은 `npm run build:release:legacy` 로 보존.
@@ -43,6 +44,7 @@ Markdown 원고를 입력하면 PDF, DOCX, 체크리스트, 인포그래픽, 표
 - PNG: `canvas.detail.png` · `canvas.square.png` · `canvas.story.png` (git 비추적)
 - PDF: `book.preview.pdf` · `book.modern.pdf` · `book.editorial.pdf` · `book.dashboard.pdf` · `book.bento.pdf` (git 비추적)
 - DOCX: `book.docx` (편집 가능한 흐름형 Word, git 비추적)
+- EPUB: `book.epub` (전자책 리더용 EPUB 3, OCF/ZIP, git 비추적)
 
 ### 산출물 생성 (실제 `output/`)
 - `npm run build:html` — 책 HTML 5종 + 미리보기(`book.preview.html`)

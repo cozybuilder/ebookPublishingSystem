@@ -31,6 +31,12 @@ export interface DocxRule {
   file: string;
   minBytes: number;
 }
+export interface EpubRule {
+  file: string;
+  minBytes: number;
+  /** ZIP 안에 반드시 존재해야 하는 entry 이름 */
+  requiredEntries: string[];
+}
 
 export const HTML_RULES: HtmlRule[] = [
   { file: 'book.html', minBytes: 1 * KB, markers: ['grid-stack'] },
@@ -59,6 +65,22 @@ export const PDF_RULES: PdfRule[] = [
 ];
 
 export const DOCX_RULES: DocxRule[] = [{ file: 'book.docx', minBytes: 2 * KB }];
+
+export const EPUB_RULES: EpubRule[] = [
+  {
+    file: 'book.epub',
+    minBytes: 2 * KB,
+    requiredEntries: [
+      'mimetype',
+      'META-INF/container.xml',
+      'OEBPS/content.opf',
+      'OEBPS/nav.xhtml',
+      'OEBPS/styles/book.css',
+      'OEBPS/text/front-matter.xhtml',
+      'OEBPS/text/chapter-001.xhtml',
+    ],
+  },
+];
 
 // ===== 순수 검증 함수 (facts → reasons[]) =====
 
@@ -111,4 +133,70 @@ export function checkDocx(rule: DocxRule, fact: FileFact, isZip: boolean): strin
 /** 버퍼 선두가 ZIP(PK\x03\x04) 인지 */
 export function isZipBuffer(buf: Buffer): boolean {
   return buf.length >= 4 && buf[0] === 0x50 && buf[1] === 0x4b && buf[2] === 0x03 && buf[3] === 0x04;
+}
+
+// ===== EPUB(OCF) 구조 검증 =====
+
+/** ZIP local file header 들을 순서대로 훑어 얻은 EPUB 사실(facts) */
+export interface EpubFacts {
+  isZip: boolean;
+  /** local header 등장 순서의 entry 이름 목록 */
+  entryNames: string[];
+  /** 첫 번째 entry 이름(없으면 null) */
+  firstEntry: string | null;
+  /** 첫 entry 이름이 mimetype 일 때 그 내용(아니면 null) */
+  mimetypeContent: string | null;
+  /** 첫 entry 가 STORE(무압축, method=0) 인지 */
+  mimetypeStored: boolean;
+}
+
+/**
+ * .epub(=STORE ZIP) 버퍼의 local file header 를 순회해 EpubFacts 추출.
+ * 순수 함수(I/O 없음) — release.ts 가 파일을 읽어 전달한다.
+ * buildZip 산출(STORE, data descriptor 없음, 연속 local header) 형식을 전제로 한다.
+ */
+export function readEpubFacts(buf: Buffer): EpubFacts {
+  const facts: EpubFacts = { isZip: isZipBuffer(buf), entryNames: [], firstEntry: null, mimetypeContent: null, mimetypeStored: false };
+  if (!facts.isZip) return facts;
+
+  let off = 0;
+  let first = true;
+  while (off + 30 <= buf.length && buf.readUInt32LE(off) === 0x04034b50) {
+    const method = buf.readUInt16LE(off + 8);
+    const compSize = buf.readUInt32LE(off + 18);
+    const nameLen = buf.readUInt16LE(off + 26);
+    const extraLen = buf.readUInt16LE(off + 28);
+    const nameStart = off + 30;
+    const name = buf.subarray(nameStart, nameStart + nameLen).toString('utf8');
+    const dataStart = nameStart + nameLen + extraLen;
+    facts.entryNames.push(name);
+    if (first) {
+      facts.firstEntry = name;
+      facts.mimetypeStored = method === 0;
+      if (name === 'mimetype') facts.mimetypeContent = buf.subarray(dataStart, dataStart + compSize).toString('utf8');
+      first = false;
+    }
+    off = dataStart + compSize;
+  }
+  return facts;
+}
+
+/** EPUB 구조 검증(순수): 존재/크기/PK/mimetype 첫 entry·STORE·내용/필수 entry */
+export function checkEpub(rule: EpubRule, fact: FileFact, facts: EpubFacts): string[] {
+  const r: string[] = [];
+  if (!fact.exists) return ['없음'];
+  if (fact.size < rule.minBytes) r.push(`size<${rule.minBytes}(${fact.size})`);
+  if (!facts.isZip) {
+    r.push('PK(ZIP) 시그니처 아님');
+    return r;
+  }
+  if (facts.firstEntry !== 'mimetype') r.push('mimetype 이 첫 entry 아님');
+  else {
+    if (!facts.mimetypeStored) r.push('mimetype 비STORE(압축됨)');
+    if (facts.mimetypeContent !== 'application/epub+zip') r.push('mimetype 내용 불일치');
+  }
+  for (const e of rule.requiredEntries) {
+    if (!facts.entryNames.includes(e)) r.push(`entry 누락: ${e}`);
+  }
+  return r;
 }

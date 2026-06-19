@@ -19,10 +19,14 @@ export const RELEASE_STEPS: ReleaseStep[] = [
   { label: 'Export PNG', script: 'export:png' },
   { label: 'Export PDF', script: 'export:pdf' },
   { label: 'Export DOCX', script: 'export:docx' },
+  { label: 'Export EPUB', script: 'export:epub' },
 ];
 
 /** 존재 + size>0 + ZIP(PK) 시그니처 확인 대상 */
 export const RELEASE_DOCX: string[] = ['book.docx'];
+
+/** 존재 + size>0 + EPUB(OCF) 구조 확인 대상 */
+export const RELEASE_EPUB: string[] = ['book.epub'];
 
 /** 존재만 확인하는 HTML 산출물 */
 export const RELEASE_HTML: string[] = [

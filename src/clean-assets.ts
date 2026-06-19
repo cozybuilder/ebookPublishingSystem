@@ -4,7 +4,7 @@
  * output/ 안의 "재생성 가능한 산출물"만 삭제한다(추적 canonical HTML 은 보존).
  * 실행: npm run clean:assets
  *
- * 삭제 대상: *.png, *.pdf, canvas.chapter*.html, canvas.sparse.*(html/png)
+ * 삭제 대상: *.png, *.pdf, *.docx, *.epub, canvas.chapter*.html, canvas.sparse.*(html/png)
  * 보존: canonical HTML(book.* / canvas.detail|square|story.html 등)
  * 안전장치: output 디렉터리 안만, canonical 이름 제외.
  * 외부 라이브러리 없음(fs.readdirSync + 파일명 패턴).
@@ -45,6 +45,7 @@ export function isDisposableArtifact(file: string): boolean {
   if (file.endsWith('.png')) return true;
   if (file.endsWith('.pdf')) return true;
   if (file.endsWith('.docx')) return true;
+  if (file.endsWith('.epub')) return true;
   if (/^canvas\.chapter\d+\.detail\.html$/.test(file)) return true;
   if (/^canvas\.sparse\..*\.html$/.test(file)) return true;
   if (/^book\.preview\.(square|story)\.html$/.test(file)) return true; // preview promo 캔버스
