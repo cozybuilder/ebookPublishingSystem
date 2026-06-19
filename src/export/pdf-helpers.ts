@@ -8,14 +8,15 @@
 import { readFileSync } from 'node:fs';
 
 /**
- * PDF 변환 대상(preview → modern → editorial → dashboard 순).
- * Bento 는 grid/print 보정 난도가 높아 후순위 — 아직 미포함.
+ * PDF 변환 대상(preview → modern → editorial → dashboard → bento 순).
+ * Bento 는 인쇄 시 단일컬럼 print 보정으로 처리(아래 PRINT_CSS).
  */
 export const PDF_TARGETS: string[] = [
   'book.preview.html',
   'book.modern.html',
   'book.editorial.html',
   'book.dashboard.html',
+  'book.bento.html',
 ];
 
 /**
@@ -45,6 +46,18 @@ export const PRINT_CSS = `
   }
   .page { break-after: page; }
   .page:last-child { break-after: auto; }
+  /* Bento: 인쇄 시 2열 grid → 단일 컬럼(화면용 .grid-bento 는 불변, print 한정) */
+  .grid-bento {
+    display: block !important;
+    gap: 0 !important;
+  }
+  .grid-bento > * {
+    width: 100% !important;
+    max-width: 100% !important;
+    margin: 0 0 12px 0 !important;
+    break-inside: avoid;
+    page-break-inside: avoid;
+  }
   * {
     -webkit-print-color-adjust: exact;
     print-color-adjust: exact;

@@ -52,8 +52,7 @@ check(
   JSON.stringify(stepScripts) === JSON.stringify(['build:html', 'build:canvas', 'export:png', 'export:pdf']),
 );
 check('RELEASE_PNG: 3종', RELEASE_PNG.length === 3 && RELEASE_PNG.every((f) => f.endsWith('.png')));
-check('RELEASE_PDF: 4종(preview/modern/editorial/dashboard)', RELEASE_PDF.length === 4 && RELEASE_PDF.includes('book.dashboard.pdf') && RELEASE_PDF.every((f) => f.endsWith('.pdf')));
-check('RELEASE_PDF: Bento 미포함(후순위)', !RELEASE_PDF.includes('book.bento.pdf'));
+check('RELEASE_PDF: 5종(preview/modern/editorial/dashboard/bento)', RELEASE_PDF.length === 5 && RELEASE_PDF.includes('book.dashboard.pdf') && RELEASE_PDF.includes('book.bento.pdf') && RELEASE_PDF.every((f) => f.endsWith('.pdf')));
 check('RELEASE_HTML: book/canvas HTML 포함', RELEASE_HTML.includes('book.html') && RELEASE_HTML.includes('canvas.detail.html'));
 
 console.log('\n────────────────────────────');

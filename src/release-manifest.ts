@@ -42,4 +42,5 @@ export const RELEASE_PDF: string[] = [
   'book.modern.pdf',
   'book.editorial.pdf',
   'book.dashboard.pdf',
+  'book.bento.pdf',
 ];

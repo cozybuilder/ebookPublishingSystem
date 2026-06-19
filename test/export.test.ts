@@ -119,10 +119,14 @@ check('isPdfBuffer: %PDF- → true', isPdfBuffer(Buffer.from('%PDF-1.7\n...')) =
 check('isPdfBuffer: 비-PDF → false', isPdfBuffer(Buffer.from('<html>')) === false);
 check('isPdfBuffer: 짧은 버퍼 → false', isPdfBuffer(Buffer.from('%PD')) === false);
 
-// PDF 대상 목록(preview/modern/editorial/dashboard, Bento 후순위 제외)
-check('PDF_TARGETS: preview/modern/editorial/dashboard 포함', ['book.preview.html', 'book.modern.html', 'book.editorial.html', 'book.dashboard.html'].every((f) => PDF_TARGETS.includes(f)));
-check('PDF_TARGETS: Bento 미포함(후순위)', !PDF_TARGETS.includes('book.bento.html'));
-check('PDF_TARGETS: 4종 모두 .html', PDF_TARGETS.length === 4 && PDF_TARGETS.every((f) => f.endsWith('.html')));
+// PDF 대상 목록(preview/modern/editorial/dashboard/bento 5종)
+check('PDF_TARGETS: 5종 전부 포함', ['book.preview.html', 'book.modern.html', 'book.editorial.html', 'book.dashboard.html', 'book.bento.html'].every((f) => PDF_TARGETS.includes(f)));
+check('PDF_TARGETS: Bento 포함', PDF_TARGETS.includes('book.bento.html'));
+check('PDF_TARGETS: 5종 모두 .html', PDF_TARGETS.length === 5 && PDF_TARGETS.every((f) => f.endsWith('.html')));
+
+// Bento print 단일컬럼 보정 마커
+check('PRINT_CSS: .grid-bento 단일컬럼(display block)', PRINT_CSS.includes('.grid-bento') && PRINT_CSS.includes('display: block !important'));
+check('PRINT_CSS: grid 자식 width 100%', PRINT_CSS.includes('width: 100% !important'));
 
 console.log('\n────────────────────────────');
 if (failures.length === 0) {
