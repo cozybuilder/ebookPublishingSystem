@@ -85,6 +85,13 @@ Markdown 원고를 입력하면 PDF, DOCX, 체크리스트, 인포그래픽, 표
   - **이미지 자산 규약**: `ImageBlock` 의 `id` 로 이미지 파일을 찾아 실삽입(없으면 placeholder).
     탐색 우선순위: `assets/images/<id>.png` → `.jpg` → `.jpeg` → (호환) `assets/<id>.png` → `.jpg` → `.jpeg`.
     예: `assets/images/IMG-001.png`. 이 규약은 향후 PDF/HTML/EPUB/이미지 프롬프트 엔진이 공유.
+- `npm run export:epub` — `output/book.epub` (전자책 리더용 EPUB 3, OCF/ZIP 직접 생성, 의존성 0)
+  - 구조: `mimetype`(첫 entry·STORE) · `META-INF/container.xml` · `OEBPS/content.opf`(manifest/spine) ·
+    `OEBPS/nav.xhtml`(목차) · `OEBPS/styles/book.css` · `OEBPS/text/front-matter.xhtml` ·
+    `OEBPS/text/chapter-00N.xhtml`(챕터 단위 분할).
+  - Front Matter(표지/판권/저자 소개/면책) 포함, 목차는 nav.xhtml 로 분리. reflowable·단순 CSS 우선.
+  - 이미지: 위 이미지 자산 규약(resolveImageAsset)으로 발견 시 `OEBPS/images/` 포함(`<img>`), 없으면 placeholder 문단.
+  - v1 범위: 기본 구조/리더 호환 우선. EPUBCheck 완전 통과는 후속, `build:release` 통합도 다음 단계.
 - `npm run build:image-prompts` — 원고의 ImageBlock 을 모아 생성용 프롬프트 매니페스트 출력
   (`output/image-prompts.json` / `output/image-prompts.md`). **실제 AI 생성은 아님**(생성 전 목록).
   - 각 항목: id / type / prompt / recommendedPath(`assets/images/<id>.png`) / exists·missing /
