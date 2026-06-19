@@ -93,6 +93,44 @@ check('story: ChapterHeading+ResultCard 중심(2개 이하)', storyCardCount > 0
 // detail 은 고정 높이 auto-fit 비대상 → square 보다 많은 컴포넌트
 check('detail: auto-fit 비대상(컴포넌트 더 많음)', (detail.match(/data-id="cmp-/g) ?? []).length > squareCardCount);
 
+// ===== Selector v1 =====
+// data-selector / data-picked 존재
+check('detail: data-selector + data-picked', detail.includes('data-selector="marketing"') && detail.includes('data-picked="'));
+check('square: data-selector=summary', square.includes('data-selector="summary"') && square.includes('data-picked="'));
+check('story: data-selector=marketing', story.includes('data-selector="marketing"'));
+
+function picked(html: string): string[] {
+  const m = html.match(/data-picked="([^"]*)"/);
+  return m && m[1] ? m[1].split(',') : [];
+}
+const sqPicked = picked(square);
+const stPicked = picked(story);
+
+// square: ResultCard/QuoteBlock/ChecklistCard 중심(다른 타입 없음)
+check(
+  'square: 요약 카드 중심(Result/Quote/Checklist만)',
+  sqPicked.length > 0 && sqPicked.every((t) => ['ResultCard', 'QuoteBlock', 'ChecklistCard'].includes(t)),
+  `got [${sqPicked.join(',')}]`,
+);
+// story: ChapterHeading 반드시 포함(require)
+check('story: ChapterHeading 필수 포함(require)', stPicked.includes('ChapterHeading'), `got [${stPicked.join(',')}]`);
+
+// maxPerType: 같은 타입 반복 제한 (각 타입 1회 이하)
+function noDup(arr: string[]): boolean {
+  return new Set(arr).size === arr.length;
+}
+check('square: 같은 타입 반복 없음(maxPerType)', noDup(sqPicked));
+check('story: 같은 타입 반복 없음(maxPerType)', noDup(stPicked));
+
+// 결정론: 같은 입력 → 같은 출력
+const square2 = renderCanvas(all, bento.tokens, bento.recipe, SQUARE_CANVAS, 'T');
+const story2 = renderCanvas(all, bento.tokens, bento.recipe, STORY_CANVAS, 'T');
+check('결정론적: square 재렌더 동일', square === square2);
+check('결정론적: story 재렌더 동일', story === story2);
+
+// 기존 auto-fit 유지(회귀)
+check('auto-fit 유지: square data-fit/compact/clamp', square.includes('data-fit="compact"') && square.includes('-webkit-line-clamp'));
+
 // book.*.html 미접촉(이 테스트는 canvas.* 만 씀)
 check('book.* 비접촉(이 테스트는 canvas.* 만 생성)', true);
 

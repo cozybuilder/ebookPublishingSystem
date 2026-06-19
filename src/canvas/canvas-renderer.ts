@@ -11,6 +11,7 @@ import { buildCss, renderLayoutComponent } from '../html-renderer/html-renderer.
 import type { DesignTokens, LayoutComponent } from '../types/design.ts';
 import type { StyleRecipe } from '../types/theme.ts';
 import type { CanvasProfile } from './canvas-profiles.ts';
+import { selectComponents } from './canvas-selector.ts';
 
 const CTA_TITLE = 'CozyBuilder Lab';
 const CTA_SUB = '읽히는 전자책을 상품처럼 만듭니다';
@@ -83,14 +84,6 @@ body.canvas-body {
 .canvas-fit-flow .card { }
 `.trim();
 
-function pickComponents(all: LayoutComponent[], profile: CanvasProfile): LayoutComponent[] {
-  const allowed = new Set<string>(profile.pick);
-  let sel = all.filter((c) => allowed.has(c.componentType));
-  // auto-fit: fit.maxComponents 와 profile.limit 중 더 엄격한 값으로 제한
-  const cap = Math.min(profile.fit.maxComponents, profile.limit ?? Infinity);
-  if (Number.isFinite(cap)) sel = sel.slice(0, cap);
-  return sel;
-}
 
 /** 선별된 레이아웃 컴포넌트로 캔버스 HTML 문서를 생성한다. */
 export function renderCanvas(
@@ -101,7 +94,7 @@ export function renderCanvas(
   docTitle: string,
 ): string {
   const css = buildCss(tokens, recipe); // Bento(gridStyle:bento) → BENTO_V2_CSS 포함
-  const selected = pickComponents(all, profile);
+  const selected = selectComponents(all, profile); // 점수 기반 결정론적 큐레이션
   const inner = selected.map(renderLayoutComponent).join('\n    ');
   const singleCls = profile.singleColumn ? ' canvas-single' : '';
 
@@ -109,6 +102,9 @@ export function renderCanvas(
   const fitKey = profile.fit.mode === 'flow' ? 'flow' : profile.fit.density;
   const fitClass = `canvas-fit canvas-fit-${fitKey}`;
   const spec = `${profile.width}×${profile.height ?? 'auto'} · ${fitKey.toUpperCase()}`;
+
+  // selector 디버그 마커
+  const picked = selected.map((c) => c.componentType).join(',');
 
   return `<!DOCTYPE html>
 <html lang="ko">
@@ -122,7 +118,7 @@ ${CANVAS_CSS}
 </style>
 </head>
 <body class="canvas-body">
-  <section class="canvas canvas-${profile.name} ${fitClass}" data-canvas="${profile.name}" data-fit="${fitKey}" data-spec="${spec}">
+  <section class="canvas canvas-${profile.name} ${fitClass}" data-canvas="${profile.name}" data-fit="${fitKey}" data-spec="${spec}" data-selector="${profile.selector.strategy}" data-picked="${picked}">
     <div class="page-body grid-bento${singleCls}">
     ${inner}
     </div>
