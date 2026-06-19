@@ -18,7 +18,11 @@ export const RELEASE_STEPS: ReleaseStep[] = [
   { label: 'Build Canvas', script: 'build:canvas' },
   { label: 'Export PNG', script: 'export:png' },
   { label: 'Export PDF', script: 'export:pdf' },
+  { label: 'Export DOCX', script: 'export:docx' },
 ];
+
+/** 존재 + size>0 + ZIP(PK) 시그니처 확인 대상 */
+export const RELEASE_DOCX: string[] = ['book.docx'];
 
 /** 존재만 확인하는 HTML 산출물 */
 export const RELEASE_HTML: string[] = [

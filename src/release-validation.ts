@@ -27,6 +27,10 @@ export interface PdfRule {
   file: string;
   minBytes: number;
 }
+export interface DocxRule {
+  file: string;
+  minBytes: number;
+}
 
 export const HTML_RULES: HtmlRule[] = [
   { file: 'book.html', minBytes: 1 * KB, markers: ['grid-stack'] },
@@ -53,6 +57,8 @@ export const PDF_RULES: PdfRule[] = [
   { file: 'book.dashboard.pdf', minBytes: 100 * KB },
   { file: 'book.bento.pdf', minBytes: 100 * KB },
 ];
+
+export const DOCX_RULES: DocxRule[] = [{ file: 'book.docx', minBytes: 2 * KB }];
 
 // ===== 순수 검증 함수 (facts → reasons[]) =====
 
@@ -91,4 +97,18 @@ export function checkPdf(rule: PdfRule, fact: FileFact, isPdf: boolean): string[
   if (fact.size < rule.minBytes) r.push(`size<${rule.minBytes}(${fact.size})`);
   if (!isPdf) r.push('%PDF 헤더 아님');
   return r;
+}
+
+/** DOCX = ZIP(PK) 시그니처 검사용 순수 함수 */
+export function checkDocx(rule: DocxRule, fact: FileFact, isZip: boolean): string[] {
+  const r: string[] = [];
+  if (!fact.exists) return ['없음'];
+  if (fact.size < rule.minBytes) r.push(`size<${rule.minBytes}(${fact.size})`);
+  if (!isZip) r.push('PK(ZIP) 시그니처 아님');
+  return r;
+}
+
+/** 버퍼 선두가 ZIP(PK\x03\x04) 인지 */
+export function isZipBuffer(buf: Buffer): boolean {
+  return buf.length >= 4 && buf[0] === 0x50 && buf[1] === 0x4b && buf[2] === 0x03 && buf[3] === 0x04;
 }

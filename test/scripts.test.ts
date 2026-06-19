@@ -8,8 +8,8 @@
 import { readFileSync } from 'node:fs';
 import { dirname, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { RELEASE_STEPS, RELEASE_HTML, RELEASE_PNG, RELEASE_PDF } from '../src/release-manifest.ts';
-import { HTML_RULES, PNG_RULES, PDF_RULES, checkHtml, checkPng, checkPdf } from '../src/release-validation.ts';
+import { RELEASE_STEPS, RELEASE_HTML, RELEASE_PNG, RELEASE_PDF, RELEASE_DOCX } from '../src/release-manifest.ts';
+import { HTML_RULES, PNG_RULES, PDF_RULES, DOCX_RULES, checkHtml, checkPng, checkPdf, checkDocx, isZipBuffer } from '../src/release-validation.ts';
 import { isDisposableArtifact, CANONICAL_HTML } from '../src/clean-assets.ts';
 import { previewPromoHtmlName, previewPromoPngName, PREVIEW_PROMO_SPECS } from '../src/canvas/preview-promo-names.ts';
 
@@ -88,8 +88,8 @@ check('build:marketing-assets: 순서 html→canvas:chapters→png:chapters→pr
 // 매니페스트 구성(오케스트레이터 검증 대상)
 const stepScripts = RELEASE_STEPS.map((x) => x.script);
 check(
-  'RELEASE_STEPS: html→canvas→png→pdf 순서',
-  JSON.stringify(stepScripts) === JSON.stringify(['build:html', 'build:canvas', 'export:png', 'export:pdf']),
+  'RELEASE_STEPS: html→canvas→png→pdf→docx 순서',
+  JSON.stringify(stepScripts) === JSON.stringify(['build:html', 'build:canvas', 'export:png', 'export:pdf', 'export:docx']),
 );
 check('RELEASE_PNG: 3종', RELEASE_PNG.length === 3 && RELEASE_PNG.every((f) => f.endsWith('.png')));
 check('RELEASE_PDF: 5종(preview/modern/editorial/dashboard/bento)', RELEASE_PDF.length === 5 && RELEASE_PDF.includes('book.dashboard.pdf') && RELEASE_PDF.includes('book.bento.pdf') && RELEASE_PDF.every((f) => f.endsWith('.pdf')));
@@ -134,6 +134,19 @@ for (const f of ['book.html', 'book.modern.html', 'book.bento.html', 'book.edito
   check(`preserve(canonical): ${f}`, isDisposableArtifact(f) === false);
 }
 check('CANONICAL_HTML: book/canvas 핵심 포함', CANONICAL_HTML.has('book.html') && CANONICAL_HTML.has('canvas.story.html'));
+
+// ===== Release DOCX 통합 =====
+check('RELEASE_DOCX: book.docx', RELEASE_DOCX.length === 1 && RELEASE_DOCX[0] === 'book.docx');
+check('DOCX_RULES: book.docx 규칙 존재', DOCX_RULES.some((r) => r.file === 'book.docx'));
+check('checkDocx: 정상 통과', checkDocx({ file: 'book.docx', minBytes: 100 }, { exists: true, size: 12000 }, true).length === 0);
+check('checkDocx: 없음', checkDocx({ file: 'book.docx', minBytes: 100 }, { exists: false, size: 0 }, false).includes('없음'));
+check('checkDocx: size 미달', checkDocx({ file: 'book.docx', minBytes: 5000 }, { exists: true, size: 10 }, true).some((r) => r.startsWith('size<')));
+check('checkDocx: PK 아님', checkDocx({ file: 'book.docx', minBytes: 1 }, { exists: true, size: 12000 }, false).includes('PK(ZIP) 시그니처 아님'));
+check('isZipBuffer: PK\\x03\\x04 → true', isZipBuffer(Buffer.from([0x50, 0x4b, 0x03, 0x04])) === true);
+check('isZipBuffer: 비-ZIP → false', isZipBuffer(Buffer.from('PDF')) === false);
+// export:docx 스크립트 존재 + build:release 미포함(별도 export 스크립트로는 유지, 단계는 release.ts 내부)
+check('export:docx 스크립트 존재', (s['export:docx'] ?? '').includes('export-docx'));
+check('disposable: book.docx', isDisposableArtifact('book.docx') === true);
 // 무관 파일은 삭제 대상 아님(방어)
 check('disposable: 무관 .md 아님', isDisposableArtifact('readme.md') === false);
 

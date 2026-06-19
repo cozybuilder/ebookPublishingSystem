@@ -20,9 +20,12 @@ import {
   HTML_RULES,
   PNG_RULES,
   PDF_RULES,
+  DOCX_RULES,
   checkHtml,
   checkPng,
   checkPdf,
+  checkDocx,
+  isZipBuffer,
   type FileFact,
 } from './release-validation.ts';
 
@@ -70,6 +73,13 @@ function pdfOf(file: string): boolean {
     return false;
   }
 }
+function zipOf(file: string): boolean {
+  try {
+    return isZipBuffer(readFileSync(out(file)).subarray(0, 4));
+  } catch {
+    return false;
+  }
+}
 
 /** 강화된 검증: 존재 + size 임계 + 마커/규격/헤더 */
 function verify(): Issue[] {
@@ -84,6 +94,10 @@ function verify(): Issue[] {
   }
   for (const rule of PDF_RULES) {
     const reasons = checkPdf(rule, fact(rule.file), pdfOf(rule.file));
+    if (reasons.length) issues.push({ file: rule.file, reasons });
+  }
+  for (const rule of DOCX_RULES) {
+    const reasons = checkDocx(rule, fact(rule.file), zipOf(rule.file));
     if (reasons.length) issues.push({ file: rule.file, reasons });
   }
   return issues;
@@ -101,6 +115,8 @@ function summarize(): void {
   }
   console.log(`  PDF: ${PDF_RULES.length}종 OK`);
   for (const r of PDF_RULES) console.log(`    - ${r.file} (${fact(r.file).size} bytes)`);
+  console.log(`  DOCX: ${DOCX_RULES.length}종 OK`);
+  for (const r of DOCX_RULES) console.log(`    - ${r.file} (${fact(r.file).size} bytes)`);
 }
 
 function main(): void {
