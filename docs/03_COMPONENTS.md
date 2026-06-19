@@ -41,6 +41,13 @@
 - **입력 데이터** : `text` (단락 텍스트, 인라인 강조 포함 가능)
 - **예상 출력** : 가독성 위주의 본문 단락.
 
+## 4-1. QuoteBlock
+
+- **역할** : 인용문(Markdown `>`)을 표시. 본문 강조 문장 / 상세페이지 문구 / 후기.
+- **입력 데이터** : `text` (여러 줄 `>` 는 하나로 병합)
+- **예상 출력** : blockquote. 테마별 표현 차이
+  (Modern=차분한 인용 카드 / Bento=강한 메시지 카드 / Editorial=매거진 인용문).
+
 ## 5. TableCard
 
 - **역할** : 일반 정보 표(표준 Markdown 표 = `table` 블록)를 시각적으로 정리해 표시.
@@ -141,6 +148,7 @@
 | `subtitle:` | SubtitleBlock | text |
 | `author:` | AuthorBlock | text |
 | 일반 단락 | ParagraphBlock | text |
+| 인용문 (`>`) | QuoteBlock | text |
 | Markdown 표 (table) | TableCard | columns[], rows[][] |
 | `:::checklist` | ChecklistCard | items[] |
 | `:::compare` | CompareCard | columns[], rows[][] |

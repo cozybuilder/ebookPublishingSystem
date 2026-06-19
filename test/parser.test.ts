@@ -56,6 +56,7 @@ const blocks: Block[] = ch?.blocks ?? [];
 // --- 블록 순서 (원고 순서대로 유지되는가) ---
 const expectedOrder = [
   'paragraph', // 본문
+  'quote', // 인용문(여러 줄 → 하나)
   'table',
   'checklist',
   'compare',
@@ -79,8 +80,17 @@ check(
 function findOne<T extends Block['type']>(t: T) {
   return blocks.find((b) => b.type === t);
 }
-for (const t of ['paragraph', 'table', 'checklist', 'compare', 'before-after', 'prompt', 'steps', 'faq', 'warning', 'result', 'image'] as const) {
+for (const t of ['paragraph', 'quote', 'table', 'checklist', 'compare', 'before-after', 'prompt', 'steps', 'faq', 'warning', 'result', 'image'] as const) {
   check(`블록 존재: ${t}`, findOne(t) !== undefined);
+}
+
+// --- quote: 여러 줄 blockquote 가 하나로 묶이고 '>' 제거 ---
+const quote = findOne('quote');
+if (quote && quote.type === 'quote') {
+  check('quote: 여러 줄 → 하나로 병합', quote.text === '인용문 첫 줄입니다. 인용문 둘째 줄입니다.', `got "${quote.text}"`);
+  check("quote: '>' 기호 제거됨", !quote.text.includes('>'));
+} else {
+  check('quote: 블록 확보', false, 'quote 블록 없음');
 }
 
 // --- table: 표준 Markdown 표가 table 블록으로 인식 ---

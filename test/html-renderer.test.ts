@@ -65,6 +65,7 @@ check('output/book.html 생성됨', fullFromDisk.length > 0);
 check('HTML: TitleBlock 내용 포함', fullHtml.includes(book.metadata.title));
 check('HTML: ChecklistCard 내용 포함', fullHtml.includes('체크 항목 1') && fullHtml.includes('class="checklist"'));
 check('HTML: TableCard 포함', fullHtml.includes('<table>') && fullHtml.includes('항목'));
+check('HTML: QuoteBlock 마크업 포함', fullHtml.includes('<blockquote class="quote">') && fullHtml.includes('인용문 첫 줄입니다.'));
 check('HTML: WarningCard 포함', fullHtml.includes('주의 문구') && fullHtml.includes('tone-emphasis'));
 check('HTML: ResultCard 포함', fullHtml.includes('결과 요약 문구'));
 

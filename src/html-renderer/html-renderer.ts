@@ -257,6 +257,10 @@ td:first-child { font-weight: 650; color: var(--navy); }
 .prompt { background: #0f1830; border-radius: 12px; padding: var(--sp-md) var(--sp-lg); }
 .prompt pre { margin: 0; white-space: pre-wrap; font-family: "SFMono-Regular", Consolas, monospace; font-size: 14px; color: #d9e2f3; line-height: 1.6; }
 
+/* Quote — 기본(Modern Glass 포함 stack 테마): 차분한 인용 카드 */
+.quote { margin: var(--sp-lg) 0; padding: var(--sp-lg) var(--sp-xl); background: #f7f8fb; border: 1px solid var(--hairline); border-left: 3px solid var(--cyan); border-radius: 12px; }
+.quote p { margin: 0; font-size: var(--fs-emphasis); line-height: 1.6; color: #2f3a52; }
+
 /* FAQ */
 .faq-item { padding: var(--sp-sm) 0; border-bottom: 1px solid #eef1f6; }
 .faq-item:last-child { border-bottom: none; }
@@ -429,6 +433,16 @@ const BENTO_V2_CSS = `
 }
 .grid-bento [data-type="ImageBlock"] .slot-icon { width: 56px; height: 56px; border-radius: 16px; }
 .grid-bento [data-type="ImageBlock"] .slot-tag { font-size: 12px; color: var(--navy); }
+
+/* (9b) QuoteBlock — 강한 메시지 / SNS 문구 카드 */
+.grid-bento > [data-type="QuoteBlock"] { grid-column: 1 / -1; }
+.grid-bento [data-type="QuoteBlock"] .quote {
+  background: linear-gradient(135deg, #11182b 0%, #1f2d5a 100%);
+  border: 0; border-radius: var(--r-card); padding: var(--sp-xl); text-align: center;
+}
+.grid-bento [data-type="QuoteBlock"] .quote p {
+  color: #fff; font-size: 28px; font-weight: 750; line-height: 1.4; letter-spacing: -0.01em;
+}
 `.trim();
 
 /**
@@ -462,10 +476,13 @@ const EDITORIAL_CSS = `
 }
 .var-editorial [data-type="ChapterHeading"] .ty-chapter { font-size: 46px; line-height: 1.15; margin: 0; }
 
-/* (8) QuoteBlock — 잡지 인용문 (QuoteBlock 컴포넌트 도입 시 적용; 현재 미사용) */
-.var-editorial [data-type="QuoteBlock"] {
-  font-family: Georgia, "Noto Serif KR", serif; font-size: 28px; line-height: 1.5; font-style: italic;
-  color: var(--navy); border-left: 3px solid var(--orange); padding-left: var(--sp-lg); margin: var(--sp-xl) 0;
+/* (8) QuoteBlock — 잡지 인용문 */
+.var-editorial [data-type="QuoteBlock"] .quote {
+  background: transparent; border: 0; border-left: 3px solid var(--orange); border-radius: 0;
+  padding: var(--sp-md) 0 var(--sp-md) var(--sp-lg); margin: var(--sp-xl) 0;
+}
+.var-editorial [data-type="QuoteBlock"] .quote p {
+  font-family: Georgia, "Noto Serif KR", serif; font-size: 28px; line-height: 1.5; font-style: italic; color: var(--navy);
 }
 
 /* (9) ResultCard — 기사 하단 핵심 요약 박스 */
@@ -532,6 +549,8 @@ function renderComponentInner(c: Component): string {
       return `<div class="ty-caption">${nl2br(c.text)}</div>`;
     case 'ParagraphBlock':
       return `<p class="ty-body">${esc(c.text)}</p>`;
+    case 'QuoteBlock':
+      return `<blockquote class="quote"><p>${esc(c.text)}</p></blockquote>`;
     case 'TableCard':
       return `<div class="card-label">표</div><div class="tbl">${renderTable(c.columns, c.rows)}</div>`;
     case 'ChecklistCard':

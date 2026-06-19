@@ -26,6 +26,7 @@ export type ComponentType =
   | 'CopyrightNotice' // 보조: 판권 고지(임시 고정 텍스트)
   // --- 블록 기반 ---
   | 'ParagraphBlock'
+  | 'QuoteBlock'
   | 'TableCard'
   | 'ChecklistCard'
   | 'CompareCard'
@@ -45,6 +46,7 @@ export type Component =
   | TableOfContentsList
   | CopyrightNotice
   | ParagraphBlock
+  | QuoteBlock
   | TableCard
   | ChecklistCard
   | CompareCard
@@ -90,6 +92,10 @@ export interface CopyrightNotice {
 // ----- 블록 기반 -----
 export interface ParagraphBlock {
   type: 'ParagraphBlock';
+  text: string;
+}
+export interface QuoteBlock {
+  type: 'QuoteBlock';
   text: string;
 }
 export interface TableCard {

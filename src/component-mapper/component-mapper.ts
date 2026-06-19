@@ -83,6 +83,8 @@ function blockToComponent(block: AST.Block): Component {
   switch (block.type) {
     case 'paragraph':
       return { type: 'ParagraphBlock', text: block.text };
+    case 'quote':
+      return { type: 'QuoteBlock', text: block.text };
     case 'table':
       return { type: 'TableCard', columns: block.columns, rows: block.rows };
     case 'checklist':

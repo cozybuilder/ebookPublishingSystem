@@ -79,6 +79,7 @@
 | 종류 | 의미 | 담는 내용(자연어) |
 | --- | --- | --- |
 | paragraph | 일반 본문 단락 | 텍스트 한 단락 |
+| quote | 인용문 | 인용 텍스트 (Markdown `>`, 여러 줄은 하나로 병합) |
 | table | 정보 정리용 표 | 열 제목들 + 행 데이터들 (표준 Markdown 표) |
 | checklist | 체크리스트 | 점검 항목들의 목록 |
 | compare | 비교표(카드형) | 열 제목들 + 행 데이터들 |
@@ -90,7 +91,8 @@
 | result | 결과 요약 | 핵심 요약 텍스트 |
 | image | 이미지 슬롯 | 식별자(id), 이미지 유형(type), 생성 설명(prompt) |
 
-> 입력 언어(01)의 9개 Container Block + 표준 본문 단락(paragraph) + 표준 Markdown 표(table) = 11종.
+> 입력 언어(01)의 9개 Container Block + 표준 본문 단락(paragraph) + 표준 Markdown 표(table)
+> + 표준 인용문(quote, Markdown `>`) = 12종.
 > 제목/부제/저자는 블록이 아니라 **Metadata** 에 속한다.
 >
 > **table vs compare** : `table`은 정보 정리용 일반 표(표준 Markdown 표 문법으로 입력),
@@ -105,7 +107,7 @@ Book
 ├─ Metadata (title, subtitle?, author?)
 └─ Chapter[]            (number, title)
    └─ Block[]           (type, content)   ← 등장 순서 보존
-        type ∈ { paragraph, table, checklist, compare, before-after,
+        type ∈ { paragraph, quote, table, checklist, compare, before-after,
                  prompt, steps, faq, warning, result, image }
 
 ※ Page 는 AST의 일부가 아니라, 출력 단계에서 AST로부터 파생되는 구조다.

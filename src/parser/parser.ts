@@ -61,6 +61,16 @@ function isBulletLine(line: string): boolean {
   return /^\s*-\s+/.test(line);
 }
 
+function isQuoteLine(line: string): boolean {
+  // '>' 또는 '> ...' 형태. (일반 문단을 오인하지 않도록 줄 시작이 '>' 인 경우만)
+  return /^\s*>/.test(line);
+}
+
+function stripQuoteMarker(line: string): string {
+  // 선행 '>' 1개와 뒤따르는 공백 1개 제거 (빈 '>' 줄은 빈 문자열)
+  return line.replace(/^\s*>\s?/, '').trim();
+}
+
 function isTableLine(line: string): boolean {
   return /^\s*\|.*\|\s*$/.test(line.trim());
 }
@@ -239,6 +249,23 @@ export function parseBook(markdown: string): Book {
       }
       const block = buildContainerBlock(name, body);
       if (current) current.blocks.push(block);
+      continue;
+    }
+
+    // 인용문 (Markdown blockquote): '>' 로 시작하는 연속 줄을 하나의 quote 로 묶는다.
+    // 빈 줄 또는 '>' 가 아닌 줄에서 종료. '>' 기호는 텍스트에서 제거한다.
+    if (isQuoteLine(line)) {
+      flushParagraph();
+      const quoteLines: string[] = [];
+      for (; i < lines.length; i++) {
+        if (!isQuoteLine(lines[i])) {
+          i--; // 인용문 아닌 줄은 다음 루프에서 다시 처리
+          break;
+        }
+        quoteLines.push(stripQuoteMarker(lines[i]));
+      }
+      const text = quoteLines.join(' ').replace(/\s+/g, ' ').trim();
+      if (current && text !== '') current.blocks.push({ type: 'quote', text });
       continue;
     }
 

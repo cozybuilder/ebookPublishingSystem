@@ -135,6 +135,13 @@ check('무유출: Modern 에 FEATURE eyebrow 없음', !modernHtml.includes('cont
 check('무유출: Bento 에 var-editorial 규칙 없음', !bentoHtml.includes('var-editorial'));
 check('무유출: Bento 에 FEATURE eyebrow 없음', !bentoHtml.includes('content: "FEATURE"'));
 
+// --- QuoteBlock 테마별 스타일 ---
+check('Quote: 공통 마크업(blockquote.quote)', modernHtml.includes('<blockquote class="quote">'));
+check('Modern Glass: 기본 인용 스타일(.quote 규칙)', modernHtml.includes('.quote {'));
+check('Bento: 메시지 카드 인용([data-type="QuoteBlock"] .quote)', bentoHtml.includes('[data-type="QuoteBlock"] .quote'));
+check('Editorial: 매거진 인용([data-type="QuoteBlock"] .quote)', editorialHtml.includes('[data-type="QuoteBlock"] .quote'));
+check('무유출: Modern 에 Bento 메시지 인용 규칙 없음', !modernHtml.includes('.grid-bento [data-type="QuoteBlock"]'));
+
 // --- 기존 html 후크 유지(회귀 방지) ---
 check('Modern: tone 클래스 유지', modernHtml.includes('tone-emphasis'));
 check('Modern: Navy HEX 유지', modernHtml.includes('#1F2D5A'));

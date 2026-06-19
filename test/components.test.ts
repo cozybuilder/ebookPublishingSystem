@@ -64,6 +64,7 @@ check(
 // --- 블록 → 컴포넌트 매핑 (ContentPage 안) ---
 const content = page(full, 'ContentPage');
 check('ContentPage: paragraph → ParagraphBlock', hasComp(content, 'ParagraphBlock'));
+check('ContentPage: quote → QuoteBlock', hasComp(content, 'QuoteBlock'));
 check('ContentPage: table → TableCard', hasComp(content, 'TableCard'));
 check('ContentPage: checklist → ChecklistCard', hasComp(content, 'ChecklistCard'));
 check('ContentPage: compare → CompareCard', hasComp(content, 'CompareCard'));

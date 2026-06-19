@@ -32,6 +32,7 @@ export interface Chapter {
 // ===== Block (11종, 판별 유니온) =====
 export type BlockType =
   | 'paragraph'
+  | 'quote'
   | 'table'
   | 'checklist'
   | 'compare'
@@ -45,6 +46,7 @@ export type BlockType =
 
 export type Block =
   | ParagraphBlock
+  | QuoteBlock
   | TableBlock
   | ChecklistBlock
   | CompareBlock
@@ -58,6 +60,12 @@ export type Block =
 
 export interface ParagraphBlock {
   type: 'paragraph';
+  text: string;
+}
+
+/** 인용문 (Markdown blockquote `>`). 여러 줄은 하나로 묶인다. */
+export interface QuoteBlock {
+  type: 'quote';
   text: string;
 }
 

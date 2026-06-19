@@ -43,6 +43,7 @@ interface Chapter {
 ```ts
 type Block =
   | ParagraphBlock
+  | QuoteBlock
   | TableBlock
   | ChecklistBlock
   | CompareBlock
@@ -56,10 +57,11 @@ type Block =
 
 interface BlockBase { type: BlockType; }
 type BlockType =
-  | 'paragraph' | 'table' | 'checklist' | 'compare' | 'before-after'
+  | 'paragraph' | 'quote' | 'table' | 'checklist' | 'compare' | 'before-after'
   | 'prompt' | 'steps' | 'faq' | 'warning' | 'result' | 'image';
 
 interface ParagraphBlock  extends BlockBase { type: 'paragraph';  text: string; }
+interface QuoteBlock      extends BlockBase { type: 'quote';      text: string; }   // Markdown `>` (여러 줄 병합)
 interface TableBlock      extends BlockBase { type: 'table';      columns: string[]; rows: string[][]; }   // 정보 정리용 표
 interface ChecklistBlock  extends BlockBase { type: 'checklist';  items: string[]; }
 interface CompareBlock    extends BlockBase { type: 'compare';    columns: string[]; rows: string[][]; }   // 강조 비교(카드형)
