@@ -32,6 +32,8 @@ Markdown 원고를 입력하면 PDF, DOCX, 체크리스트, 인포그래픽, 표
     detail 860×≥1200) + PDF %PDF 헤더·최소 size) 후 요약 출력. 깨진/빈/규격 오류 산출물은 exit 1.
   - sparse 자산(fallback 검증 fixture)은 릴리스에 미포함. 필요 시 `npm run build:release:sparse` 별도 실행.
   - 기존 체인 방식은 `npm run build:release:legacy` 로 보존.
+- 마케팅 보조 이미지: `npm run build:marketing-assets` (챕터 상세 PNG + preview PNG)
+- sparse 자산(`build:assets:sparse`)은 fallback **검증용 fixture** — 상품/마케팅 산출물 아님.
 
 ### 릴리스 산출물 (`npm run build:release`)
 - HTML: `book.html` · `book.modern.html` · `book.bento.html` · `book.editorial.html` ·
@@ -53,7 +55,11 @@ Markdown 원고를 입력하면 PDF, DOCX, 체크리스트, 인포그래픽, 표
   (시스템 Chrome/Edge, width 860, detail auto-height) — 크몽 상세페이지 삽입용 이미지
   - PDF preview(다운로드/미리보기 파일)와 역할 구분: PNG 는 상세페이지에 붙이는 이미지
   - 별도 선택 산출물 — `build:release`/CI 게이트 미포함, git 비추적(`output/*.png`)
-- `npm run build:chapter-assets` — 위 둘 일괄
+- `npm run build:chapter-assets` — 챕터 캔버스+PNG 일괄
+- **`npm run build:marketing-assets`** — 크몽 상세페이지/홍보용 보조 이미지 일괄
+  (= build:html → build:canvas:chapters → export:png:chapters → export:png:preview)
+  - 산출: `canvas.chapter{N}.detail.png` (챕터별) + `book.preview.png`
+  - PDF / sparse / release 기본 산출물은 미포함. CI 게이트에도 미포함.
   - 챕터별 상세 이미지는 **별도 선택 산출물** — `build:release` 기본에는 미포함, CI 게이트에도 미포함.
   - 챕터 HTML/PNG 는 git 비추적(`output/canvas.chapter*.html` / `*.png`)
 - `npm run export:png` — 캔버스 HTML → PNG (시스템 Chrome/Edge headless, 의존성 0)

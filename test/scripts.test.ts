@@ -52,6 +52,24 @@ check('export:png:chapters 존재(--chapters)', (s['export:png:chapters'] ?? '')
 // build:release 는 preview/chapters PNG 미포함(별도 선택 산출물)
 check('build:release: preview/chapters 미포함', !rel.includes('preview') && !rel.includes('chapter'));
 
+// build:marketing-assets 구성: html → chapters canvas → chapters png → preview png
+const mkt = s['build:marketing-assets'] ?? '';
+check('build:marketing-assets 존재', mkt.length > 0);
+check('build:marketing-assets: build:html 포함', mkt.includes('build:html'));
+check('build:marketing-assets: chapters 캔버스+PNG 포함', mkt.includes('build:canvas:chapters') && mkt.includes('export:png:chapters'));
+check('build:marketing-assets: preview PNG 포함', mkt.includes('export:png:preview'));
+check('build:marketing-assets: PDF 미포함', !mkt.includes('export:pdf'));
+check('build:marketing-assets: sparse 미포함', !mkt.includes('sparse'));
+check('build:marketing-assets: release 미참조', !mkt.includes('build:release'));
+// build:release 가 marketing-assets 를 참조하지 않음
+check('build:release: marketing-assets 미포함', !rel.includes('marketing'));
+// 순서: html → canvas:chapters → png:chapters → preview
+const iH = mkt.indexOf('build:html');
+const iCC = mkt.indexOf('build:canvas:chapters');
+const iPC = mkt.indexOf('export:png:chapters');
+const iPV = mkt.indexOf('export:png:preview');
+check('build:marketing-assets: 순서 html→canvas:chapters→png:chapters→preview', iH >= 0 && iCC > iH && iPC > iCC && iPV > iPC);
+
 // 매니페스트 구성(오케스트레이터 검증 대상)
 const stepScripts = RELEASE_STEPS.map((x) => x.script);
 check(
