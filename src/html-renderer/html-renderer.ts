@@ -36,6 +36,7 @@ export const BASE_RECIPE: StyleRecipe = {
   cardStyle: 'soft',
   tableStyle: 'lined',
   badgeStyle: 'solid',
+  gridStyle: 'stack',
 };
 
 function esc(s: string): string {
@@ -281,6 +282,44 @@ td:first-child { font-weight: 650; color: var(--navy); }
 .slot-tag { font-size: 11px; letter-spacing: .18em; color: #128799; font-weight: 700; }
 .slot-meta { font-size: var(--fs-caption); color: var(--gray); margin-top: 2px; }
 .slot-prompt { font-size: var(--fs-body); color: #41506e; margin-top: 8px; max-width: 80%; }
+
+/* ===== 페이지 본문 컨테이너 ===== */
+.page-body.grid-stack { display: block; }
+
+/* ===== Bento Grid (gridStyle: bento 에서만 활성) ===== */
+.page-body.grid-bento {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--sp-lg);
+  align-items: start;
+}
+.grid-bento > div { margin: 0; }
+/* 큰 카드(2열 span): 텍스트/표/대표/강조 */
+.grid-bento > [data-type="TitleBlock"],
+.grid-bento > [data-type="SubtitleBlock"],
+.grid-bento > [data-type="AuthorBlock"],
+.grid-bento > [data-type="ChapterHeading"],
+.grid-bento > [data-type="ParagraphBlock"],
+.grid-bento > [data-type="CopyrightNotice"],
+.grid-bento > [data-type="TableOfContentsList"],
+.grid-bento > [data-type="TableCard"],
+.grid-bento > [data-type="CompareCard"],
+.grid-bento > [data-type="ResultCard"],
+.grid-bento > [data-type="WarningCard"],
+.grid-bento > [data-type="ImageBlock"] { grid-column: 1 / -1; }
+/* 작은 카드(1열): Checklist / Steps / Prompt / FAQ / BeforeAfter 는 타일처럼 배치 */
+
+/* 챕터 대표 카드 — Apple 발표 슬라이드 느낌 */
+.grid-bento > [data-type="ChapterHeading"] {
+  background: linear-gradient(135deg, #ffffff 0%, #eef2ff 100%);
+  border: 1px solid var(--neutral-line);
+  border-radius: var(--r-card);
+  padding: var(--sp-xxl) var(--sp-xl);
+}
+.grid-bento > [data-type="ChapterHeading"] .ty-chapter { font-size: 38px; line-height: 1.15; margin: 0; }
+/* 핵심 결과 카드 강조 */
+.grid-bento > [data-type="ResultCard"] .card-label { font-size: 15px; }
+.grid-bento > [data-type="ResultCard"] .ty-body { font-size: var(--fs-emphasis); }
 `.trim();
 }
 
@@ -364,11 +403,13 @@ function renderLayoutComponent(lc: LayoutComponent): string {
   return `<div data-id="${lc.componentId}" data-type="${lc.componentType}">${inner}</div>`;
 }
 
-function renderPage(page: LayoutPage): string {
+function renderPage(page: LayoutPage, recipe: StyleRecipe): string {
   const body = page.components.map(renderLayoutComponent).join('\n  ');
   return `<section class="page" data-page="${page.pageType}">
   <div class="page-label">${page.pageType}</div>
+  <div class="page-body grid-${recipe.gridStyle}">
   ${body}
+  </div>
 </section>`;
 }
 
@@ -379,7 +420,7 @@ export function renderHtml(
   recipe: StyleRecipe = BASE_RECIPE,
 ): string {
   const css = buildCss(tokens, recipe);
-  const pagesHtml = pages.map(renderPage).join('\n');
+  const pagesHtml = pages.map((p) => renderPage(p, recipe)).join('\n');
   return `<!DOCTYPE html>
 <html lang="ko">
 <head>

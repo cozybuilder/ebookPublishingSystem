@@ -202,13 +202,53 @@ td:first-child { font-weight: 650; color: var(--navy); }
 .slot-tag { font-size: 11px; letter-spacing: .18em; color: #128799; font-weight: 700; }
 .slot-meta { font-size: var(--fs-caption); color: var(--gray); margin-top: 2px; }
 .slot-prompt { font-size: var(--fs-body); color: #41506e; margin-top: 8px; max-width: 80%; }
+
+/* ===== 페이지 본문 컨테이너 ===== */
+.page-body.grid-stack { display: block; }
+
+/* ===== Bento Grid (gridStyle: bento 에서만 활성) ===== */
+.page-body.grid-bento {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--sp-lg);
+  align-items: start;
+}
+.grid-bento > div { margin: 0; }
+/* 큰 카드(2열 span): 텍스트/표/대표/강조 */
+.grid-bento > [data-type="TitleBlock"],
+.grid-bento > [data-type="SubtitleBlock"],
+.grid-bento > [data-type="AuthorBlock"],
+.grid-bento > [data-type="ChapterHeading"],
+.grid-bento > [data-type="ParagraphBlock"],
+.grid-bento > [data-type="CopyrightNotice"],
+.grid-bento > [data-type="TableOfContentsList"],
+.grid-bento > [data-type="TableCard"],
+.grid-bento > [data-type="CompareCard"],
+.grid-bento > [data-type="ResultCard"],
+.grid-bento > [data-type="WarningCard"],
+.grid-bento > [data-type="ImageBlock"] { grid-column: 1 / -1; }
+/* 작은 카드(1열): Checklist / Steps / Prompt / FAQ / BeforeAfter 는 타일처럼 배치 */
+
+/* 챕터 대표 카드 — Apple 발표 슬라이드 느낌 */
+.grid-bento > [data-type="ChapterHeading"] {
+  background: linear-gradient(135deg, #ffffff 0%, #eef2ff 100%);
+  border: 1px solid var(--neutral-line);
+  border-radius: var(--r-card);
+  padding: var(--sp-xxl) var(--sp-xl);
+}
+.grid-bento > [data-type="ChapterHeading"] .ty-chapter { font-size: 38px; line-height: 1.15; margin: 0; }
+/* 핵심 결과 카드 강조 */
+.grid-bento > [data-type="ResultCard"] .card-label { font-size: 15px; }
+.grid-bento > [data-type="ResultCard"] .ty-body { font-size: var(--fs-emphasis); }
 </style>
 </head>
 <body>
 <main class="book">
 <section class="page" data-page="ChecklistPage">
   <div class="page-label">ChecklistPage</div>
+  <div class="page-body grid-stack">
   <div class="card tone-neutral" data-id="cmp-0001" data-type="ChecklistCard"><div class="card-label">체크리스트</div><ul class="checklist"><li><span class="cbox"></span><span>매일 같은 시간에 할 수 있는가</span></li><li><span class="cbox"></span><span>5분 안에 시작할 수 있을 만큼 작은가</span></li><li><span class="cbox"></span><span>실패해도 다음 날 다시 할 수 있는가</span></li></ul></div>
+  </div>
 </section>
 </main>
 </body>

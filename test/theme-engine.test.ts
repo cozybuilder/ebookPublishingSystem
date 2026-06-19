@@ -48,8 +48,10 @@ check('미지정 시 default theme 반환', getTheme().name === 'ModernGlass');
 
 // --- 테마 선택 ---
 check('ModernGlass 테마 선택 가능', getTheme('ModernGlass').name === 'ModernGlass');
+check('Bento 테마 선택 가능', getTheme('Bento').name === 'Bento');
 check('Minimal 테마(레거시) 선택 가능', getTheme('Minimal').name === 'Minimal');
 check('theme name 정규화(modern → ModernGlass)', normalizeThemeName('modern') === 'ModernGlass');
+check('theme name 정규화(bento → Bento)', normalizeThemeName('BENTO') === 'Bento');
 check('theme name 정규화(minimal → Minimal)', normalizeThemeName('minimal') === 'Minimal');
 check('theme name 정규화(대문자/별칭 cozy)', normalizeThemeName('COZY') === 'CozyBuilderLab');
 check('알 수 없는 이름 → undefined', normalizeThemeName('rainbow') === undefined);
@@ -65,9 +67,11 @@ const merged = mergeTokens(DEFAULT_TOKENS, { radius: { card: 99 } });
 check('mergeTokens: 부분 override', merged.radius.card === 99 && merged.radius.image === DEFAULT_TOKENS.radius.image);
 check('mergeTokens: base 불변(원본 미변경)', DEFAULT_TOKENS.radius.card === 12);
 
-// --- 프로파일 기본 테마 (v3: 전부 ModernGlass) ---
+// --- 프로파일 기본 테마 (v3) ---
 check('FullBookPDF 기본 theme = ModernGlass', themeNameForProfile('FullBookPDF') === 'ModernGlass');
 check('ChecklistPDF 기본 theme = ModernGlass', themeNameForProfile('ChecklistPDF') === 'ModernGlass');
+check('DetailPageImages 기본 theme = Bento', themeNameForProfile('DetailPageImages') === 'Bento');
+check('SNSPromoImages 기본 theme = Bento', themeNameForProfile('SNSPromoImages') === 'Bento');
 
 // --- 합성된 theme 으로 렌더링 ---
 const book = parseBook(readFileSync(samplePath, 'utf8'));
@@ -88,6 +92,16 @@ check('ModernGlass: 페이지 그림자 없음(box-shadow: none)', modernHtml.in
 check('ModernGlass: 큰 radius(--r-card 20px)', modernHtml.includes('--r-card: 20px'));
 check('ModernGlass: 깔끔한 배경(#f6f7f9)', modernHtml.includes('#f6f7f9'));
 check('ModernGlass ≠ Cozy(서로 다른 결과)', modernHtml !== cozyHtml);
+
+// --- Bento 표현 ---
+const bento = resolveThemeByName('Bento');
+const bentoHtml = renderHtml(layout, bento.tokens, 'bento', bento.recipe);
+check('렌더 가능: Bento HTML 생성', bentoHtml.includes('<section class="page"'));
+check('Bento: 벤토 그리드 활성(grid-bento)', bentoHtml.includes('grid-bento'));
+check('Modern: 세로 흐름(grid-stack)', modernHtml.includes('grid-stack'));
+check('Bento ≠ Modern(명확히 다른 표현)', bentoHtml !== modernHtml);
+check('Bento: 큰 라운드 타일(--r-card 22px)', bentoHtml.includes('--r-card: 22px'));
+check('Bento: 카드 틴트 사용(emphasis 배경)', bentoHtml.includes('#fff6ee'));
 
 // --- 기존 html 후크 유지(회귀 방지) ---
 check('Modern: tone 클래스 유지', modernHtml.includes('tone-emphasis'));

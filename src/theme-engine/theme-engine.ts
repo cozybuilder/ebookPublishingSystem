@@ -45,6 +45,29 @@ const MODERN_GLASS_RECIPE: StyleRecipe = {
   cardStyle: 'glass',
   tableStyle: 'open',
   badgeStyle: 'outline',
+  gridStyle: 'stack',
+};
+
+/**
+ * Bento (v3) — Apple WWDC / OpenAI / Nothing 방향.
+ * 벤토 그리드(카드 크기 차이), 숫자 배지 강조, 정보 그룹화, 챕터 대표 카드,
+ * 핵심 결과 강조. 상세페이지/SNS/홍보용.
+ */
+const BENTO_RECIPE: StyleRecipe = {
+  pageBackground: '#f1f2f4',
+  pageShadow: false,
+  pageRadius: 28,
+  cardShadow: false,
+  cardTint: true, // 의미 톤 카드에 존재감(warning/result/info 독립)
+  cardBorder: '#E6E8EC',
+  accent: true, // 숫자 배지/액센트 강조
+  tableHeaderTinted: true, // OpenAI 정보 카드형 표 헤더
+  checkboxRadius: 8,
+  density: 'comfortable',
+  cardStyle: 'soft',
+  tableStyle: 'lined',
+  badgeStyle: 'solid', // 강한 숫자 배지
+  gridStyle: 'bento', // 벤토 그리드
 };
 
 /** CozyBuilder Lab(v2 레거시) = 렌더러 기본 표현 그대로 */
@@ -75,6 +98,16 @@ const ModernGlass: Theme = {
   recipe: MODERN_GLASS_RECIPE,
 };
 
+const Bento: Theme = {
+  name: 'Bento',
+  label: 'Bento',
+  // 큰 라운드 타일 (base 색/타이포/간격은 상속)
+  tokenOverride: {
+    radius: { card: 22, image: 18 },
+  },
+  recipe: BENTO_RECIPE,
+};
+
 const CozyBuilderLab: Theme = {
   name: 'CozyBuilderLab',
   label: 'CozyBuilder Lab',
@@ -97,18 +130,19 @@ const Minimal: Theme = {
 
 export const THEMES: ThemeRegistry = {
   ModernGlass,
+  Bento,
   CozyBuilderLab, // v2 레거시(유지)
   Minimal, // v2 레거시(유지)
 };
 
-/** 출력 프로파일 → 기본 테마 (Bento 구현 전까지 전부 ModernGlass) */
+/** 출력 프로파일 → 기본 테마 */
 export const PROFILE_THEME: ProfileThemeMapping = {
   FullBookPDF: 'ModernGlass',
   EditableDOCX: 'ModernGlass',
   KmongPreviewPDF: 'ModernGlass',
   ChecklistPDF: 'ModernGlass',
-  DetailPageImages: 'ModernGlass',
-  SNSPromoImages: 'ModernGlass',
+  DetailPageImages: 'Bento',
+  SNSPromoImages: 'Bento',
 };
 
 // ----- 합성 -----
@@ -145,6 +179,7 @@ const NAME_ALIAS: Record<string, ThemeName> = {
   'modern glass': 'ModernGlass',
   modern: 'ModernGlass',
   glass: 'ModernGlass',
+  bento: 'Bento',
   cozybuilderlab: 'CozyBuilderLab',
   cozy: 'CozyBuilderLab',
   minimal: 'Minimal',

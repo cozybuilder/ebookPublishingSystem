@@ -18,7 +18,7 @@ import type { ProfileName } from './output.ts';
 /** 깊은 부분 적용 (override diff 표현용) — 타입 전용(런타임 영향 없음) */
 export type DeepPartial<T> = T extends object ? { [K in keyof T]?: DeepPartial<T[K]> } : T;
 
-export type ThemeName = 'ModernGlass' | 'CozyBuilderLab' | 'Minimal';
+export type ThemeName = 'ModernGlass' | 'Bento' | 'CozyBuilderLab' | 'Minimal';
 
 /** base DesignTokens 에 덮어쓸 차분(diff). 지정하지 않은 값은 base 상속. */
 export type ThemeOverride = DeepPartial<DesignTokens>;
@@ -43,6 +43,9 @@ export interface StyleRecipe {
   cardStyle: 'soft' | 'glass'; // soft=채워진 카드 / glass=얇은 외곽선 중심
   tableStyle: 'lined' | 'open'; // lined=구분선 표 / open=헤더 채움 없이 여백 중심
   badgeStyle: 'solid' | 'outline'; // 숫자 배지: 채움 / 외곽선
+
+  // v3(Bento) 추가 다이얼
+  gridStyle: 'stack' | 'bento'; // stack=세로 흐름 / bento=벤토 그리드(카드 크기 차이)
 }
 
 export interface Theme {

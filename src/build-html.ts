@@ -77,6 +77,10 @@ function main(): void {
     render(book, FullBookPDF, modern, `${title} (Modern Glass)`),
     '[FullBookPDF / ModernGlass]',
   );
+
+  // Bento 검수용 명시 출력(항상 생성)
+  const bento = resolveThemeByName('Bento');
+  write(out('book.bento.html'), render(book, FullBookPDF, bento, `${title} (Bento)`), '[FullBookPDF / Bento]');
 }
 
 main();
