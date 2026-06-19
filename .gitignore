@@ -22,5 +22,9 @@ output/book.preview.story.html
 output/image-prompts.json
 output/image-prompts.md
 
+# Front Matter 매니페스트(재생성 가능) — 추적하지 않는다
+output/front-matter.json
+output/front-matter.md
+
 # output 폴더는 현재 검증용 산출물(book.ast.json 등)을 추적하기 위해
 # 의도적으로 제외하지 않는다. (이후 단계에서 정책 재검토)

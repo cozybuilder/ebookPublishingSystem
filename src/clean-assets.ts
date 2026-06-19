@@ -49,6 +49,7 @@ export function isDisposableArtifact(file: string): boolean {
   if (/^canvas\.sparse\..*\.html$/.test(file)) return true;
   if (/^book\.preview\.(square|story)\.html$/.test(file)) return true; // preview promo 캔버스
   if (file === 'image-prompts.json' || file === 'image-prompts.md') return true; // 이미지 프롬프트 매니페스트
+  if (file === 'front-matter.json' || file === 'front-matter.md') return true; // Front Matter 매니페스트
   return false;
 }
 

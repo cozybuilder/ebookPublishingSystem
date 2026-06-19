@@ -119,6 +119,10 @@ export function componentToXml(c: Component, ctx: RenderCtx = { media: [], docPr
       return c.entries.map((e) => paragraph(`${e.number}. ${e.title}`, { numId: 1 })).join('');
     case 'CopyrightNotice':
       return paragraph(c.text, { style: 'Caption' });
+    case 'AuthorBio':
+      return paragraph(c.heading, { style: 'Heading2' }) + paragraph(c.text);
+    case 'Disclaimer':
+      return paragraph(c.heading, { style: 'Heading2' }) + paragraph(c.text, { style: 'Caption' });
     case 'ParagraphBlock':
       return paragraph(c.text);
     case 'QuoteBlock':

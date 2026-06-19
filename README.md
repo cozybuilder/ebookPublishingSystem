@@ -133,6 +133,20 @@ Markdown 원고를 입력하면 PDF, DOCX, 체크리스트, 인포그래픽, 표
   - 탐지 실패 시 워크플로 `Build release` 스텝에 `env: CHROME_PATH: <경로>` 를 지정(주석 참고).
 - 산출물(`output/*.png` / `output/*.pdf`)은 gitignore — v1 은 게이트 목적이라 artifact 업로드 안 함.
 
+## Front Matter (자동 생성)
+
+전자책 앞부분(표지·판권·목차·저자 소개·면책 조항)을 메타데이터로 자동 생성한다.
+
+- `npm run build:front-matter` → `output/front-matter.json` / `output/front-matter.md`(매니페스트, git 비추적).
+- 기본값(미지정 시):
+  - title: book.md 첫 `#` 또는 `Untitled Ebook`
+  - author: `CozyBuilder` (원고 author 우선) / publisher·brand: `CozyBuilder Lab` / year: 현재 연도
+  - disclaimer / authorBio: 기본 문구
+- Front Matter 컴포넌트(표지→판권→목차→저자 소개→면책)는 `prependFrontMatter()` 로 본문 컴포넌트
+  앞에 붙는다(본문 순서 보존). 목차(toc)는 EPUB 연계를 위해 구조로 보존.
+- v1 은 매니페스트 산출 + prepend 헬퍼 제공(기존 build:html/export 파이프라인 무회귀).
+  향후 frontmatter YAML(`---` 메타블록) 도입 시 resolveFrontMatterMeta override 로 확장 가능.
+
 ## 최상위 기준 문서
 
 - `docs/00_PROJECT_CONSTITUTION.md`

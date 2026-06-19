@@ -635,6 +635,10 @@ function renderComponentInner(c: Component): string {
         .join('')}</ul>`;
     case 'CopyrightNotice':
       return `<div class="ty-caption">${nl2br(c.text)}</div>`;
+    case 'AuthorBio':
+      return `<h2 class="ty-chapter">${esc(c.heading)}</h2><p class="ty-body">${nl2br(c.text)}</p>`;
+    case 'Disclaimer':
+      return `<h2 class="ty-chapter">${esc(c.heading)}</h2><p class="ty-caption">${nl2br(c.text)}</p>`;
     case 'ParagraphBlock':
       return `<p class="ty-body">${esc(c.text)}</p>`;
     case 'QuoteBlock':

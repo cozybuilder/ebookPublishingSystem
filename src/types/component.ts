@@ -24,6 +24,8 @@ export type ComponentType =
   | 'ChapterHeading' // 보조: 챕터 제목 (docs/03 외 구조 컴포넌트)
   | 'TableOfContentsList' // 보조: 목차 항목 목록
   | 'CopyrightNotice' // 보조: 판권 고지(임시 고정 텍스트)
+  | 'AuthorBio' // Front Matter: 저자 소개
+  | 'Disclaimer' // Front Matter: 면책 조항
   // --- 블록 기반 ---
   | 'ParagraphBlock'
   | 'QuoteBlock'
@@ -45,6 +47,8 @@ export type Component =
   | ChapterHeading
   | TableOfContentsList
   | CopyrightNotice
+  | AuthorBio
+  | Disclaimer
   | ParagraphBlock
   | QuoteBlock
   | TableCard
@@ -86,6 +90,16 @@ export interface TableOfContentsList {
 }
 export interface CopyrightNotice {
   type: 'CopyrightNotice';
+  text: string;
+}
+export interface AuthorBio {
+  type: 'AuthorBio';
+  heading: string;
+  text: string;
+}
+export interface Disclaimer {
+  type: 'Disclaimer';
+  heading: string;
   text: string;
 }
 
