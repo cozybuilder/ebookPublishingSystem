@@ -205,16 +205,16 @@ td:first-child { font-weight: 650; color: var(--navy); }
 
 /* ===== 페이지 본문 컨테이너 ===== */
 .page-body.grid-stack { display: block; }
-
-/* ===== Bento Grid (gridStyle: bento 에서만 활성) ===== */
+/* ===== Bento Grid ===== */
 .page-body.grid-bento {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: var(--sp-lg);
-  align-items: start;
+  align-items: stretch;
 }
 .grid-bento > div { margin: 0; }
-/* 큰 카드(2열 span): 텍스트/표/대표/강조 */
+.grid-bento > .card { height: 100%; }
+/* 큰 카드(2열 span) */
 .grid-bento > [data-type="TitleBlock"],
 .grid-bento > [data-type="SubtitleBlock"],
 .grid-bento > [data-type="AuthorBlock"],
@@ -225,21 +225,118 @@ td:first-child { font-weight: 650; color: var(--navy); }
 .grid-bento > [data-type="TableCard"],
 .grid-bento > [data-type="CompareCard"],
 .grid-bento > [data-type="ResultCard"],
-.grid-bento > [data-type="WarningCard"],
 .grid-bento > [data-type="ImageBlock"] { grid-column: 1 / -1; }
-/* 작은 카드(1열): Checklist / Steps / Prompt / FAQ / BeforeAfter 는 타일처럼 배치 */
+/* 작은 카드(1열 타일): Checklist / Steps / Prompt / FAQ / BeforeAfter / Warning */
 
-/* 챕터 대표 카드 — Apple 발표 슬라이드 느낌 */
-.grid-bento > [data-type="ChapterHeading"] {
-  background: linear-gradient(135deg, #ffffff 0%, #eef2ff 100%);
-  border: 1px solid var(--neutral-line);
+/* (1) ChapterHeading — Hero Card */
+.grid-bento [data-type="ChapterHeading"] {
+  position: relative;
+  background: radial-gradient(120% 140% at 0% 0%, #eaf0ff 0%, #ffffff 60%);
+  border: 1px solid #e4e9f5;
   border-radius: var(--r-card);
-  padding: var(--sp-xxl) var(--sp-xl);
+  padding: 64px var(--sp-xl) 56px;
 }
-.grid-bento > [data-type="ChapterHeading"] .ty-chapter { font-size: 38px; line-height: 1.15; margin: 0; }
-/* 핵심 결과 카드 강조 */
-.grid-bento > [data-type="ResultCard"] .card-label { font-size: 15px; }
-.grid-bento > [data-type="ResultCard"] .ty-body { font-size: var(--fs-emphasis); }
+.grid-bento [data-type="ChapterHeading"]::before {
+  content: "CHAPTER"; display: inline-block;
+  font-size: 12px; font-weight: 800; letter-spacing: .22em; color: var(--cyan);
+  margin-bottom: var(--sp-md);
+}
+.grid-bento [data-type="ChapterHeading"] .ty-chapter {
+  font-size: 44px; line-height: 1.1; letter-spacing: -0.03em; margin: 0;
+}
+
+/* (2) ResultCard — 가장 강한 하이라이트 카드 */
+.grid-bento [data-type="ResultCard"].card {
+  background: linear-gradient(135deg, #fff3e8 0%, #ffe7d2 100%);
+  border: 1px solid #f7d3b1; border-radius: var(--r-card);
+  padding: var(--sp-xl) var(--sp-xl);
+}
+.grid-bento [data-type="ResultCard"] .card-label {
+  font-size: 13px; letter-spacing: .14em; text-transform: uppercase; color: var(--orange);
+}
+.grid-bento [data-type="ResultCard"] .card-label::before {
+  content: "★"; width: 26px; height: 26px; border-radius: 50%;
+  background: var(--orange); color: #fff; display: inline-flex; align-items: center; justify-content: center; font-size: 13px;
+}
+.grid-bento [data-type="ResultCard"] .ty-body {
+  font-size: 26px; line-height: 1.35; font-weight: 750; color: #6a3410; margin-top: var(--sp-sm);
+}
+
+/* (3) ChecklistCard — 실천 카드 묶음 */
+.grid-bento [data-type="ChecklistCard"] .checklist { display: flex; flex-direction: column; gap: 10px; }
+.grid-bento [data-type="ChecklistCard"] .checklist li {
+  border: 1px solid #e7ecf4; border-radius: 12px; background: #fff;
+  padding: 14px 16px; gap: 14px; border-bottom: 1px solid #e7ecf4;
+}
+.grid-bento [data-type="ChecklistCard"] .cbox {
+  width: 26px; height: 26px; border-radius: 8px; border: 0;
+  background: var(--cyan); position: relative;
+}
+.grid-bento [data-type="ChecklistCard"] .cbox::after {
+  content: "✓"; position: absolute; inset: 0; display: flex; align-items: center; justify-content: center;
+  color: #fff; font-size: 15px; font-weight: 800;
+}
+
+/* (4) StepsCard — 플로우 카드 */
+.grid-bento [data-type="StepsCard"] .steps li { padding-left: 60px; padding-bottom: var(--sp-lg); }
+.grid-bento [data-type="StepsCard"] .steps li::before {
+  width: 42px; height: 42px; font-size: 16px;
+  background: linear-gradient(135deg, var(--cyan), #128799); color: #fff; border: 0;
+  box-shadow: 0 6px 14px rgba(31,182,201,.4);
+}
+.grid-bento [data-type="StepsCard"] .steps li:not(:last-child)::after {
+  left: 20px; top: 44px; width: 2px; background: linear-gradient(var(--cyan), transparent);
+}
+.grid-bento [data-type="StepsCard"] .steps li > span {
+  display: block; background: #f7fbfc; border: 1px solid #e1f1f4; border-radius: 12px;
+  padding: 12px 14px; padding-top: 12px;
+}
+
+/* (5) CompareCard — VS 비교 구조 (표를 컬럼형으로 재해석) */
+.grid-bento [data-type="CompareCard"] .tbl { border: 0; }
+.grid-bento [data-type="CompareCard"] table { border-spacing: 10px 0; border-collapse: separate; }
+.grid-bento [data-type="CompareCard"] th {
+  background: #11182b; color: #fff; border-radius: 12px 12px 0 0; text-align: center; font-size: 13px;
+}
+.grid-bento [data-type="CompareCard"] td {
+  background: #fff; border: 1px solid #e7ecf4; text-align: center; border-bottom: 1px solid #e7ecf4;
+}
+.grid-bento [data-type="CompareCard"] td:first-child { font-weight: 800; color: var(--navy); background: #f6f8fc; }
+
+/* (6) TableCard — row card (엑셀 느낌 제거) */
+.grid-bento [data-type="TableCard"] .tbl { border: 0; overflow: visible; }
+.grid-bento [data-type="TableCard"] thead { display: none; }
+.grid-bento [data-type="TableCard"] table,
+.grid-bento [data-type="TableCard"] tbody,
+.grid-bento [data-type="TableCard"] tr,
+.grid-bento [data-type="TableCard"] td { display: block; }
+.grid-bento [data-type="TableCard"] tbody { display: flex; flex-direction: column; gap: 10px; }
+.grid-bento [data-type="TableCard"] tr {
+  border: 1px solid #e7ecf4; border-radius: 12px; background: #fff; padding: 14px 16px;
+  display: flex; flex-wrap: wrap; gap: 6px 18px; align-items: baseline;
+}
+.grid-bento [data-type="TableCard"] td { border: 0; padding: 0; color: #4a5468; }
+.grid-bento [data-type="TableCard"] td:first-child { font-weight: 800; color: var(--navy); font-size: var(--fs-emphasis); width: 100%; }
+
+/* (7) WarningCard — 인사이트 카드(부드럽게) */
+.grid-bento [data-type="WarningCard"].card {
+  background: #fbf6ee; border: 1px solid #efe2cc; border-radius: var(--r-card);
+}
+.grid-bento [data-type="WarningCard"] .card-label { color: #b9772a; }
+.grid-bento [data-type="WarningCard"] .card-label::before {
+  content: "i"; width: 22px; height: 22px; border-radius: 50%;
+  background: #e7a14e; color: #fff; display: inline-flex; align-items: center; justify-content: center;
+  font-style: italic; font-weight: 800; font-size: 13px;
+}
+
+/* (8) ImageBlock — 대표 비주얼 자리 */
+.grid-bento [data-type="ImageBlock"] .slot-frame {
+  min-height: 240px;
+  background: linear-gradient(135deg, #e9f2ff 0%, #f3ecff 50%, #ffeef4 100%);
+  border: 1px solid #e2e6f0; border-radius: var(--r-card);
+}
+.grid-bento [data-type="ImageBlock"] .slot-icon { width: 56px; height: 56px; border-radius: 16px; }
+.grid-bento [data-type="ImageBlock"] .slot-tag { font-size: 12px; color: var(--navy); }
 </style>
 </head>
 <body>

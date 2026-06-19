@@ -93,7 +93,7 @@ check('ModernGlass: 큰 radius(--r-card 20px)', modernHtml.includes('--r-card: 2
 check('ModernGlass: 깔끔한 배경(#f6f7f9)', modernHtml.includes('#f6f7f9'));
 check('ModernGlass ≠ Cozy(서로 다른 결과)', modernHtml !== cozyHtml);
 
-// --- Bento 표현 ---
+// --- Bento v2 표현 ---
 const bento = resolveThemeByName('Bento');
 const bentoHtml = renderHtml(layout, bento.tokens, 'bento', bento.recipe);
 check('렌더 가능: Bento HTML 생성', bentoHtml.includes('<section class="page"'));
@@ -101,7 +101,20 @@ check('Bento: 벤토 그리드 활성(grid-bento)', bentoHtml.includes('grid-ben
 check('Modern: 세로 흐름(grid-stack)', modernHtml.includes('grid-stack'));
 check('Bento ≠ Modern(명확히 다른 표현)', bentoHtml !== modernHtml);
 check('Bento: 큰 라운드 타일(--r-card 22px)', bentoHtml.includes('--r-card: 22px'));
-check('Bento: 카드 틴트 사용(emphasis 배경)', bentoHtml.includes('#fff6ee'));
+
+// Bento v2 컴포넌트 스타일
+check('Bento v2: ChapterHeading hero(CHAPTER eyebrow)', bentoHtml.includes('content: "CHAPTER"'));
+check('Bento v2: ResultCard highlight', bentoHtml.includes('[data-type="ResultCard"].card'));
+check('Bento v2: ChecklistCard item card', bentoHtml.includes('[data-type="ChecklistCard"] .checklist li'));
+check('Bento v2: StepsCard flow', bentoHtml.includes('[data-type="StepsCard"] .steps li::before'));
+check('Bento v2: TableCard row card(thead 숨김)', bentoHtml.includes('[data-type="TableCard"] thead { display: none'));
+check('Bento v2: CompareCard VS 구조', bentoHtml.includes('[data-type="CompareCard"]'));
+check('Bento v2: WarningCard 인사이트 카드', bentoHtml.includes('[data-type="WarningCard"].card'));
+check('Bento v2: ImageBlock 대표 비주얼', bentoHtml.includes('[data-type="ImageBlock"] .slot-frame'));
+
+// Modern Glass 에 Bento v2 스타일이 섞이지 않음(규칙 출력 자체 없음)
+check('무유출: Modern 에 grid-bento 규칙 없음', !modernHtml.includes('grid-bento'));
+check('무유출: Modern 에 Bento hero eyebrow 없음', !modernHtml.includes('content: "CHAPTER"'));
 
 // --- 기존 html 후크 유지(회귀 방지) ---
 check('Modern: tone 클래스 유지', modernHtml.includes('tone-emphasis'));
