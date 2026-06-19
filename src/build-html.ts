@@ -19,13 +19,16 @@ import { buildPages } from './page-builder/page-builder.ts';
 import { mapComponents } from './component-mapper/component-mapper.ts';
 import { applyLayout } from './layout-engine/layout-engine.ts';
 import { renderHtml } from './html-renderer/html-renderer.ts';
-import { FullBookPDF, ChecklistPDF } from './page-builder/profiles.ts';
+import { FullBookPDF, ChecklistPDF, KmongPreviewPDF } from './page-builder/profiles.ts';
+import { select } from './selector/selector.ts';
 import {
   normalizeThemeName,
   resolveThemeByName,
   resolveThemeForProfile,
 } from './theme-engine/theme-engine.ts';
 import type { Book } from './types/ast.ts';
+import type { ComponentType } from './types/component.ts';
+import type { ComponentPage } from './types/component.ts';
 import type { OutputProfile } from './types/output.ts';
 import type { ResolvedTheme } from './types/theme.ts';
 
@@ -41,7 +44,20 @@ function parseThemeArg(): string | undefined {
 }
 
 function render(book: Book, profile: OutputProfile, theme: ResolvedTheme, docTitle: string): string {
-  const layout = applyLayout(mapComponents(book, buildPages(book, profile)), theme.tokens);
+  const compPages = mapComponents(book, buildPages(book, profile));
+
+  // componentSelector 가 지정된 프로파일만 컴포넌트 선별(미지정 → 기존 전체 출력 경로 유지).
+  if (profile.componentSelector) {
+    const policy = profile.componentSelector;
+    const flat = compPages.flatMap((p) => p.components);
+    const primaryAllow = new Set<ComponentType>([...policy.prefer, ...(policy.require ?? [])]);
+    const r = select(flat, (c) => c.type, policy, { cap: flat.length, primaryAllow });
+    const page: ComponentPage = { type: 'ContentPage', components: r.items };
+    const layout = applyLayout([page], theme.tokens);
+    return renderHtml(layout, theme.tokens, docTitle, theme.recipe, policy.strategy);
+  }
+
+  const layout = applyLayout(compPages, theme.tokens);
   return renderHtml(layout, theme.tokens, docTitle, theme.recipe);
 }
 
@@ -96,6 +112,14 @@ function main(): void {
     out('book.dashboard.html'),
     render(book, FullBookPDF, dashboard, `${title} (Dashboard)`),
     '[FullBookPDF / Dashboard]',
+  );
+
+  // 미리보기(판매/요약) — componentSelector(marketing) 적용
+  const previewTheme = resolveThemeForProfile('KmongPreviewPDF');
+  write(
+    out('book.preview.html'),
+    render(book, KmongPreviewPDF, previewTheme, `${title} — 미리보기`),
+    `[KmongPreviewPDF / ${previewTheme.name} / selector=marketing]`,
   );
 }
 

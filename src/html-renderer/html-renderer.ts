@@ -717,9 +717,12 @@ export function renderHtml(
   tokens: DesignTokens,
   docTitle: string,
   recipe: StyleRecipe = BASE_RECIPE,
+  componentSelectorName?: string,
 ): string {
   const css = buildCss(tokens, recipe);
   const pagesHtml = pages.map((p) => renderPage(p, recipe)).join('\n');
+  // componentSelector 가 적용된 출력에만 마커를 남긴다(full book 에는 없음).
+  const selAttr = componentSelectorName ? ` data-component-selector="${componentSelectorName}"` : '';
   return `<!DOCTYPE html>
 <html lang="ko">
 <head>
@@ -730,7 +733,7 @@ export function renderHtml(
 ${css}
 </style>
 </head>
-<body>
+<body${selAttr}>
 <main class="book">
 ${pagesHtml}
 </main>

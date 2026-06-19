@@ -22,6 +22,10 @@ export function buildPages(book: Book, profile: OutputProfile): Page[] {
   switch (profile.name) {
     case 'FullBookPDF':
       return buildFullBookPages(book);
+    case 'KmongPreviewPDF':
+      // 미리보기는 FullBook 과 동일한 페이지 구조를 컴포넌트 소스로 재사용한다.
+      // 실제 컴포넌트 선별은 componentSelector(Component Mapper 이후)가 담당.
+      return buildFullBookPages(book);
     case 'ChecklistPDF':
       return buildChecklistPages(book);
     default:

@@ -25,11 +25,12 @@ export const WORKFLOW_SELECTOR: SelectorPolicy<ComponentType> = {
   fallback: { minComponents: 1, useFirstAvailable: true },
 };
 
-/** 홍보/세일즈 중심 */
+/** 홍보/세일즈 중심 (미리보기/판매 페이지 요약) */
 export const MARKETING_SELECTOR: SelectorPolicy<ComponentType> = {
   strategy: 'marketing',
-  prefer: ['ChapterHeading', 'ResultCard', 'QuoteBlock', 'ImageBlock', 'CompareCard'],
-  fallback: { minComponents: 1, useFirstAvailable: true },
+  // ChapterHeading 있으면 포함, 요약/인용/체크리스트/비교/이미지 중심. Paragraph 제외.
+  prefer: ['ChapterHeading', 'ResultCard', 'QuoteBlock', 'ChecklistCard', 'CompareCard', 'ImageBlock'],
+  fallback: { minComponents: 1, preferTypes: ['ResultCard', 'QuoteBlock'], useFirstAvailable: true },
 };
 
 /** 읽기 중심 (본문 위주) */

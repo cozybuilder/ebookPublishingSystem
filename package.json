@@ -20,6 +20,7 @@
     "test:theme": "node test/theme-engine.test.ts",
     "test:canvas": "node test/canvas.test.ts",
     "test:selector": "node test/selector.test.ts",
+    "test:book-selector": "node test/book-selector-integration.test.ts",
     "test:isolation": "node test/output-isolation.test.ts",
     "clean:test-output": "node -e \"require('node:fs').rmSync('tmp/test-output',{recursive:true,force:true})\""
   },
