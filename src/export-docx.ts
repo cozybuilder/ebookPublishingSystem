@@ -6,13 +6,14 @@
  * 실행: npm run export:docx
  */
 
-import { readFileSync, writeFileSync, mkdirSync, statSync, existsSync } from 'node:fs';
+import { readFileSync, writeFileSync, mkdirSync, statSync } from 'node:fs';
 import { dirname, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { parseBook } from './parser/parser.ts';
 import { buildPages } from './page-builder/page-builder.ts';
 import { mapComponents } from './component-mapper/component-mapper.ts';
 import { renderDocx, type ImageResolver } from './docx/docx-renderer.ts';
+import { resolveImageAsset } from './assets/image-asset-resolver.ts';
 import { FullBookPDF } from './page-builder/profiles.ts';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
@@ -20,14 +21,11 @@ const projectRoot = resolve(__dirname, '..');
 const inputPath = resolve(projectRoot, 'input', 'book.md');
 const outPath = resolve(projectRoot, 'output', 'book.docx');
 
-// 이미지 슬롯 id → assets/<id>.{png,jpg,jpeg} 파일이 있으면 실삽입, 없으면 placeholder.
-const assetsDir = resolve(projectRoot, 'assets');
+// 이미지 슬롯 id → 표준 자산 규약(assets/images/<id>.* 우선, assets/<id>.* 호환)으로 해석.
+// 파일 있으면 실삽입, 없으면 placeholder.
 const imageResolver: ImageResolver = (block) => {
-  for (const ext of ['png', 'jpg', 'jpeg'] as const) {
-    const p = resolve(assetsDir, `${block.id}.${ext}`);
-    if (existsSync(p)) return { data: readFileSync(p), ext };
-  }
-  return null;
+  const found = resolveImageAsset(block.id, projectRoot);
+  return found ? { data: found.data, ext: found.ext } : null;
 };
 
 function main(): void {
