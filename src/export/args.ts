@@ -17,6 +17,32 @@ export function parsePrefix(argv: string[]): string {
 }
 
 /**
+ * PDF export 실행 모드.
+ *  - all: PDF_TARGETS 전체
+ *  - target: 지정 1개(PDF_TARGETS 내)
+ */
+export type ExportPdfMode = { kind: 'all' } | { kind: 'target'; target: string };
+
+/**
+ * argv → ExportPdfMode (순수). 잘못된 입력이면 Error throw.
+ * @param argv      process.argv 등
+ * @param validTargets  허용 대상 목록(PDF_TARGETS)
+ */
+export function parseExportPdfArgs(argv: string[], validTargets: readonly string[]): ExportPdfMode {
+  const occurrences = argv.filter((a) => a === '--target').length;
+  if (occurrences === 0) return { kind: 'all' };
+  if (occurrences > 1) throw new Error('--target 은 한 번만 지정할 수 있습니다.');
+
+  const i = argv.indexOf('--target');
+  const value = argv[i + 1];
+  if (!value || value.startsWith('--')) throw new Error('--target 값이 필요합니다 (예: --target book.preview.html).');
+  if (!validTargets.includes(value)) {
+    throw new Error(`알 수 없는 --target: ${value} (가능: ${validTargets.join(', ')})`);
+  }
+  return { kind: 'target', target: value };
+}
+
+/**
  * PNG export 실행 모드.
  *  - canvas: 기본(detail/square/story), prefix 로 입력 세트 전환('' | 'sparse.')
  *  - chapters / preview / preview-promo: 전용 모드

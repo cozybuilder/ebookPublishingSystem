@@ -8,7 +8,7 @@
 
 import { findBrowser, BROWSER_CANDIDATES } from '../src/export/browser.ts';
 import { readPngSize } from '../src/export/png-size.ts';
-import { parsePrefix, parseExportPngArgs } from '../src/export/args.ts';
+import { parsePrefix, parseExportPngArgs, parseExportPdfArgs } from '../src/export/args.ts';
 import { injectPrintCss, htmlToPdfName, isPdfBuffer, PRINT_CSS, PDF_TARGETS } from '../src/export/pdf-helpers.ts';
 import {
   resolveDetailHeight,
@@ -151,6 +151,29 @@ check('isPdfBuffer: 짧은 버퍼 → false', isPdfBuffer(Buffer.from('%PD')) ==
 check('PDF_TARGETS: 5종 전부 포함', ['book.preview.html', 'book.modern.html', 'book.editorial.html', 'book.dashboard.html', 'book.bento.html'].every((f) => PDF_TARGETS.includes(f)));
 check('PDF_TARGETS: Bento 포함', PDF_TARGETS.includes('book.bento.html'));
 check('PDF_TARGETS: 5종 모두 .html', PDF_TARGETS.length === 5 && PDF_TARGETS.every((f) => f.endsWith('.html')));
+
+// parseExportPdfArgs
+function pdfMode(argv: string[]) {
+  return parseExportPdfArgs(['node', 'export-pdf.ts', ...argv], PDF_TARGETS);
+}
+check('pdf mode: 기본 all', pdfMode([]).kind === 'all');
+for (const t of PDF_TARGETS) {
+  const m = pdfMode(['--target', t]);
+  check(`pdf mode: --target ${t}`, m.kind === 'target' && m.target === t);
+}
+function pdfThrows(argv: string[]): boolean {
+  try {
+    pdfMode(argv);
+    return false;
+  } catch {
+    return true;
+  }
+}
+check('pdf mode 오류: --target 값 누락', pdfThrows(['--target']));
+check('pdf mode 오류: --target 다음 플래그', pdfThrows(['--target', '--x']));
+check('pdf mode 오류: --target 중복', pdfThrows(['--target', 'book.modern.html', '--target', 'book.bento.html']));
+check('pdf mode 오류: unknown target', pdfThrows(['--target', 'book.unknown.html']));
+check('pdf mode 오류: Bento PNG 가 아닌 png target', pdfThrows(['--target', 'book.modern.pdf']));
 
 // Bento print 단일컬럼 보정 마커
 check('PRINT_CSS: .grid-bento 단일컬럼(display block)', PRINT_CSS.includes('.grid-bento') && PRINT_CSS.includes('display: block !important'));

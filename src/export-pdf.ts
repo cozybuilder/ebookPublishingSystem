@@ -21,13 +21,11 @@ import { dirname, resolve } from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import { findBrowser, browserNotFoundMessage } from './export/browser.ts';
 import { injectPrintCss, htmlToPdfName, isPdfFile, PDF_TARGETS } from './export/pdf-helpers.ts';
+import { parseExportPdfArgs } from './export/args.ts';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const projectRoot = resolve(__dirname, '..');
 const out = (name: string) => resolve(projectRoot, 'output', name);
-
-/** v1 변환 대상 HTML 파일명 (preview → modern → editorial 순) */
-const TARGETS = PDF_TARGETS;
 
 function toPdf(browser: string, htmlFile: string, tmpDir: string): boolean {
   const srcHtml = out(htmlFile);
@@ -76,14 +74,24 @@ function main(): void {
     return;
   }
 
+  let targets: string[];
+  try {
+    const mode = parseExportPdfArgs(process.argv, PDF_TARGETS);
+    targets = mode.kind === 'all' ? [...PDF_TARGETS] : [mode.target];
+  } catch (e) {
+    console.error(`  ✗ 인자 오류: ${(e as Error).message}`);
+    process.exitCode = 1;
+    return;
+  }
+
   const tmpDir = mkdtempSync(resolve(tmpdir(), 'ebook-pdf-'));
   mkdirSync(resolve(tmpDir, 'profile'), { recursive: true });
-  console.log('✓ PDF Export (headless --print-to-pdf)');
+  console.log(`✓ PDF Export (headless --print-to-pdf, ${targets.length}종)`);
   console.log(`  브라우저 : ${browser}`);
 
   let failed = 0;
   try {
-    for (const htmlFile of TARGETS) {
+    for (const htmlFile of targets) {
       if (!toPdf(browser, htmlFile, tmpDir)) failed++;
     }
   } finally {
