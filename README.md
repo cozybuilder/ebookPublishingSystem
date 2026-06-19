@@ -24,6 +24,13 @@ Markdown 원고를 입력하면 PDF, DOCX, 체크리스트, 인포그래픽, 표
 - `npm run build:html` — 책 HTML 5종 + 미리보기(`book.preview.html`)
 - `npm run build:canvas` — 캔버스 detail/square/story
 - `npm run build:canvas:sparse` — 폴백 검증용 sparse 캔버스
+- `npm run export:png` — 캔버스 HTML → PNG (시스템 Chrome/Edge headless, 의존성 0)
+  - 사전: `npm run build:canvas` 로 HTML 생성
+  - 산출: `output/canvas.detail.png` / `canvas.square.png`(1080×1080) / `canvas.story.png`(1080×1920)
+  - 브라우저 탐지: `CHROME_PATH` 환경변수 우선 → Windows 기본 Chrome → Edge
+    - override 예: `set CHROME_PATH=C:\Program Files\Google\Chrome\Application\chrome.exe`
+  - detail 은 v1에서 전체 페이지(가변 높이)를 window 높이 기준으로 캡처(아래 한계 참고)
+  - PNG 는 재생성 가능한 산출물이라 git 추적 제외(`output/*.png`)
 - 그 외: `build:pages` / `build:components` / `build:layout`, `parse`
 
 ### 테스트
