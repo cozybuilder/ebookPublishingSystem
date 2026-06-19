@@ -13,7 +13,9 @@ import { buildPages } from '../src/page-builder/page-builder.ts';
 import { mapComponents } from '../src/component-mapper/component-mapper.ts';
 import { applyLayout } from '../src/layout-engine/layout-engine.ts';
 import { renderCanvas } from '../src/canvas/canvas-renderer.ts';
+import { selectComponents } from '../src/canvas/canvas-selector.ts';
 import { DETAIL_CANVAS, SQUARE_CANVAS, STORY_CANVAS } from '../src/canvas/canvas-profiles.ts';
+import type { LayoutComponent } from '../src/types/design.ts';
 import { FullBookPDF } from '../src/page-builder/profiles.ts';
 import { resolveThemeByName } from '../src/theme-engine/theme-engine.ts';
 
@@ -130,6 +132,69 @@ check('결정론적: story 재렌더 동일', story === story2);
 
 // 기존 auto-fit 유지(회귀)
 check('auto-fit 유지: square data-fit/compact/clamp', square.includes('data-fit="compact"') && square.includes('-webkit-line-clamp'));
+
+// ===== Fallback v1 =====
+// 후보가 충분한 rich 샘플 → fallback=false
+check('충분할 때 fallback=false (square)', square.includes('data-fallback="false"'));
+check('충분할 때 fallback=false (story)', story.includes('data-fallback="false"'));
+
+// 합성 LayoutComponent 빌더
+let _n = 0;
+function lc(type: string, comp: Record<string, unknown>): LayoutComponent {
+  return {
+    componentId: `cmp-${String(++_n).padStart(4, '0')}`,
+    componentType: type as never,
+    tone: 'neutral',
+    typographyRole: 'body',
+    spacing: 'md',
+    radius: null,
+    bounds: null,
+    component: comp as never,
+  };
+}
+
+// (a) square: Result/Quote/Checklist 없음 + ChapterHeading 만 → 폴백으로 ChapterHeading
+const sparseSquare = [
+  lc('ParagraphBlock', { type: 'ParagraphBlock', text: 'p' }),
+  lc('ChapterHeading', { type: 'ChapterHeading', number: 1, title: 'T' }),
+];
+const rSquare = selectComponents(sparseSquare, SQUARE_CANVAS);
+check('square: 요약 카드 없으면 fallback=true', rSquare.fallback === true);
+check('square: fallback 으로 ChapterHeading 채움(빈 캔버스 방지)', rSquare.components.some((c) => c.componentType === 'ChapterHeading'));
+check('square: 빈 캔버스 아님', rSquare.components.length >= 1);
+
+// (b) story: ChapterHeading(require) 없음 → 오류 없이 폴백, 빈 캔버스 아님
+const noHeadStory = [
+  lc('ChecklistCard', { type: 'ChecklistCard', items: ['a'] }),
+  lc('QuoteBlock', { type: 'QuoteBlock', text: 'q' }),
+];
+const rStory = selectComponents(noHeadStory, STORY_CANVAS);
+check('story: ChapterHeading 없어도 빈 캔버스 아님', rStory.components.length >= 1);
+check('story: require 부재 시 fallback 동작(오류 없음)', rStory.fallback === true || rStory.components.length >= 2);
+
+// (c) fit.maxComponents 초과 금지
+const many = Array.from({ length: 10 }, (_, i) => lc('QuoteBlock', { type: 'QuoteBlock', text: `q${i}` }));
+const rMany = selectComponents(many, { ...SQUARE_CANVAS, selector: { ...SQUARE_CANVAS.selector, fallback: { minComponents: 8, useFirstAvailable: true } } } as never);
+check('fallback: fit.maxComponents(2) 초과 안 함', rMany.components.length <= SQUARE_CANVAS.fit.maxComponents, `got ${rMany.components.length}`);
+
+// (d) avoid 타입은 fallback 에서도 제외(allowTypes 미지정 시)
+const avoidProfile = {
+  ...SQUARE_CANVAS,
+  fit: { mode: 'fixed', maxComponents: 3, density: 'compact' },
+  pick: ['ResultCard'],
+  selector: { strategy: 'summary', prefer: ['ResultCard'], avoid: ['WarningCard'], fallback: { minComponents: 3, useFirstAvailable: true } },
+};
+const avoidInput = [
+  lc('ResultCard', { type: 'ResultCard', text: 'r' }),
+  lc('WarningCard', { type: 'WarningCard', text: 'w' }),
+  lc('QuoteBlock', { type: 'QuoteBlock', text: 'q' }),
+];
+const rAvoid = selectComponents(avoidInput, avoidProfile as never);
+check('fallback: avoid 타입 제외 유지(WarningCard 없음)', !rAvoid.components.some((c) => c.componentType === 'WarningCard'));
+
+// (e) 결정론: 폴백 포함 동일 입력 동일 출력
+const rSquare2 = selectComponents(sparseSquare, SQUARE_CANVAS);
+check('fallback: 결정론(동일 입력 동일 출력)', JSON.stringify(rSquare.components.map((c) => c.componentId)) === JSON.stringify(rSquare2.components.map((c) => c.componentId)));
 
 // book.*.html 미접촉(이 테스트는 canvas.* 만 씀)
 check('book.* 비접촉(이 테스트는 canvas.* 만 생성)', true);

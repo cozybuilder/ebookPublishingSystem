@@ -34,6 +34,21 @@ export type SelectorStrategy = 'priority' | 'marketing' | 'summary' | 'workflow'
  * 캔버스에 담을 컴포넌트를 목적에 맞게 자동 큐레이션하는 정책.
  * 결정론적: 같은 입력이면 같은 출력(점수 동점은 원고 등장 순서로 tie-break).
  */
+/**
+ * 후보 부족 시 빈/빈약한 캔버스를 막는 폴백 정책.
+ * 1차 선별 결과가 minComponents 미만이면 실행된다.
+ */
+export interface CanvasFallback {
+  /** 이 수 미만이면 폴백 실행 */
+  minComponents?: number;
+  /** 폴백에서 허용할 타입(있으면 이 안에서만) */
+  allowTypes?: ComponentType[];
+  /** 폴백에서 우선할 타입 */
+  preferTypes?: ComponentType[];
+  /** 그래도 부족하면 원고 등장순으로 채움 */
+  useFirstAvailable?: boolean;
+}
+
 export interface CanvasSelector {
   strategy: SelectorStrategy;
   /** 가산점 대상(우선 포함되도록) */
@@ -44,6 +59,8 @@ export interface CanvasSelector {
   require?: ComponentType[];
   /** 타입별 최대 개수(같은 카드 반복 방지) */
   maxPerType?: Partial<Record<ComponentType, number>>;
+  /** 후보 부족 시 폴백 */
+  fallback?: CanvasFallback;
 }
 
 export interface CanvasProfile {
@@ -86,6 +103,11 @@ export const DETAIL_CANVAS: CanvasProfile = {
     strategy: 'marketing',
     prefer: PRIORITY,
     maxPerType: { ParagraphBlock: 0 },
+    fallback: {
+      minComponents: 4,
+      allowTypes: PRIORITY,
+      useFirstAvailable: true,
+    },
   },
 };
 
@@ -102,6 +124,13 @@ export const SQUARE_CANVAS: CanvasProfile = {
     prefer: ['ResultCard', 'QuoteBlock', 'ChecklistCard'],
     avoid: ['ChapterHeading'],
     maxPerType: { ResultCard: 1, QuoteBlock: 1, ChecklistCard: 1 },
+    // 요약 카드가 전혀 없으면 ChapterHeading 으로라도 채움
+    fallback: {
+      minComponents: 1,
+      allowTypes: ['ResultCard', 'QuoteBlock', 'ChecklistCard', 'ChapterHeading'],
+      preferTypes: ['ResultCard', 'QuoteBlock', 'ChecklistCard'],
+      useFirstAvailable: true,
+    },
   },
 };
 
@@ -118,6 +147,13 @@ export const STORY_CANVAS: CanvasProfile = {
     require: ['ChapterHeading'],
     prefer: ['ResultCard', 'QuoteBlock'],
     maxPerType: { ChapterHeading: 1, ResultCard: 1, QuoteBlock: 1 },
+    // ChapterHeading 이 없거나 부족하면 결과/인용/체크리스트로 채움
+    fallback: {
+      minComponents: 2,
+      allowTypes: ['ChapterHeading', 'ResultCard', 'QuoteBlock', 'ChecklistCard'],
+      preferTypes: ['ChapterHeading', 'ResultCard', 'QuoteBlock'],
+      useFirstAvailable: true,
+    },
   },
 };
 

@@ -94,7 +94,8 @@ export function renderCanvas(
   docTitle: string,
 ): string {
   const css = buildCss(tokens, recipe); // Bento(gridStyle:bento) → BENTO_V2_CSS 포함
-  const selected = selectComponents(all, profile); // 점수 기반 결정론적 큐레이션
+  const result = selectComponents(all, profile); // 점수 기반 결정론적 큐레이션 + 폴백
+  const selected = result.components;
   const inner = selected.map(renderLayoutComponent).join('\n    ');
   const singleCls = profile.singleColumn ? ' canvas-single' : '';
 
@@ -103,8 +104,11 @@ export function renderCanvas(
   const fitClass = `canvas-fit canvas-fit-${fitKey}`;
   const spec = `${profile.width}×${profile.height ?? 'auto'} · ${fitKey.toUpperCase()}`;
 
-  // selector 디버그 마커
+  // selector / fallback 디버그 마커
   const picked = selected.map((c) => c.componentType).join(',');
+  const fallbackAttr = result.fallback
+    ? ` data-fallback="true" data-fallback-reason="${result.reason ?? ''}"`
+    : ' data-fallback="false"';
 
   return `<!DOCTYPE html>
 <html lang="ko">
@@ -118,7 +122,7 @@ ${CANVAS_CSS}
 </style>
 </head>
 <body class="canvas-body">
-  <section class="canvas canvas-${profile.name} ${fitClass}" data-canvas="${profile.name}" data-fit="${fitKey}" data-spec="${spec}" data-selector="${profile.selector.strategy}" data-picked="${picked}">
+  <section class="canvas canvas-${profile.name} ${fitClass}" data-canvas="${profile.name}" data-fit="${fitKey}" data-spec="${spec}" data-selector="${profile.selector.strategy}" data-picked="${picked}"${fallbackAttr}>
     <div class="page-body grid-bento${singleCls}">
     ${inner}
     </div>
