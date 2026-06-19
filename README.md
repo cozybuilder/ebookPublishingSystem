@@ -78,6 +78,10 @@ Markdown 원고를 입력하면 PDF, DOCX, 체크리스트, 인포그래픽, 표
   - 대상 5종: `book.preview.pdf` · `book.modern.pdf` · `book.editorial.pdf` · `book.dashboard.pdf` · `book.bento.pdf`
     (Bento 는 화면은 2열 유지, PDF 는 print 한정 단일컬럼 보정으로 출력)
   - 단일 대상만: `node src/export-pdf.ts --target book.preview.html` (대상은 위 HTML 중 하나)
+- `npm run export:docx` — `output/book.docx` (편집 가능한 흐름형 Word, 직접 OpenXML, 의존성 0)
+  - HTML/PDF 테마 복제가 아니라 워드 편집 구조 우선(제목/본문/인용/체크리스트/표/단계/주의/결과
+    + 이미지 placeholder). v1 은 이미지 실삽입 없음.
+  - 별도 export 트랙 — `build:release`/CI 게이트 미포함. git 비추적(`output/*.docx`).
   - print CSS(@page A4 / 배경·색 출력 / break-inside)는 임시 HTML 에만 주입,
     원본 `book.*.html` 은 변경하지 않음
   - PDF 는 재생성 가능 산출물이라 git 추적 제외(`output/*.pdf`)

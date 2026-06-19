@@ -6,9 +6,10 @@ node_modules
 # 테스트 전용 산출물(실제 output/ 와 분리) — 추적하지 않는다
 tmp/
 
-# 생성 가능한 PNG/PDF 산출물(export 로 재생성) — 추적하지 않는다
+# 생성 가능한 PNG/PDF/DOCX 산출물(export 로 재생성) — 추적하지 않는다
 output/*.png
 output/*.pdf
+output/*.docx
 
 # 챕터별 상세 캔버스(별도 선택 산출물, 챕터 수에 따라 가변) — 추적하지 않는다
 output/canvas.chapter*.html
