@@ -19,7 +19,9 @@
     "test:html": "node test/html-renderer.test.ts",
     "test:theme": "node test/theme-engine.test.ts",
     "test:canvas": "node test/canvas.test.ts",
-    "test:selector": "node test/selector.test.ts"
+    "test:selector": "node test/selector.test.ts",
+    "test:isolation": "node test/output-isolation.test.ts",
+    "clean:test-output": "node -e \"require('node:fs').rmSync('tmp/test-output',{recursive:true,force:true})\""
   },
   "engines": {
     "node": ">=22.6.0"

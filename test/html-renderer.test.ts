@@ -21,8 +21,9 @@ import { DEFAULT_TOKENS } from '../src/design-tokens/default-tokens.ts';
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const projectRoot = resolve(__dirname, '..');
 const samplePath = resolve(projectRoot, 'samples', 'parser-sample.md');
-const fullOut = resolve(projectRoot, 'output', 'book.html');
-const checklistOut = resolve(projectRoot, 'output', 'book.checklist.html');
+// 테스트 산출물은 실제 output/ 과 분리(오염 방지)
+const fullOut = resolve(projectRoot, 'tmp', 'test-output', 'book.html');
+const checklistOut = resolve(projectRoot, 'tmp', 'test-output', 'book.checklist.html');
 
 let passed = 0;
 const failures: string[] = [];
@@ -59,7 +60,7 @@ console.log('HTML Renderer 단위 테스트 실행\n');
 
 // --- 파일 생성 ---
 const fullFromDisk = readFileSync(fullOut, 'utf8');
-check('output/book.html 생성됨', fullFromDisk.length > 0);
+check('tmp/test-output/book.html 생성됨', fullFromDisk.length > 0);
 
 // --- 컨텐츠 포함 ---
 check('HTML: TitleBlock 내용 포함', fullHtml.includes(book.metadata.title));
@@ -82,7 +83,7 @@ check('CSS: Cyan(#1FB6C9) 포함', fullHtml.includes('#1FB6C9'));
 
 // --- 체크리스트 전용 HTML ---
 const checklistFromDisk = readFileSync(checklistOut, 'utf8');
-check('output/book.checklist.html 생성됨', checklistFromDisk.length > 0);
+check('tmp/test-output/book.checklist.html 생성됨', checklistFromDisk.length > 0);
 check('체크리스트 HTML: checklist 내용 포함', checklistHtml.includes('class="checklist"') && checklistHtml.includes('체크 항목 1'));
 check(
   '체크리스트 HTML: checklist 외 카드 라벨 미포함(예: 프롬프트/주의)',

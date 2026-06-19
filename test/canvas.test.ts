@@ -22,7 +22,8 @@ import { resolveThemeByName } from '../src/theme-engine/theme-engine.ts';
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const projectRoot = resolve(__dirname, '..');
 const samplePath = resolve(projectRoot, 'samples', 'parser-sample.md');
-const out = (name: string) => resolve(projectRoot, 'output', name);
+// 테스트 산출물은 실제 output/ 과 분리(오염 방지)
+const out = (name: string) => resolve(projectRoot, 'tmp', 'test-output', name);
 
 let passed = 0;
 const failures: string[] = [];
