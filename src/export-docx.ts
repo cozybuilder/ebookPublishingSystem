@@ -6,13 +6,13 @@
  * 실행: npm run export:docx
  */
 
-import { readFileSync, writeFileSync, mkdirSync, statSync } from 'node:fs';
+import { readFileSync, writeFileSync, mkdirSync, statSync, existsSync } from 'node:fs';
 import { dirname, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { parseBook } from './parser/parser.ts';
 import { buildPages } from './page-builder/page-builder.ts';
 import { mapComponents } from './component-mapper/component-mapper.ts';
-import { renderDocx } from './docx/docx-renderer.ts';
+import { renderDocx, type ImageResolver } from './docx/docx-renderer.ts';
 import { FullBookPDF } from './page-builder/profiles.ts';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
@@ -20,10 +20,20 @@ const projectRoot = resolve(__dirname, '..');
 const inputPath = resolve(projectRoot, 'input', 'book.md');
 const outPath = resolve(projectRoot, 'output', 'book.docx');
 
+// 이미지 슬롯 id → assets/<id>.{png,jpg,jpeg} 파일이 있으면 실삽입, 없으면 placeholder.
+const assetsDir = resolve(projectRoot, 'assets');
+const imageResolver: ImageResolver = (block) => {
+  for (const ext of ['png', 'jpg', 'jpeg'] as const) {
+    const p = resolve(assetsDir, `${block.id}.${ext}`);
+    if (existsSync(p)) return { data: readFileSync(p), ext };
+  }
+  return null;
+};
+
 function main(): void {
   const book = parseBook(readFileSync(inputPath, 'utf8'));
   const components = mapComponents(book, buildPages(book, FullBookPDF)).flatMap((p) => p.components);
-  const docx = renderDocx(components, book.metadata.title);
+  const docx = renderDocx(components, book.metadata.title, imageResolver);
 
   mkdirSync(dirname(outPath), { recursive: true });
   writeFileSync(outPath, docx);

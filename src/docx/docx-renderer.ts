@@ -7,8 +7,26 @@
  */
 
 import { escXml } from './docx-escape.ts';
-import { buildDocx } from './docx-package.ts';
+import { buildDocx, type MediaItem } from './docx-package.ts';
+import { emuExtent, imageDimensions, inlineDrawingParagraph, normalizeExt } from './docx-image.ts';
 import type { Component } from '../types/component.ts';
+
+/**
+ * ImageBlock → 실제 이미지 데이터 해석기.
+ * 파일을 찾으면 {data, ext} 반환, 없으면 null(→ placeholder fallback).
+ */
+export type ImageResolver = (block: { id: string; imageType: string; prompt: string }) => {
+  data: Buffer;
+  ext: string;
+} | null;
+
+/** 렌더링 중 이미지 media/관계를 누적하는 컨텍스트 */
+interface RenderCtx {
+  resolver?: ImageResolver;
+  media: MediaItem[];
+  /** drawing docPr 고유 id 카운터 */
+  docPrSeq: number;
+}
 
 const SECT_PR =
   '<w:p/><w:sectPr><w:pgSz w:w="11906" w:h="16838"/><w:pgMar w:top="1440" w:right="1440" w:bottom="1440" w:left="1440" w:header="708" w:footer="708" w:gutter="0"/></w:sectPr>';
@@ -65,8 +83,29 @@ function tableXml(columns: string[], rows: string[][]): string {
   return `<w:tbl>${tblPr}${headRow}${bodyRows}</w:tbl>`;
 }
 
-/** 단일 Component → DOCX XML 조각 */
-export function componentToXml(c: Component): string {
+/** 이미지 placeholder 문단(이미지 미해석 시 fallback) */
+function imagePlaceholder(c: { id: string; imageType: string; prompt: string }): string {
+  return paragraph(`[IMAGE SLOT: ${c.id} / ${c.imageType} / ${c.prompt}]`, { bordered: true });
+}
+
+/** ImageBlock → inline drawing(해석 성공) 또는 placeholder. media/관계는 ctx 에 누적. */
+function imageXml(c: { id: string; imageType: string; prompt: string }, ctx: RenderCtx): string {
+  const resolved = ctx.resolver?.(c);
+  if (!resolved) return imagePlaceholder(c);
+
+  const ext = normalizeExt(resolved.ext);
+  const index = ctx.media.length + 1; // image1, image2 ...
+  const fileName = `image${index}.${ext}`;
+  const relId = `rId${100 + index}`; // styles=rId1/numbering=rId2 와 충돌 없는 영역
+  ctx.media.push({ fileName, relId, ext, data: resolved.data });
+
+  const { cx, cy } = emuExtent(imageDimensions(resolved.data, ext));
+  ctx.docPrSeq += 1;
+  return inlineDrawingParagraph(ctx.docPrSeq, relId, cx, cy, c.id);
+}
+
+/** 단일 Component → DOCX XML 조각 (이미지 누적용 ctx; 미지정 시 placeholder 경로) */
+export function componentToXml(c: Component, ctx: RenderCtx = { media: [], docPrSeq: 0 }): string {
   switch (c.type) {
     case 'TitleBlock':
       return paragraph(c.text, { style: 'Heading1' });
@@ -98,24 +137,32 @@ export function componentToXml(c: Component): string {
     case 'FAQCard':
       return c.pairs.map((p) => `${labeledParagraph('Q.', p.q)}${labeledParagraph('A.', p.a)}`).join('');
     case 'ImageBlock':
-      return paragraph(`[IMAGE SLOT: ${c.id} / ${c.imageType} / ${c.prompt}]`, { bordered: true });
+      return imageXml(c, ctx);
     default:
       // 안전 fallback: 알 수 없는 컴포넌트는 일반 문단
       return paragraph(String((c as { type?: string }).type ?? ''));
   }
 }
 
-/** Components → document.xml 전체 */
-export function renderDocumentXml(components: Component[]): string {
-  const body = components.map(componentToXml).join('');
-  return (
+/** Components → { document.xml, media } */
+export function renderDocument(components: Component[], resolver?: ImageResolver): { xml: string; media: MediaItem[] } {
+  const ctx: RenderCtx = { resolver, media: [], docPrSeq: 0 };
+  const body = components.map((c) => componentToXml(c, ctx)).join('');
+  const xml =
     '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>\n' +
-    '<w:document xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main">' +
-    `<w:body>${body}${SECT_PR}</w:body></w:document>`
-  );
+    '<w:document xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main" ' +
+    'xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships">' +
+    `<w:body>${body}${SECT_PR}</w:body></w:document>`;
+  return { xml, media: ctx.media };
+}
+
+/** Components → document.xml 전체(이미지 없음 경로, 하위호환) */
+export function renderDocumentXml(components: Component[], resolver?: ImageResolver): string {
+  return renderDocument(components, resolver).xml;
 }
 
 /** Components → .docx Buffer */
-export function renderDocx(components: Component[], title: string): Buffer {
-  return buildDocx(renderDocumentXml(components), title);
+export function renderDocx(components: Component[], title: string, resolver?: ImageResolver): Buffer {
+  const { xml, media } = renderDocument(components, resolver);
+  return buildDocx(xml, title, media);
 }

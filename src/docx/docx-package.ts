@@ -7,9 +7,20 @@
 
 import { crc32 } from 'node:zlib';
 import { escXml } from './docx-escape.ts';
+import { imageContentType, type ImageExt } from './docx-image.ts';
 
 export interface ZipEntry {
   name: string;
+  data: Buffer;
+}
+
+/** document.xml.rels 의 이미지 관계 + word/media 파일 */
+export interface MediaItem {
+  /** 파일명(media/ 내부, 예: image1.png) */
+  fileName: string;
+  /** document.xml 의 r:embed 가 참조하는 관계 id(rIdN) */
+  relId: string;
+  ext: ImageExt;
   data: Buffer;
 }
 
@@ -78,17 +89,27 @@ export function buildZip(entries: ZipEntry[]): Buffer {
 // ===== 정적 OOXML 파트 =====
 const XML_DECL = '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>\n';
 
-const CONTENT_TYPES =
-  XML_DECL +
-  `<Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types">` +
-  `<Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/>` +
-  `<Default Extension="xml" ContentType="application/xml"/>` +
-  `<Override PartName="/word/document.xml" ContentType="application/vnd.openxmlformats-officedocument.wordprocessingml.document.main+xml"/>` +
-  `<Override PartName="/word/styles.xml" ContentType="application/vnd.openxmlformats-officedocument.wordprocessingml.styles+xml"/>` +
-  `<Override PartName="/word/numbering.xml" ContentType="application/vnd.openxmlformats-officedocument.wordprocessingml.numbering+xml"/>` +
-  `<Override PartName="/docProps/core.xml" ContentType="application/vnd.openxmlformats-package.core-properties+xml"/>` +
-  `<Override PartName="/docProps/app.xml" ContentType="application/vnd.openxmlformats-officedocument.extended-properties+xml"/>` +
-  `</Types>`;
+function contentTypes(media: MediaItem[]): string {
+  // 사용된 이미지 확장자별 Default 등록(중복 제거)
+  const extDefaults = new Map<string, string>();
+  for (const m of media) extDefaults.set(m.ext, imageContentType(m.ext));
+  const imageDefaults = [...extDefaults.entries()]
+    .map(([ext, ct]) => `<Default Extension="${ext}" ContentType="${ct}"/>`)
+    .join('');
+  return (
+    XML_DECL +
+    `<Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types">` +
+    `<Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/>` +
+    `<Default Extension="xml" ContentType="application/xml"/>` +
+    imageDefaults +
+    `<Override PartName="/word/document.xml" ContentType="application/vnd.openxmlformats-officedocument.wordprocessingml.document.main+xml"/>` +
+    `<Override PartName="/word/styles.xml" ContentType="application/vnd.openxmlformats-officedocument.wordprocessingml.styles+xml"/>` +
+    `<Override PartName="/word/numbering.xml" ContentType="application/vnd.openxmlformats-officedocument.wordprocessingml.numbering+xml"/>` +
+    `<Override PartName="/docProps/core.xml" ContentType="application/vnd.openxmlformats-package.core-properties+xml"/>` +
+    `<Override PartName="/docProps/app.xml" ContentType="application/vnd.openxmlformats-officedocument.extended-properties+xml"/>` +
+    `</Types>`
+  );
+}
 
 const RELS =
   XML_DECL +
@@ -98,12 +119,22 @@ const RELS =
   `<Relationship Id="rId3" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/extended-properties" Target="docProps/app.xml"/>` +
   `</Relationships>`;
 
-const DOC_RELS =
-  XML_DECL +
-  `<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">` +
-  `<Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/styles" Target="styles.xml"/>` +
-  `<Relationship Id="rId2" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/numbering" Target="numbering.xml"/>` +
-  `</Relationships>`;
+function docRels(media: MediaItem[]): string {
+  const imageRels = media
+    .map(
+      (m) =>
+        `<Relationship Id="${m.relId}" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/image" Target="media/${m.fileName}"/>`,
+    )
+    .join('');
+  return (
+    XML_DECL +
+    `<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">` +
+    `<Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/styles" Target="styles.xml"/>` +
+    `<Relationship Id="rId2" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/numbering" Target="numbering.xml"/>` +
+    imageRels +
+    `</Relationships>`
+  );
+}
 
 const W_NS = 'http://schemas.openxmlformats.org/wordprocessingml/2006/main';
 
@@ -137,21 +168,23 @@ const APP_XML =
   XML_DECL +
   `<Properties xmlns="http://schemas.openxmlformats.org/officeDocument/2006/extended-properties"><Application>Ebook Publishing System</Application></Properties>`;
 
-/** document.xml(본문 XML)과 제목으로 .docx 의 모든 ZIP 엔트리를 구성한다. */
-export function buildDocxEntries(documentXml: string, title: string): ZipEntry[] {
-  return [
-    { name: '[Content_Types].xml', data: Buffer.from(CONTENT_TYPES, 'utf8') },
+/** document.xml(본문 XML)과 제목, 이미지 media 로 .docx 의 모든 ZIP 엔트리를 구성한다. */
+export function buildDocxEntries(documentXml: string, title: string, media: MediaItem[] = []): ZipEntry[] {
+  const entries: ZipEntry[] = [
+    { name: '[Content_Types].xml', data: Buffer.from(contentTypes(media), 'utf8') },
     { name: '_rels/.rels', data: Buffer.from(RELS, 'utf8') },
     { name: 'word/document.xml', data: Buffer.from(documentXml, 'utf8') },
-    { name: 'word/_rels/document.xml.rels', data: Buffer.from(DOC_RELS, 'utf8') },
+    { name: 'word/_rels/document.xml.rels', data: Buffer.from(docRels(media), 'utf8') },
     { name: 'word/styles.xml', data: Buffer.from(STYLES_XML, 'utf8') },
     { name: 'word/numbering.xml', data: Buffer.from(NUMBERING_XML, 'utf8') },
     { name: 'docProps/core.xml', data: Buffer.from(coreXml(title), 'utf8') },
     { name: 'docProps/app.xml', data: Buffer.from(APP_XML, 'utf8') },
   ];
+  for (const m of media) entries.push({ name: `word/media/${m.fileName}`, data: m.data });
+  return entries;
 }
 
 /** 최종 .docx Buffer */
-export function buildDocx(documentXml: string, title: string): Buffer {
-  return buildZip(buildDocxEntries(documentXml, title));
+export function buildDocx(documentXml: string, title: string, media: MediaItem[] = []): Buffer {
+  return buildZip(buildDocxEntries(documentXml, title, media));
 }
