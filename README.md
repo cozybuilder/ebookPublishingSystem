@@ -37,8 +37,8 @@ Markdown 원고를 입력하면 PDF, DOCX, 체크리스트, 인포그래픽, 표
   - PNG 는 재생성 가능한 산출물이라 git 추적 제외(`output/*.png`)
 - `npm run export:pdf` — book HTML → PDF (시스템 Chrome/Edge `--print-to-pdf`, 의존성 0)
   - 사전: `npm run build:html`
-  - v1 대상: `output/book.preview.pdf`, `output/book.modern.pdf`
-    (Bento/Dashboard 는 page-break 보정 후순위 — v1 미포함)
+  - v1 대상: `output/book.preview.pdf`, `output/book.modern.pdf`, `output/book.editorial.pdf`
+    (Bento/Dashboard 는 page-break 보정 후순위 — 아직 미포함)
   - print CSS(@page A4 / 배경·색 출력 / break-inside)는 임시 HTML 에만 주입,
     원본 `book.*.html` 은 변경하지 않음
   - PDF 는 재생성 가능 산출물이라 git 추적 제외(`output/*.pdf`)

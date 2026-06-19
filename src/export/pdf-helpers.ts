@@ -8,6 +8,12 @@
 import { readFileSync } from 'node:fs';
 
 /**
+ * PDF 변환 대상(v1: preview → modern → editorial 순).
+ * Bento/Dashboard 는 page-break 보정 후순위 — 아직 미포함.
+ */
+export const PDF_TARGETS: string[] = ['book.preview.html', 'book.modern.html', 'book.editorial.html'];
+
+/**
  * PDF 변환용 print CSS (v1).
  * - @page: A4 / 16mm 여백
  * - 화면용 카드 장식(그림자/라운드/회색 배경) 제거, 배경/색 출력, break-inside 보호

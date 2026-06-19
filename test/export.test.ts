@@ -9,7 +9,7 @@
 import { findBrowser, BROWSER_CANDIDATES } from '../src/export/browser.ts';
 import { readPngSize } from '../src/export/png-size.ts';
 import { parsePrefix } from '../src/export/args.ts';
-import { injectPrintCss, htmlToPdfName, isPdfBuffer, PRINT_CSS } from '../src/export/pdf-helpers.ts';
+import { injectPrintCss, htmlToPdfName, isPdfBuffer, PRINT_CSS, PDF_TARGETS } from '../src/export/pdf-helpers.ts';
 import {
   resolveDetailHeight,
   isMeasurementValid,
@@ -118,6 +118,11 @@ check('htmlToPdfName: 경로 포함', htmlToPdfName('output/book.preview.html') 
 check('isPdfBuffer: %PDF- → true', isPdfBuffer(Buffer.from('%PDF-1.7\n...')) === true);
 check('isPdfBuffer: 비-PDF → false', isPdfBuffer(Buffer.from('<html>')) === false);
 check('isPdfBuffer: 짧은 버퍼 → false', isPdfBuffer(Buffer.from('%PD')) === false);
+
+// PDF 대상 목록(v1: preview/modern/editorial, Bento/Dashboard 제외)
+check('PDF_TARGETS: preview/modern/editorial 포함', PDF_TARGETS.includes('book.preview.html') && PDF_TARGETS.includes('book.modern.html') && PDF_TARGETS.includes('book.editorial.html'));
+check('PDF_TARGETS: Bento/Dashboard 미포함(후순위)', !PDF_TARGETS.includes('book.bento.html') && !PDF_TARGETS.includes('book.dashboard.html'));
+check('PDF_TARGETS: 모두 .html', PDF_TARGETS.length === 3 && PDF_TARGETS.every((f) => f.endsWith('.html')));
 
 console.log('\n────────────────────────────');
 if (failures.length === 0) {

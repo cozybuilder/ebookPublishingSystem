@@ -20,14 +20,14 @@ import { tmpdir } from 'node:os';
 import { dirname, resolve } from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import { findBrowser, browserNotFoundMessage } from './export/browser.ts';
-import { injectPrintCss, htmlToPdfName, isPdfFile } from './export/pdf-helpers.ts';
+import { injectPrintCss, htmlToPdfName, isPdfFile, PDF_TARGETS } from './export/pdf-helpers.ts';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const projectRoot = resolve(__dirname, '..');
 const out = (name: string) => resolve(projectRoot, 'output', name);
 
-/** v1 변환 대상 HTML 파일명 (preview → modern 순) */
-const TARGETS = ['book.preview.html', 'book.modern.html'];
+/** v1 변환 대상 HTML 파일명 (preview → modern → editorial 순) */
+const TARGETS = PDF_TARGETS;
 
 function toPdf(browser: string, htmlFile: string, tmpDir: string): boolean {
   const srcHtml = out(htmlFile);
