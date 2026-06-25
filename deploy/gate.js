@@ -14,11 +14,22 @@
     if (el) el.style.display = "flex";
   }
 
+  function boot() {
+    if (loading) loading.style.display = "none";
+    if (window.__bootStudio) window.__bootStudio();
+  }
+
   // 1) 데스크톱 전용 게이트 (홈페이지 redirect 는 기기 구분 불가 → 앱에서 처리)
   if (window.matchMedia && window.matchMedia("(max-width: 1179px)").matches) {
     showOnly(mobile);
     return;
   }
+
+  // 1.5) 같은 세션에서 이미 검증됨 → 토큰 없이도 부팅(검증 성공 후 새로고침 허용).
+  //      토큰은 검증 직후 URL 에서 제거되므로, 이 플래그가 없으면 새로고침 시 차단된다.
+  try {
+    if (sessionStorage.getItem("ebook_launched") === "1") { boot(); return; }
+  } catch (e) {}
 
   // 2) 토큰 읽기 (query 우선, hash fallback)
   function readToken() {
@@ -40,11 +51,10 @@
     .then(function (r) { return r.json().catch(function () { return { ok: false }; }); })
     .then(function (d) {
       if (d && d.ok) {
-        // 4) 성공 — 토큰 URL 에서 제거(공유/재사용 방지), 세션 플래그만, studio 부팅
+        // 4) 성공 — 토큰 URL 에서 제거(공유/재사용 방지), 세션 플래그(새로고침 허용), studio 부팅
         try { sessionStorage.setItem("ebook_launched", "1"); } catch (e) {}
         history.replaceState(null, "", location.pathname);
-        if (loading) loading.style.display = "none";
-        if (window.__bootStudio) window.__bootStudio();
+        boot();
       } else {
         showOnly(blocked);
       }

@@ -49,7 +49,8 @@ export default async function handler(req, res) {
   }
 
   const now = Math.floor(Date.now() / 1000);
-  if (claims.app_key !== "ebook") {
+  const appKey = claims.app_key != null ? claims.app_key : claims.appKey; // 홈페이지 토큰 키 표기(app_key/appKey) 호환
+  if (appKey !== "ebook") {
     return res.status(200).json({ ok: false, reason: "wrong_app" });
   }
   if (typeof claims.exp !== "number" || claims.exp < now) {
