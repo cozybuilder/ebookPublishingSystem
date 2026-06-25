@@ -12,6 +12,8 @@ import { fileURLToPath } from 'node:url';
 import { parseBook } from './parser/parser.ts';
 import { renderDocx, type ImageResolver } from './docx/docx-renderer.ts';
 import { resolveImageAsset } from './assets/image-asset-resolver.ts';
+import { resolveCoverDataUri } from './assets/cover-resolver.ts';
+import { loadConfigOverrides } from './front-matter/front-matter-config.ts';
 import { withFrontMatterComponents } from './front-matter/front-matter-apply.ts';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
@@ -28,8 +30,11 @@ const imageResolver: ImageResolver = (block) => {
 
 function main(): void {
   const book = parseBook(readFileSync(inputPath, 'utf8'));
+  // 표지 이미지(있으면 표지 면) — assets/images/cover.* 또는 cover: 메타의 id.
+  const coverImage = resolveCoverDataUri(projectRoot, book.metadata.cover ?? 'cover') ?? undefined;
+  const config = loadConfigOverrides(resolve(projectRoot, 'input', 'book.config.json'));
   // Front Matter(표지/판권/목차/저자 소개/면책) + 본문 (기본 ON)
-  const components = withFrontMatterComponents(book);
+  const components = withFrontMatterComponents(book, { ...config, coverImage });
   const docx = renderDocx(components, book.metadata.title, imageResolver);
 
   mkdirSync(dirname(outPath), { recursive: true });

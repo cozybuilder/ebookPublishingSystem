@@ -16,6 +16,8 @@ export interface FrontMatterMeta {
   description?: string;
   disclaimer: string;
   authorBio: string;
+  /** 표지 이미지 data URI (있으면 표지 면에 full-bleed). 없으면 텍스트 표지. */
+  coverImage?: string;
 }
 
 /** 사용자 override(부분). 미지정 값은 기본값으로 채워진다. */

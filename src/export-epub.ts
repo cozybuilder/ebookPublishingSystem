@@ -12,6 +12,8 @@ import { fileURLToPath } from 'node:url';
 import { createHash } from 'node:crypto';
 import { parseBook } from './parser/parser.ts';
 import { resolveImageAsset } from './assets/image-asset-resolver.ts';
+import { resolveCoverDataUri } from './assets/cover-resolver.ts';
+import { loadConfigOverrides } from './front-matter/front-matter-config.ts';
 import { buildEpubModel, type EpubImageResolver } from './epub/epub-renderer.ts';
 import { buildEpub } from './epub/epub-package.ts';
 
@@ -35,10 +37,13 @@ function stableUuid(seed: string): string {
 function main(): void {
   const book = parseBook(readFileSync(inputPath, 'utf8'));
   const modified = new Date().toISOString().replace(/\.\d+Z$/, 'Z');
+  const coverImage = resolveCoverDataUri(projectRoot, book.metadata.cover ?? 'cover') ?? undefined;
+  const config = loadConfigOverrides(resolve(projectRoot, 'input', 'book.config.json'));
   const model = buildEpubModel(book, {
     uuid: stableUuid(book.metadata.title || 'Untitled Ebook'),
     modified,
     resolver: imageResolver,
+    overrides: { ...config, coverImage },
   });
   const epub = buildEpub(model);
 

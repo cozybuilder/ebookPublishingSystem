@@ -22,6 +22,8 @@ import { DETAIL_CANVAS } from './canvas/canvas-profiles.ts';
 import { chapterDetailHtmlName } from './canvas/chapter-names.ts';
 import { FullBookPDF } from './page-builder/profiles.ts';
 import { resolveThemeByName } from './theme-engine/theme-engine.ts';
+import { resolveImageDataUri } from './assets/cover-resolver.ts';
+import type { ComponentPage } from './types/component.ts';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const projectRoot = resolve(__dirname, '..');
@@ -35,6 +37,21 @@ function resolveInput(): string {
 }
 const inputPath = resolveInput();
 const out = (name: string) => resolve(projectRoot, 'output', name);
+
+// 자산 id → data URI 캐시. ImageBlock 에 실제 이미지를 주입(없으면 placeholder 유지).
+const imageCache = new Map<string, string | null>();
+function embedImages(pages: ComponentPage[]): ComponentPage[] {
+  for (const p of pages) {
+    for (const c of p.components) {
+      if (c.type === 'ImageBlock' && !c.src) {
+        if (!imageCache.has(c.id)) imageCache.set(c.id, resolveImageDataUri(projectRoot, c.id));
+        const src = imageCache.get(c.id);
+        if (src) c.src = src;
+      }
+    }
+  }
+  return pages;
+}
 
 function main(): void {
   const book = parseBook(readFileSync(inputPath, 'utf8'));
@@ -50,7 +67,7 @@ function main(): void {
     const ordinal = ci + 1;
     // 챕터 ordinal 범위로 페이지 제한 → detail selector 로 큐레이션
     const scoped = scopePages(allPages, { scope: 'range', from: { chapter: ordinal }, to: { chapter: ordinal } });
-    const layout = applyLayout(mapComponents(book, scoped), bento.tokens);
+    const layout = applyLayout(embedImages(mapComponents(book, scoped)), bento.tokens);
     const all = layout.flatMap((p) => p.components);
     const html = renderCanvas(all, bento.tokens, bento.recipe, DETAIL_CANVAS, `${title} — Chapter ${ordinal}`);
     const file = chapterDetailHtmlName(ordinal);

@@ -9,6 +9,7 @@
 import { escXml } from './docx-escape.ts';
 import { buildDocx, type MediaItem } from './docx-package.ts';
 import { emuExtent, imageDimensions, inlineDrawingParagraph, normalizeExt } from './docx-image.ts';
+import { fromDataUri } from '../assets/cover-resolver.ts';
 import type { Component } from '../types/component.ts';
 
 /**
@@ -38,6 +39,42 @@ function runs(text: string, bold = false): string {
     .split('\n')
     .map((ln, i) => `<w:r>${rPr}${i > 0 ? '<w:br/>' : ''}<w:t xml:space="preserve">${escXml(ln)}</w:t></w:r>`)
     .join('');
+}
+
+/**
+ * 단락 인라인 변환(==강조==, [[tag:라벨]])을 스타일 런으로. 미포함 시 기존 runs 와 동일.
+ * kind: 'hl'(하이라이트) | 'tag'(태그 칩) | ''(일반).
+ */
+function inlineRuns(text: string): string {
+  const segs: { t: string; kind: 'hl' | 'tag' | '' }[] = [];
+  const re = /==([^=]+?)==|\[\[tag:\s*([^\]]+?)\s*\]\]/g;
+  let last = 0;
+  let m: RegExpExecArray | null;
+  while ((m = re.exec(text)) !== null) {
+    if (m.index > last) segs.push({ t: text.slice(last, m.index), kind: '' });
+    if (m[1] !== undefined) segs.push({ t: m[1], kind: 'hl' });
+    else segs.push({ t: m[2], kind: 'tag' });
+    last = re.lastIndex;
+  }
+  if (last < text.length) segs.push({ t: text.slice(last), kind: '' });
+  const rPrOf = (k: 'hl' | 'tag' | ''): string => {
+    if (k === 'hl') return '<w:rPr><w:highlight w:val="yellow"/></w:rPr>';
+    if (k === 'tag') return '<w:rPr><w:color w:val="2563EB"/><w:shd w:val="clear" w:color="auto" w:fill="EFF6FF"/></w:rPr>';
+    return '';
+  };
+  return segs
+    .map((seg) => {
+      const rPr = rPrOf(seg.kind);
+      return seg.t
+        .split('\n')
+        .map((ln, i) => `<w:r>${rPr}${i > 0 ? '<w:br/>' : ''}<w:t xml:space="preserve">${escXml(ln)}</w:t></w:r>`)
+        .join('');
+    })
+    .join('');
+}
+
+function inlineParagraph(text: string): string {
+  return `<w:p>${inlineRuns(text)}</w:p>`;
 }
 
 interface ParaOpts {
@@ -104,9 +141,25 @@ function imageXml(c: { id: string; imageType: string; prompt: string }, ctx: Ren
   return inlineDrawingParagraph(ctx.docPrSeq, relId, cx, cy, c.id);
 }
 
+/** 표지 이미지(data URI) → 본문 폭 inline drawing. 디코드 실패 시 빈 문자열(표지 텍스트가 대체). */
+function coverImageXml(src: string, ctx: RenderCtx): string {
+  const decoded = fromDataUri(src);
+  if (!decoded) return '';
+  const ext = normalizeExt(decoded.ext);
+  const index = ctx.media.length + 1;
+  const fileName = `image${index}.${ext}`;
+  const relId = `rId${100 + index}`;
+  ctx.media.push({ fileName, relId, ext, data: decoded.data });
+  const { cx, cy } = emuExtent(imageDimensions(decoded.data, ext));
+  ctx.docPrSeq += 1;
+  return inlineDrawingParagraph(ctx.docPrSeq, relId, cx, cy, 'cover');
+}
+
 /** 단일 Component → DOCX XML 조각 (이미지 누적용 ctx; 미지정 시 placeholder 경로) */
 export function componentToXml(c: Component, ctx: RenderCtx = { media: [], docPrSeq: 0 }): string {
   switch (c.type) {
+    case 'CoverImage':
+      return coverImageXml(c.src, ctx);
     case 'TitleBlock':
       return paragraph(c.text, { style: 'Heading1' });
     case 'SubtitleBlock':
@@ -124,7 +177,7 @@ export function componentToXml(c: Component, ctx: RenderCtx = { media: [], docPr
     case 'Disclaimer':
       return paragraph(c.heading, { style: 'Heading2' }) + paragraph(c.text, { style: 'Caption' });
     case 'ParagraphBlock':
-      return paragraph(c.text);
+      return inlineParagraph(c.text);
     case 'QuoteBlock':
       return paragraph(c.text, { style: 'Quote' });
     case 'ChecklistCard':
@@ -136,10 +189,131 @@ export function componentToXml(c: Component, ctx: RenderCtx = { media: [], docPr
       return tableXml(c.columns, c.rows);
     case 'WarningCard':
       return labeledParagraph('주의:', c.text, 'FFF1E6');
-    case 'ResultCard':
-      return labeledParagraph('핵심 결과:', c.text, 'EAF2FB');
+    case 'ResultCard': {
+      const rL: Record<string, string> = { success: '성공:', info: '정보:', warning: '주의:', error: '오류:' };
+      const rT: Record<string, string> = { success: 'F0FDF4', info: 'EFF6FF', warning: 'FFFBEB', error: 'FEF2F2' };
+      const rLabel = c.variant ? rL[c.variant] : '핵심 결과:';
+      const rTint = c.variant ? rT[c.variant] : 'EAF2FB';
+      return labeledParagraph(rLabel, c.text, rTint);
+    }
+    case 'CalloutCard': {
+      const L: Record<string, string> = { info: '정보:', tip: '팁:', note: '노트:' };
+      const T: Record<string, string> = { info: 'EFF6FF', tip: 'F0FDF4', note: 'F5F3FF' };
+      return labeledParagraph(L[c.variant] ?? '정보:', c.text, T[c.variant] ?? 'EFF6FF');
+    }
+    case 'Divider':
+      return '<w:p><w:pPr><w:pBdr><w:bottom w:val="single" w:sz="6" w:space="1" w:color="E5E7EB"/></w:pBdr></w:pPr></w:p>';
+    case 'CodeBlock': {
+      const label = c.lang ? labeledParagraph('코드:', c.lang, 'F3F4F6') : '';
+      const codeRuns = c.code
+        .split('\n')
+        .map((ln, i) => `<w:r><w:rPr><w:rFonts w:ascii="Consolas" w:hAnsi="Consolas"/></w:rPr>${i > 0 ? '<w:br/>' : ''}<w:t xml:space="preserve">${escXml(ln)}</w:t></w:r>`)
+        .join('');
+      return label + `<w:p><w:pPr><w:shd w:val="clear" w:color="auto" w:fill="F8FAFC"/></w:pPr>${codeRuns}</w:p>`;
+    }
     case 'FAQCard':
       return c.pairs.map((p) => `${labeledParagraph('Q.', p.q)}${labeledParagraph('A.', p.a)}`).join('');
+    case 'TimelineCard':
+      return c.items
+        .map((it) => paragraph(it.date, { style: 'Caption' }) + paragraph(it.title, { bold: true }) + (it.desc ? paragraph(it.desc) : ''))
+        .join('');
+    case 'StatsCard':
+      return c.items
+        .map((it) => paragraph(`${it.icon ? it.icon + ' ' : ''}${it.value}`, { bold: true }) + paragraph(it.label, { style: 'Caption' }))
+        .join('');
+    case 'ChartCard': {
+      const n = Math.min(c.labels.length, c.values.length);
+      const head = ['항목', c.unit ? `값 (${c.unit})` : '값'];
+      const rows: string[][] = [];
+      for (let i = 0; i < n; i++) rows.push([c.labels[i], String(c.values[i])]);
+      return (c.title ? paragraph(c.title, { bold: true }) : '') + tableXml(head, rows);
+    }
+    case 'TimelineCardList':
+      // 수직선 그래픽 생략 → 날짜(caption) + 제목(bold) + 설명 목록. date 없으면 생략.
+      return c.items
+        .map(
+          (it) =>
+            (it.date ? paragraph(it.date, { style: 'Caption' }) : '') +
+            paragraph(it.title, { bold: true }) +
+            (it.desc ? paragraph(it.desc) : ''),
+        )
+        .join('');
+    case 'StepperCard': {
+      // 가로 그래픽 대신 번호 목록 + 현재 단계만 음영(◀ 현재). 완료=✓.
+      if (c.steps.length === 0) return '';
+      const cur = c.current;
+      let out = c.steps
+        .map((label, idx) => {
+          const s = idx + 1;
+          const done = s < cur;
+          const isCur = s === cur;
+          const txt = `${s}. ${label}${done ? ' ✓' : ''}${isCur ? ' ◀ 현재' : ''}`;
+          return paragraph(txt, { bold: isCur, shadeFill: isCur ? 'EAF1FB' : undefined });
+        })
+        .join('');
+      if (c.desc) {
+        const curLabel = c.steps[cur - 1] ?? '';
+        out += paragraph(`${cur}단계: ${curLabel}`, { bold: true });
+        out += paragraph(c.desc, { style: 'Caption' });
+      }
+      return out;
+    }
+    case 'ProgressCard':
+      // 막대 표현이 제한적 → "라벨 — NN%(완료)" 텍스트 + 음영. 첫 항목=전체(굵게).
+      return c.items
+        .map((it, i) => {
+          const done = it.percent >= 100;
+          const txt = `${it.label} — ${done ? '완료 ✓' : it.percent + '%'}`;
+          return paragraph(txt, { bold: i === 0 || done, shadeFill: done ? 'E6F4EA' : 'EAF1FB' });
+        })
+        .join('');
+    case 'FeatureCard': {
+      const head = paragraph(`${c.icon ? c.icon + ' ' : ''}${c.title}`, { bold: true });
+      const desc = c.desc ? paragraph(c.desc) : '';
+      const items = c.items.map((it) => paragraph(`✓ ${it}`)).join('');
+      return head + desc + items;
+    }
+    case 'ComparisonCard':
+      return tableXml(c.columns, c.rows);
+    case 'AlertCard': {
+      const L: Record<string, string> = { success: '성공:', info: '정보:', warning: '경고:', error: '오류:' };
+      const T: Record<string, string> = { success: 'EAF7EE', info: 'EAF1FB', warning: 'FFF7E6', error: 'FDECEC' };
+      return labeledParagraph(L[c.variant] ?? '정보:', c.text, T[c.variant] ?? 'EAF1FB');
+    }
+    case 'ProcessCard':
+      return c.items
+        .map((it) => paragraph(`${it.icon ? it.icon + ' ' : ''}${it.title}`, { bold: true }) + (it.desc ? paragraph(it.desc, { style: 'Caption' }) : ''))
+        .join('');
+    case 'RatingCard': {
+      const filled = Math.round(c.value);
+      const stars = '★'.repeat(Math.max(0, filled)) + '☆'.repeat(Math.max(0, c.max - filled));
+      return paragraph(`${stars}  ${c.value} / ${c.max}${c.label ? '  ' + c.label : ''}`, { bold: true });
+    }
+    case 'TagGroup':
+    case 'ChipGroup':
+      return paragraph(c.items.join('   ·   '));
+    case 'TreeCard':
+      return c.items.map((it) => paragraph(`${'    '.repeat(it.depth)}└ ${it.label}`)).join('');
+    case 'PaginationCard':
+      return paragraph(`${c.current} / ${c.total} 페이지`, { style: 'Caption' });
+    case 'EmptyState':
+      return paragraph(`${c.icon ? c.icon + ' ' : ''}${c.title}`, { bold: true }) + (c.desc ? paragraph(c.desc, { style: 'Caption' }) : '');
+    case 'SearchBar':
+      return paragraph(`검색: ${c.query || c.placeholder}`, { shadeFill: 'F3F4F6' });
+    case 'TooltipBox':
+      return labeledParagraph(c.label ? `${c.label}:` : '설명:', c.text, 'F9FAFB');
+    case 'PopoverBox':
+      return (c.title ? paragraph(c.title, { bold: true }) : '') + paragraph(c.text, { shadeFill: 'F9FAFB' });
+    case 'ModalCard':
+      return paragraph(c.title, { bold: true, shadeFill: 'EAF1FB' }) + paragraph(c.text, { shadeFill: 'EAF1FB' });
+    case 'DrawerCard':
+      return paragraph(c.title, { bold: true, shadeFill: 'EAF1FB' }) + paragraph(c.text, { shadeFill: 'EAF1FB' });
+    case 'SkeletonCard':
+      return paragraph('[ 콘텐츠 자리 (준비 중) ]', { style: 'Caption', shadeFill: 'F3F4F6' });
+    case 'FileCard': {
+      const sub = [c.fileType, c.size].filter((s) => s !== '').join(' · ');
+      return paragraph(`📄 ${c.name}`, { bold: true }) + (sub ? paragraph(sub, { style: 'Caption' }) : '');
+    }
     case 'ImageBlock':
       return imageXml(c, ctx);
     default:

@@ -6,6 +6,12 @@ node_modules
 # 테스트 전용 산출물(실제 output/ 와 분리) — 추적하지 않는다
 tmp/
 
+# 프로젝트별 작업 공간(사용자 데이터: 원고/이미지/산출물) — 추적하지 않는다
+projects/
+
+# GUI 가 프로젝트 설정을 동기화하는 스크래치 파일 — 추적하지 않는다
+input/book.config.json
+
 # 생성 가능한 PNG/PDF/DOCX/EPUB 산출물(export 로 재생성) — 추적하지 않는다
 output/*.png
 output/*.pdf

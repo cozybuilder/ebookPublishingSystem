@@ -102,7 +102,67 @@ function blockToComponent(block: AST.Block): Component {
     case 'warning':
       return { type: 'WarningCard', text: block.text };
     case 'result':
-      return { type: 'ResultCard', text: block.text };
+      return { type: 'ResultCard', text: block.text, variant: block.variant };
+    case 'callout':
+      return { type: 'CalloutCard', variant: block.variant, text: block.text };
+    case 'divider':
+      return { type: 'Divider' };
+    case 'code':
+      return { type: 'CodeBlock', lang: block.lang, code: block.code };
+    case 'timeline':
+      return { type: 'TimelineCard', items: block.items };
+    case 'stats':
+      return { type: 'StatsCard', items: block.items };
+    case 'chart':
+      return {
+        type: 'ChartCard',
+        chartType: block.chartType,
+        title: block.title,
+        unit: block.unit,
+        center: block.center,
+        labels: block.labels,
+        values: block.values,
+      };
+    case 'feature':
+      return { type: 'FeatureCard', icon: block.icon, title: block.title, desc: block.desc, items: block.items };
+    case 'progress':
+      return { type: 'ProgressCard', items: block.items };
+    case 'stepper':
+      return { type: 'StepperCard', current: block.current, desc: block.desc, steps: block.steps };
+    case 'timeline-card':
+      return { type: 'TimelineCardList', items: block.items };
+    case 'compare-card':
+      return { type: 'ComparisonCard', columns: block.columns, highlight: block.highlight, rows: block.rows };
+    case 'alert':
+      return { type: 'AlertCard', variant: block.variant, text: block.text };
+    case 'process':
+      return { type: 'ProcessCard', items: block.items };
+    case 'rating':
+      return { type: 'RatingCard', value: block.value, max: block.max, label: block.label };
+    case 'tags':
+      return { type: 'TagGroup', items: block.items };
+    case 'chips':
+      return { type: 'ChipGroup', items: block.items };
+    case 'tree':
+      return { type: 'TreeCard', items: block.items };
+    case 'pagination':
+      return { type: 'PaginationCard', current: block.current, total: block.total };
+    case 'empty':
+      return { type: 'EmptyState', icon: block.icon, title: block.title, desc: block.desc };
+    case 'search':
+      return { type: 'SearchBar', placeholder: block.placeholder, query: block.query };
+    case 'tooltip':
+      return { type: 'TooltipBox', label: block.label, text: block.text };
+    case 'popover':
+      return { type: 'PopoverBox', title: block.title, text: block.text };
+    case 'modal':
+      return { type: 'ModalCard', title: block.title, text: block.text };
+    case 'drawer':
+      return { type: 'DrawerCard', title: block.title, text: block.text };
+    case 'skeleton':
+      return { type: 'SkeletonCard', lines: block.lines };
+    case 'file':
+      return { type: 'FileCard', name: block.name, size: block.size, fileType: block.fileType };
     case 'image':
       return { type: 'ImageBlock', id: block.id, imageType: block.imageType, prompt: block.prompt };
   }

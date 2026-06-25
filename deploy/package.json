@@ -1,0 +1,7 @@
+{
+  "name": "cozybuilder-ebook-deploy",
+  "private": true,
+  "version": "1.0.0",
+  "type": "module",
+  "description": "Ebook standalone deploy root (static studio + launch-token verify API)"
+}

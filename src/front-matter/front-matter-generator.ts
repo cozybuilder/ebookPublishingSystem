@@ -30,6 +30,7 @@ export function resolveFrontMatterMeta(book: Book, overrides: FrontMatterOverrid
     description: overrides.description ?? book.metadata.subtitle,
     disclaimer: overrides.disclaimer ?? DEFAULT_DISCLAIMER,
     authorBio: overrides.authorBio ?? DEFAULT_AUTHOR_BIO,
+    coverImage: overrides.coverImage,
   };
 }
 
@@ -40,6 +41,11 @@ function tocOf(book: Book): TocEntry[] {
 /** 메타 → Front Matter 컴포넌트 시퀀스(표지 → 판권 → 목차 → 저자 소개 → 면책) */
 export function frontMatterComponents(meta: FrontMatterMeta, toc: TocEntry[]): Component[] {
   const components: Component[] = [];
+
+  // 0) 표지 이미지(있을 때만) — 표지 면 맨 앞. 없으면 기존 텍스트 표지 그대로(무회귀).
+  if (meta.coverImage) {
+    components.push({ type: 'CoverImage', src: meta.coverImage, alt: meta.title });
+  }
 
   // 1) 표지
   components.push({ type: 'TitleBlock', text: meta.title });

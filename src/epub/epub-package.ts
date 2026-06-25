@@ -30,6 +30,8 @@ export interface EpubMediaItem {
   file: string;
   mediaType: string;
   data: Buffer;
+  /** OPF manifest properties (예: 'cover-image'). 표지 이미지에만 지정. */
+  properties?: string;
 }
 
 export interface EpubModel {
@@ -46,6 +48,8 @@ export interface EpubModel {
   media: EpubMediaItem[];
   /** nav 목차 (href 는 OEBPS 기준 상대경로) */
   nav: { href: string; label: string }[];
+  /** 표지 이미지 media id (있으면 OPF 에 EPUB2 호환 <meta name="cover"> 추가). */
+  coverImageId?: string;
 }
 
 /** XHTML 문서 한 편을 감싼다(text/ 폴더 기준 → CSS 는 ../styles/book.css). */
@@ -80,7 +84,8 @@ export function contentOpf(model: EpubModel): string {
     manifest.push(`<item id="${escXml(d.id)}" href="${escXml(d.file)}" media-type="application/xhtml+xml"/>`);
   }
   for (const m of model.media) {
-    manifest.push(`<item id="${escXml(m.id)}" href="${escXml(m.file)}" media-type="${escXml(m.mediaType)}"/>`);
+    const props = m.properties ? ` properties="${escXml(m.properties)}"` : '';
+    manifest.push(`<item id="${escXml(m.id)}" href="${escXml(m.file)}" media-type="${escXml(m.mediaType)}"${props}/>`);
   }
   const spine = model.docs.map((d) => `<itemref idref="${escXml(d.id)}"/>`).join('');
   return (
@@ -94,6 +99,7 @@ export function contentOpf(model: EpubModel): string {
     `<dc:language>${escXml(model.lang)}</dc:language>` +
     `<dc:creator>${escXml(model.author)}</dc:creator>` +
     `<meta property="dcterms:modified">${escXml(model.modified)}</meta>` +
+    (model.coverImageId ? `<meta name="cover" content="${escXml(model.coverImageId)}"/>` : '') +
     '</metadata>' +
     `<manifest>${manifest.join('')}</manifest>` +
     `<spine>${spine}</spine>` +

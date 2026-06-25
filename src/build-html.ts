@@ -23,6 +23,9 @@ import { renderHtml } from './html-renderer/html-renderer.ts';
 import { FullBookPDF, ChecklistPDF, KmongPreviewPDF } from './page-builder/profiles.ts';
 import { previewComponents } from './preview-components.ts';
 import { withFrontMatterPages } from './front-matter/front-matter-apply.ts';
+import { resolveCoverDataUri, resolveImageDataUri } from './assets/cover-resolver.ts';
+import { loadConfigOverrides } from './front-matter/front-matter-config.ts';
+import type { FrontMatterOverrides } from './front-matter/front-matter-types.ts';
 import {
   normalizeThemeName,
   resolveThemeByName,
@@ -45,13 +48,38 @@ function parseThemeArg(): string | undefined {
   return undefined;
 }
 
-function render(book: Book, profile: OutputProfile, theme: ResolvedTheme, docTitle: string): string {
+// 자산 id → data URI 캐시(같은 이미지를 테마별 렌더마다 재인코딩하지 않도록).
+const imageCache = new Map<string, string | null>();
+function imageSrcFor(id: string): string | undefined {
+  if (!imageCache.has(id)) imageCache.set(id, resolveImageDataUri(projectRoot, id));
+  return imageCache.get(id) ?? undefined;
+}
+/** ImageBlock 에 실제 이미지(data URI)를 주입. 자산 없으면 placeholder 슬롯 유지(무회귀). */
+function embedImages(pages: ComponentPage[]): ComponentPage[] {
+  for (const p of pages) {
+    for (const c of p.components) {
+      if (c.type === 'ImageBlock' && !c.src) {
+        const src = imageSrcFor(c.id);
+        if (src) c.src = src;
+      }
+    }
+  }
+  return pages;
+}
+
+function render(
+  book: Book,
+  profile: OutputProfile,
+  theme: ResolvedTheme,
+  docTitle: string,
+  frontMatter: FrontMatterOverrides = {},
+): string {
   // componentSelector 가 지정된 프로파일만 선별 경로(미지정 → 기존 전체 출력 경로 유지).
   if (profile.componentSelector) {
     // Page range → blockLimit → Component Selector (공용 헬퍼)
     const items = previewComponents(book, profile);
     const page: ComponentPage = { type: 'ContentPage', components: items };
-    const layout = applyLayout([page], theme.tokens);
+    const layout = applyLayout(embedImages([page]), theme.tokens);
     return renderHtml(
       layout,
       theme.tokens,
@@ -64,12 +92,12 @@ function render(book: Book, profile: OutputProfile, theme: ResolvedTheme, docTit
 
   // FullBook: Front Matter(표지/판권/목차/저자 소개/면책) + 본문 (기본 ON)
   if (profile.name === 'FullBookPDF') {
-    const layout = applyLayout(withFrontMatterPages(book), theme.tokens);
+    const layout = applyLayout(embedImages(withFrontMatterPages(book, frontMatter)), theme.tokens);
     return renderHtml(layout, theme.tokens, docTitle, theme.recipe);
   }
 
   // 그 외(예: ChecklistPDF) — Front Matter 미적용, 기존 경로 유지
-  const layout = applyLayout(mapComponents(book, buildPages(book, profile)), theme.tokens);
+  const layout = applyLayout(embedImages(mapComponents(book, buildPages(book, profile))), theme.tokens);
   return renderHtml(layout, theme.tokens, docTitle, theme.recipe);
 }
 
@@ -83,6 +111,14 @@ function main(): void {
   const book = parseBook(readFileSync(inputPath, 'utf8'));
   const title = book.metadata.title;
 
+  // 표지 이미지(assets/images/cover.png|jpg, 또는 cover: 메타의 id) — 있으면 표지 면에 적용.
+  const coverImage = resolveCoverDataUri(projectRoot, book.metadata.cover ?? 'cover') ?? undefined;
+  // 책 기본정보(저작권/발행/저자 등) — 프로젝트 설정(input/book.config.json)이 있으면 사용자 값 우선.
+  const config = loadConfigOverrides(resolve(projectRoot, 'input', 'book.config.json'));
+  const fm: FrontMatterOverrides = { ...config, coverImage };
+  if (coverImage) console.log('  표지 이미지: 적용됨 (cover 자산 발견)');
+  if (Object.keys(config).length > 0) console.log(`  책 정보 설정 적용: ${Object.keys(config).join(', ')}`);
+
   const forced = normalizeThemeName(parseThemeArg());
 
   // 메인 출력: --theme 강제값 우선, 없으면 프로파일 기본 테마(현재 ModernGlass)
@@ -91,7 +127,7 @@ function main(): void {
 
   console.log('✓ HTML 빌드 완료 (Theme Engine 연동, default=ModernGlass)');
   console.log(`  입력 : ${inputPath}`);
-  write(out('book.html'), render(book, FullBookPDF, fullTheme, title), `[FullBookPDF / ${fullTheme.name}]`);
+  write(out('book.html'), render(book, FullBookPDF, fullTheme, title, fm), `[FullBookPDF / ${fullTheme.name}]`);
   write(
     out('book.checklist.html'),
     render(book, ChecklistPDF, checklistTheme, `${title} — 체크리스트`),
@@ -102,19 +138,19 @@ function main(): void {
   const modern = resolveThemeByName('ModernGlass');
   write(
     out('book.modern.html'),
-    render(book, FullBookPDF, modern, `${title} (Modern Glass)`),
+    render(book, FullBookPDF, modern, `${title} (Modern Glass)`, fm),
     '[FullBookPDF / ModernGlass]',
   );
 
   // Bento 검수용 명시 출력(항상 생성)
   const bento = resolveThemeByName('Bento');
-  write(out('book.bento.html'), render(book, FullBookPDF, bento, `${title} (Bento)`), '[FullBookPDF / Bento]');
+  write(out('book.bento.html'), render(book, FullBookPDF, bento, `${title} (Bento)`, fm), '[FullBookPDF / Bento]');
 
   // Editorial 검수용 명시 출력(항상 생성)
   const editorial = resolveThemeByName('Editorial');
   write(
     out('book.editorial.html'),
-    render(book, FullBookPDF, editorial, `${title} (Editorial)`),
+    render(book, FullBookPDF, editorial, `${title} (Editorial)`, fm),
     '[FullBookPDF / Editorial]',
   );
 
@@ -122,7 +158,7 @@ function main(): void {
   const dashboard = resolveThemeByName('Dashboard');
   write(
     out('book.dashboard.html'),
-    render(book, FullBookPDF, dashboard, `${title} (Dashboard)`),
+    render(book, FullBookPDF, dashboard, `${title} (Dashboard)`, fm),
     '[FullBookPDF / Dashboard]',
   );
 

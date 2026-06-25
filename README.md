@@ -1,20 +1,85 @@
 # Ebook Publishing System
 
-## 프로젝트 목적
+## 빠른 시작 (5분)
 
-Markdown 원고를 입력하면 PDF, DOCX, 체크리스트, 인포그래픽, 표, Before/After,
-판권 페이지, 크몽용 미리보기, 상세페이지 이미지까지 자동 생성하는 **전자책 출판 시스템**을 구축한다.
+1. **원고 작성** — `input/book.md` 에 Markdown 원고를 씁니다. (예제 원고가 이미 들어 있습니다)
+2. **이미지 넣기** — `assets/images/<슬롯id>.png` (선택 — 없으면 자리표시자로 처리)
+3. **표지 이미지** — `assets/images/cover.png`(또는 `.jpg`) 를 넣으면 PDF/EPUB 표지가 그 이미지로 채워집니다. (선택 — 없으면 텍스트 표지)
+4. **빌드** — `npm run build`
 
-목표는 전자책 한 권 제작이 아니라, 전자책을 지속적으로 생산할 수 있는 시스템 구축이다.
+끝. → `output/book.pdf` · `output/book.docx` · `output/book.epub`
 
-## 기본 경로
+> 지금 바로 `npm run build` 를 실행하면, 들어 있는 예제 원고로 결과물이 생성됩니다.
+> 작성 문법은 예제 `input/book.md` 가 그대로 설명서 역할을 합니다.
 
-- 기본 입력 파일 : `input/book.md`
-- 기본 출력 폴더 : `output`
+## 데스크톱 앱 (GUI)
+
+터미널 없이 버튼으로 쓰고 싶다면:
+
+1. 최초 1회 설치 : `npm install`
+2. 실행 : `npm run gui`
+3. 화면의 **8단계 Wizard** 를 차례대로 따라간다:
+   ① AI로 원고 만들기(AI 원고 작성 프롬프트 복사) → ② 프로젝트 선택/만들기 → ③ 미리보기 생성 → ④ 이미지 만들기(프롬프트 복사)
+   → ⑤ 이미지 넣기 → ⑥ 최종 확인 → ⑦ 전자책 만들기 → ⑧ 결과 열기
+
+> **프로젝트별 작업공간**: 책마다 `projects/<이름>/{book.md, images/, output/}` 로 분리되어, 이전 책의 이미지·결과물이 다음 책에 섞이지 않는다(하나의 책 = 하나의 프로젝트). 첫 실행 시 기존 작업은 자동으로 프로젝트로 흡수된다.
+
+> GUI 는 엔진을 재구현하지 않고 빌드 흐름을 실행만 한다(Electron, 데스크톱 환경 필요).
+> 원고/이미지를 고르지 않으면 기본값(`input/book.md`, `assets/images/`)을 사용한다.
+> **③ 미리보기**는 원고만으로 HTML 을 만들어 구조를 먼저 확인한다(이미지 없으면 자리표시자).
+> **④ 이미지 만들기**는 원고의 이미지 블록을 분석해 파일명·권장 크기·생성 프롬프트를 보여주고 복사하게 한다.
+> **점검**은 원고가 올바른지, 표지(`cover.png`)·본문 이미지가 준비됐는지 확인한다(CLI: `npm run preflight`).
+> **⑦ 전자책 만들기**는 `build:all`(PDF·출판용 PDF·DOCX·EPUB·HTML + 크몽 자료)을 실행하고 산출물 생성 여부를 검증한다.
+
+> 결과물은 `output/` 에 보관된다. (개발용 `npm test` 를 실행하면 비워지니, 배포 파일은 빌드 후 화면에서 바로 확인·복사한다.)
+
+## 제품 목적·방향
+
+Markdown 원고 + 이미지를 입력하면 상품 수준의 전자책(PDF/DOCX/EPUB)으로 **조립·완성**하는 시스템.
+
+- **기본 = Upload Mode** : 사용자가 원고/이미지를 직접 준비. **운영비 0원, API 의존성 없음.**
+- **선택 = API Auto Mode** : (추후 Premium) 사용자 API Key 입력 시에만 자동 생성.
+- 기준 문서: [GLOBAL_CONSTITUTION.md](GLOBAL_CONSTITUTION.md) · [PROJECT_CONSTITUTION.md](PROJECT_CONSTITUTION.md)
+
+## 출력 구조
+
+```text
+input/
+  book.md            ← 원고 (사용자 준비)
+assets/
+  images/
+    IMG-001.png      ← 이미지 (사용자 준비, 슬롯 id 기준)
+output/
+  book.pdf           ← 대표 PDF (= modern 테마 복사본, 최종본)
+  book.docx          ← 편집용 Word
+  book.epub          ← 전자책(EPUB 3)
+  kmong-preview.pdf  ← 크몽 판매용 미리보기 PDF (구매자 샘플)
+  detail-images/     ← 크몽 상세페이지용 이미지 묶음 (대표/홍보/챕터별 PNG)
+  book.modern.pdf    ← PDF (테마 4종: modern/editorial/dashboard/bento)
+  book.editorial.pdf
+  book.dashboard.pdf
+  book.bento.pdf
+  book.preview.pdf   ← 미리보기 PDF 원본
+  book.html …        ← HTML 미리보기(테마별)
+  missing-images.txt ← 누락 이미지 슬롯 안내 (있을 때)
+```
+
+> **크몽 판매 자료** : `npm run build` 한 번에 전자책(book.pdf/docx/epub) + 판매 자료(kmong-preview.pdf, detail-images/)까지 자동 준비된다.
+
+> **대표 PDF** : `book.pdf` 가 최종본이다(= modern 테마 복사본). editorial/dashboard/bento 는 선택 테마로 그대로 유지.
+> **누락 이미지** : 빌드 시 `assets/images/` 에 없는 이미지 슬롯을 콘솔 + `output/missing-images.txt` 로 안내한다. 누락이 있어도 빌드는 실패하지 않고 플레이스홀더로 진행된다.
+
+## 명령
+
+- **빌드(전체 출력)** : `npm run build`  (= `npm run build:release`)
+- 파싱만(AST 확인) : `npm run parse`
+- 테스트 : `npm test`
+
+> API Key 없이 모든 빌드·테스트가 정상 동작한다(기본 Upload Mode는 API 무의존).
 
 ## 현재 상태
 
-- **v0.1** — 초기 구조 세팅 단계
+- **v0.1** — Upload Mode 제품 플로우 정비 단계
 
 ## 실행 규칙
 
@@ -154,6 +219,8 @@ Markdown 원고를 입력하면 PDF, DOCX, 체크리스트, 인포그래픽, 표
 - **기본 출력에 포함(기본 ON)**: `book.html` 및 테마별 HTML(modern/bento/editorial/dashboard),
   이들로부터 만드는 PDF, 그리고 `book.docx` 는 앞에 표지→판권→목차→저자 소개→면책이 붙고 본문이 이어진다.
   (page-builder 자동 앞페이지를 Front Matter 산출로 대체 — 중복 없음.)
+- **표지 이미지(선택)**: `assets/images/cover.png|jpg|jpeg`(또는 원고 메타 `cover: <id>` 로 다른 자산 id 지정)가 있으면
+  표지 면을 그 이미지로 full-bleed 채운다(PDF는 A4 전면, EPUB은 `cover.xhtml` + `cover-image` 자산으로 리더 썸네일 연동, DOCX는 표지 그림). 없으면 기존 텍스트 표지(그라데이션) 유지 — 무회귀.
 - **제외**: 캔버스/마케팅 이미지(canvas.*, preview promo), `book.preview.*`(요약 미리보기),
   `book.checklist.*`, Image Prompt 매니페스트 — 본문/요약 중심 유지.
 - 목차(toc)는 EPUB 연계를 위해 구조로 보존. 향후 frontmatter YAML(`---` 메타블록) 도입 시

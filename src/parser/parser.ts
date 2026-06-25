@@ -17,6 +17,8 @@ import type {
   CompareBlock,
   FaqPair,
   Metadata,
+  ResultVariant,
+  AlertVariant,
   TableBlock,
 } from '../types/ast.ts';
 
@@ -29,8 +31,39 @@ const CONTAINER_BLOCK_NAMES = new Set<string>([
   'faq',
   'warning',
   'result',
+  'info',
+  'tip',
+  'note',
+  'divider',
+  'timeline',
+  'stats',
+  'chart',
+  'feature',
+  'progress',
+  'stepper',
+  'timeline-card',
+  'compare-card',
+  'alert',
+  'process',
+  'rating',
+  'tags',
+  'chips',
+  'tree',
+  'pagination',
+  'empty',
+  'search',
+  'tooltip',
+  'popover',
+  'modal',
+  'drawer',
+  'skeleton',
+  'file',
   'image',
 ]);
+
+const HR_RE = /^(-{3,}|\*{3,}|_{3,})$/;
+const FENCE_OPEN_RE = /^```([\w+-]*)\s*$/;
+const FENCE_CLOSE_RE = /^```\s*$/;
 
 const CHAPTER_RE = /^##\s+Chapter\s+(\d+)\.\s*(.*)$/i;
 const CONTAINER_OPEN_RE = /^:::\s*([a-zA-Z-]+)\s*$/;
@@ -51,6 +84,23 @@ function splitRow(line: string): string[] {
   return stripBullet(line)
     .split(',')
     .map((c) => c.trim());
+}
+
+/** 라벨 목록 파싱(태그/칩): '- 라벨' 불릿 또는 쉼표 구분 모두 허용. */
+function parseLabelList(lines: string[]): string[] {
+  const out: string[] = [];
+  for (const line of lines) {
+    if (line.trim() === '') continue;
+    if (isBulletLine(line)) {
+      out.push(stripBullet(line));
+      continue;
+    }
+    for (const part of line.split(',')) {
+      const p = part.trim();
+      if (p !== '') out.push(p);
+    }
+  }
+  return out;
 }
 
 function stripBullet(line: string): string {
@@ -160,8 +210,383 @@ function buildContainerBlock(name: string, body: string[]): Block {
       return { type: 'prompt', text: body.join('\n').trim() };
     case 'warning':
       return { type: 'warning', text: body.join('\n').trim() };
-    case 'result':
-      return { type: 'result', text: body.join('\n').trim() };
+    case 'result': {
+      // 첫 비어있지 않은 줄이 `variant: success|info|warning|error` 면 변형으로 처리.
+      // (선언이 없으면 기존 동작 그대로 — 회귀 0)
+      const lines = [...body];
+      let variant: ResultVariant | undefined;
+      const firstIdx = lines.findIndex((l) => l.trim() !== '');
+      if (firstIdx !== -1) {
+        const kv = splitKeyValue(lines[firstIdx]);
+        if (kv && kv.key === 'variant') {
+          const v = kv.value.trim().toLowerCase();
+          if (v === 'success' || v === 'info' || v === 'warning' || v === 'error') {
+            variant = v;
+            lines.splice(0, firstIdx + 1);
+          }
+        }
+      }
+      return { type: 'result', text: lines.join('\n').trim(), variant };
+    }
+    case 'info':
+    case 'tip':
+    case 'note':
+      return { type: 'callout', variant: name, text: body.join('\n').trim() };
+    case 'divider':
+      return { type: 'divider' };
+
+    case 'timeline': {
+      const items: { date: string; title: string; desc: string }[] = [];
+      let chunk: string[] = [];
+      const pushChunk = () => {
+        if (chunk.length === 0) return;
+        items.push({
+          date: (chunk[0] ?? '').trim(),
+          title: (chunk[1] ?? '').trim(),
+          desc: chunk.slice(2).map((s) => s.trim()).join(' '),
+        });
+        chunk = [];
+      };
+      for (const line of body) {
+        if (line.trim() === '') pushChunk();
+        else chunk.push(line);
+      }
+      pushChunk();
+      return { type: 'timeline', items };
+    }
+
+    case 'stats': {
+      const items: { icon: string; value: string; label: string }[] = [];
+      let cur: { icon: string; value: string; label: string } | null = null;
+      for (const line of body) {
+        if (line.trim() === '') {
+          if (cur) {
+            items.push(cur);
+            cur = null;
+          }
+          continue;
+        }
+        const kv = splitKeyValue(line.trim());
+        if (!kv) continue;
+        if (!cur) cur = { icon: '', value: '', label: '' };
+        if (kv.key === 'icon') cur.icon = kv.value;
+        else if (kv.key === 'value') cur.value = kv.value;
+        else if (kv.key === 'label') cur.label = kv.value;
+      }
+      if (cur) items.push(cur);
+      return { type: 'stats', items };
+    }
+
+    case 'chart': {
+      let chartType = 'bar';
+      let title = '';
+      let unit = '';
+      let center = '';
+      let labels: string[] = [];
+      let values: number[] = [];
+      for (const line of nonEmpty) {
+        const kv = splitKeyValue(line);
+        if (!kv) continue;
+        if (kv.key === 'type') chartType = kv.value;
+        else if (kv.key === 'title') title = kv.value;
+        else if (kv.key === 'unit') unit = kv.value;
+        else if (kv.key === 'center') center = kv.value;
+        else if (kv.key === 'labels') labels = kv.value.split(',').map((s) => s.trim()).filter((s) => s !== '');
+        else if (kv.key === 'values') values = kv.value.split(',').map((s) => Number(s.trim())).filter((nv) => !Number.isNaN(nv));
+      }
+      return { type: 'chart', chartType, title, unit, center, labels, values };
+    }
+
+    case 'feature': {
+      // icon/title/desc = key-value, '- ' 불릿 = 체크리스트 항목 (title 외 모두 선택)
+      let icon = '';
+      let title = '';
+      let desc = '';
+      const items: string[] = [];
+      for (const line of nonEmpty) {
+        if (isBulletLine(line)) {
+          items.push(stripBullet(line));
+          continue;
+        }
+        const kv = splitKeyValue(line);
+        if (!kv) continue;
+        if (kv.key === 'icon') icon = kv.value;
+        else if (kv.key === 'title') title = kv.value;
+        else if (kv.key === 'desc') desc = kv.value;
+      }
+      return { type: 'feature', icon, title, desc, items };
+    }
+
+    case 'progress': {
+      // 각 줄 = `라벨: 퍼센트`. 첫 항목=전체 진행률. 라벨은 한글 가능하므로
+      // splitKeyValue(ASCII 키 전용) 대신 첫 콜론 기준으로 직접 분리. 0~100 clamp.
+      const items: { label: string; percent: number }[] = [];
+      for (const line of nonEmpty) {
+        const idx = line.indexOf(':');
+        if (idx <= 0) continue;
+        const label = line.slice(0, idx).trim();
+        const n = Number(line.slice(idx + 1).replace('%', '').trim());
+        if (label === '' || Number.isNaN(n)) continue;
+        const percent = Math.max(0, Math.min(100, n));
+        items.push({ label, percent });
+      }
+      return { type: 'progress', items };
+    }
+
+    case 'stepper': {
+      // current/desc = ASCII key-value, '- ' 불릿 = 단계 라벨. current 는 1~N clamp.
+      let current = 1;
+      let desc = '';
+      const steps: string[] = [];
+      for (const line of nonEmpty) {
+        if (isBulletLine(line)) {
+          steps.push(stripBullet(line));
+          continue;
+        }
+        const kv = splitKeyValue(line);
+        if (!kv) continue;
+        if (kv.key === 'current') {
+          const n = Number(kv.value.trim());
+          if (!Number.isNaN(n)) current = Math.round(n);
+        } else if (kv.key === 'desc') desc = kv.value;
+      }
+      current = steps.length > 0 ? Math.max(1, Math.min(steps.length, current)) : 1;
+      return { type: 'stepper', current, desc, steps };
+    }
+
+    case 'timeline-card': {
+      // 빈 줄로 항목 구분, 항목 내부 date(선택)/title(필수)/desc(선택) 키-값.
+      const items: { date: string; title: string; desc: string }[] = [];
+      let cur: { date: string; title: string; desc: string } | null = null;
+      const pushCur = () => {
+        if (cur && cur.title !== '') items.push(cur);
+        cur = null;
+      };
+      for (const line of body) {
+        if (line.trim() === '') {
+          pushCur();
+          continue;
+        }
+        const kv = splitKeyValue(line.trim());
+        if (!kv) continue;
+        if (!cur) cur = { date: '', title: '', desc: '' };
+        if (kv.key === 'date') cur.date = kv.value;
+        else if (kv.key === 'title') cur.title = kv.value;
+        else if (kv.key === 'desc') cur.desc = kv.value;
+      }
+      pushCur();
+      return { type: 'timeline-card', items };
+    }
+
+    case 'compare-card': {
+      // 기존 compare 문법 + highlight(강조 열, 선택)
+      let columns: string[] = [];
+      let highlight = '';
+      const rows: string[][] = [];
+      for (const line of nonEmpty) {
+        const kv = splitKeyValue(line);
+        if (kv && kv.key === 'columns') columns = kv.value.split(',').map((c) => c.trim());
+        else if (kv && kv.key === 'highlight') highlight = kv.value.trim();
+        else if (isBulletLine(line)) rows.push(splitRow(line));
+      }
+      return { type: 'compare-card', columns, highlight, rows };
+    }
+
+    case 'alert': {
+      let variant: AlertVariant = 'info';
+      const textLines: string[] = [];
+      for (const line of nonEmpty) {
+        const kv = splitKeyValue(line);
+        if (kv && kv.key === 'variant') {
+          const v = kv.value.trim().toLowerCase();
+          if (v === 'success' || v === 'info' || v === 'warning' || v === 'error') variant = v;
+        } else if (kv && kv.key === 'text') textLines.push(kv.value);
+        else textLines.push(line.trim());
+      }
+      return { type: 'alert', variant, text: textLines.join(' ').trim() };
+    }
+
+    case 'process': {
+      // 빈 줄로 항목 구분, icon(선택)/title/desc 키-값
+      const items: { icon: string; title: string; desc: string }[] = [];
+      let cur: { icon: string; title: string; desc: string } | null = null;
+      const push = () => {
+        if (cur && cur.title !== '') items.push(cur);
+        cur = null;
+      };
+      for (const line of body) {
+        if (line.trim() === '') {
+          push();
+          continue;
+        }
+        const kv = splitKeyValue(line.trim());
+        if (!kv) continue;
+        if (!cur) cur = { icon: '', title: '', desc: '' };
+        if (kv.key === 'icon') cur.icon = kv.value;
+        else if (kv.key === 'title') cur.title = kv.value;
+        else if (kv.key === 'desc') cur.desc = kv.value;
+      }
+      push();
+      return { type: 'process', items };
+    }
+
+    case 'rating': {
+      let value = 0;
+      let max = 5;
+      let label = '';
+      for (const line of nonEmpty) {
+        const kv = splitKeyValue(line);
+        if (!kv) continue;
+        if (kv.key === 'value') {
+          const n = Number(kv.value.trim());
+          if (!Number.isNaN(n)) value = n;
+        } else if (kv.key === 'max') {
+          const n = Number(kv.value.trim());
+          if (!Number.isNaN(n) && n > 0) max = n;
+        } else if (kv.key === 'label') label = kv.value;
+      }
+      value = Math.max(0, Math.min(max, value));
+      return { type: 'rating', value, max, label };
+    }
+
+    case 'tags':
+      return { type: 'tags', items: parseLabelList(nonEmpty) };
+
+    case 'chips':
+      return { type: 'chips', items: parseLabelList(nonEmpty) };
+
+    case 'tree': {
+      // 들여쓰기(공백 2칸 또는 탭 = 1단계) + '- ' 불릿
+      const items: { depth: number; label: string }[] = [];
+      for (const raw of body) {
+        if (raw.trim() === '') continue;
+        const m = raw.match(/^(\s*)-\s+(.*)$/);
+        if (!m) continue;
+        const indent = m[1].replace(/\t/g, '  ');
+        const depth = Math.floor(indent.length / 2);
+        items.push({ depth, label: m[2].trim() });
+      }
+      return { type: 'tree', items };
+    }
+
+    case 'pagination': {
+      let current = 1;
+      let total = 1;
+      for (const line of nonEmpty) {
+        const kv = splitKeyValue(line);
+        if (!kv) continue;
+        if (kv.key === 'current') {
+          const n = Number(kv.value.trim());
+          if (!Number.isNaN(n)) current = n;
+        } else if (kv.key === 'total') {
+          const n = Number(kv.value.trim());
+          if (!Number.isNaN(n)) total = n;
+        }
+      }
+      total = Math.max(1, Math.round(total));
+      current = Math.max(1, Math.min(total, Math.round(current)));
+      return { type: 'pagination', current, total };
+    }
+
+    case 'empty': {
+      let icon = '';
+      let title = '';
+      let desc = '';
+      for (const line of nonEmpty) {
+        const kv = splitKeyValue(line);
+        if (!kv) continue;
+        if (kv.key === 'icon') icon = kv.value;
+        else if (kv.key === 'title') title = kv.value;
+        else if (kv.key === 'desc') desc = kv.value;
+      }
+      return { type: 'empty', icon, title, desc };
+    }
+
+    case 'search': {
+      let placeholder = '';
+      let query = '';
+      for (const line of nonEmpty) {
+        const kv = splitKeyValue(line);
+        if (!kv) continue;
+        if (kv.key === 'placeholder') placeholder = kv.value;
+        else if (kv.key === 'query') query = kv.value;
+      }
+      return { type: 'search', placeholder, query };
+    }
+
+    case 'tooltip': {
+      let label = '';
+      const textLines: string[] = [];
+      for (const line of nonEmpty) {
+        const kv = splitKeyValue(line);
+        if (kv && kv.key === 'label') label = kv.value;
+        else if (kv && kv.key === 'text') textLines.push(kv.value);
+        else textLines.push(line.trim());
+      }
+      return { type: 'tooltip', label, text: textLines.join(' ').trim() };
+    }
+
+    case 'popover': {
+      let title = '';
+      const textLines: string[] = [];
+      for (const line of nonEmpty) {
+        const kv = splitKeyValue(line);
+        if (kv && kv.key === 'title') title = kv.value;
+        else if (kv && kv.key === 'text') textLines.push(kv.value);
+        else textLines.push(line.trim());
+      }
+      return { type: 'popover', title, text: textLines.join(' ').trim() };
+    }
+
+    case 'modal': {
+      let title = '';
+      const textLines: string[] = [];
+      for (const line of nonEmpty) {
+        const kv = splitKeyValue(line);
+        if (kv && kv.key === 'title') title = kv.value;
+        else if (kv && kv.key === 'text') textLines.push(kv.value);
+        else textLines.push(line.trim());
+      }
+      return { type: 'modal', title, text: textLines.join(' ').trim() };
+    }
+
+    case 'drawer': {
+      let title = '';
+      const textLines: string[] = [];
+      for (const line of nonEmpty) {
+        const kv = splitKeyValue(line);
+        if (kv && kv.key === 'title') title = kv.value;
+        else if (kv && kv.key === 'text') textLines.push(kv.value);
+        else textLines.push(line.trim());
+      }
+      return { type: 'drawer', title, text: textLines.join(' ').trim() };
+    }
+
+    case 'skeleton': {
+      let lines = 3;
+      for (const line of nonEmpty) {
+        const kv = splitKeyValue(line);
+        if (kv && kv.key === 'lines') {
+          const n = Number(kv.value.trim());
+          if (!Number.isNaN(n) && n > 0) lines = Math.min(12, Math.round(n));
+        }
+      }
+      return { type: 'skeleton', lines };
+    }
+
+    case 'file': {
+      let name = '';
+      let size = '';
+      let fileType = '';
+      for (const line of nonEmpty) {
+        const kv = splitKeyValue(line);
+        if (!kv) continue;
+        if (kv.key === 'name') name = kv.value;
+        else if (kv.key === 'size') size = kv.value;
+        else if (kv.key === 'type') fileType = kv.value;
+      }
+      return { type: 'file', name, size, fileType };
+    }
 
     default:
       // 알 수 없는 블록 이름 → 본문으로 강등 (방어적 처리)
@@ -196,6 +621,10 @@ export function parseBook(markdown: string): Book {
     }
     if (kv && kv.key === 'author') {
       metadata.author = kv.value;
+      continue;
+    }
+    if (kv && kv.key === 'cover') {
+      metadata.cover = kv.value;
       continue;
     }
     // 메타데이터가 아닌 첫 콘텐츠 줄 → 챕터 본문 파싱으로 넘어감
@@ -233,6 +662,28 @@ export function parseBook(markdown: string): Book {
     // 빈 줄 → 문단 종료
     if (t === '') {
       flushParagraph();
+      continue;
+    }
+
+    // 단독 수평선(`---` / `***` / `___`) → 구분선 블록
+    if (HR_RE.test(t)) {
+      flushParagraph();
+      if (current) current.blocks.push({ type: 'divider' });
+      continue;
+    }
+
+    // 코드 펜스(```lang … ```): 내부는 원문 그대로 보존
+    const fence = t.match(FENCE_OPEN_RE);
+    if (fence) {
+      flushParagraph();
+      const lang = (fence[1] ?? '').trim();
+      const codeLines: string[] = [];
+      i++;
+      for (; i < lines.length; i++) {
+        if (FENCE_CLOSE_RE.test(lines[i].trim())) break;
+        codeLines.push(lines[i]);
+      }
+      if (current) current.blocks.push({ type: 'code', lang, code: codeLines.join('\n') });
       continue;
     }
 

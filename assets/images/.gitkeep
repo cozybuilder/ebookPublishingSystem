@@ -1,3 +1,0 @@
-# 이미지 자산 디렉터리 (ImageBlock id 기준)
-# 규약: assets/images/<imageId>.{png,jpg,jpeg}  (예: assets/images/IMG-001.png)
-# 여기에 이미지를 넣으면 DOCX 등 출력에서 해당 ImageBlock 에 실삽입된다.

@@ -37,6 +37,8 @@ const TONE_BY_COMPONENT: Partial<Record<ComponentType, Tone>> = {
   TableCard: 'neutral',
   CompareCard: 'neutral',
   BeforeAfterCard: 'neutral',
+  CalloutCard: 'info',
+  FeatureCard: 'info',
 };
 
 const TYPOGRAPHY_BY_COMPONENT: Partial<Record<ComponentType, TypographyRole>> = {
@@ -60,6 +62,12 @@ const RADIUS_BY_COMPONENT: Partial<Record<ComponentType, RadiusToken>> = {
   FAQCard: 'card',
   WarningCard: 'card',
   ResultCard: 'card',
+  CalloutCard: 'card',
+  TimelineCard: 'card',
+  FeatureCard: 'card',
+  ProgressCard: 'card',
+  StepperCard: 'card',
+  TimelineCardList: 'card',
 };
 
 const SPACING_BY_COMPONENT: Partial<Record<ComponentType, SpacingToken>> = {

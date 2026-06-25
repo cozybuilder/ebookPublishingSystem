@@ -1,0 +1,727 @@
+<!doctype html>
+<html lang="ko">
+  <head>
+    <meta charset="utf-8" />
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; style-src 'self' 'unsafe-inline'; script-src 'self' 'unsafe-inline'" />
+    <title>전자책 만들기</title>
+    <style>
+      :root { --navy:#1B2A4A; --blue:#2563EB; --ink:#1A1B1E; --muted:#85807A; --line:#E2DDD4; --paper:#FAF8F3; --card:#fff; --ok:#15803D; --warn:#B45309; --err:#B91C1C; }
+      * { box-sizing:border-box; }
+      body { margin:0; font-family:'Helvetica Neue',Arial,'Malgun Gothic',sans-serif; color:var(--ink); background:var(--paper); }
+      header { position:relative; padding:16px 24px 12px; border-bottom:1px solid var(--line); }
+      header #btn-home { position:absolute; top:14px; right:24px; font-size:12.5px; padding:6px 12px; }
+      header h1 { margin:0; font-size:18px; font-weight:800; letter-spacing:-.01em; }
+      header p { margin:4px 0 0; font-size:12px; color:var(--muted); }
+
+      /* 단계 레일 */
+      .rail { display:flex; gap:6px; padding:12px 24px; overflow-x:auto; border-bottom:1px solid var(--line); }
+      .rail .r { display:flex; align-items:center; gap:7px; padding:5px 10px; border-radius:20px; border:1px solid var(--line); background:#fff; cursor:pointer; white-space:nowrap; }
+      .rail .r .d { width:18px; height:18px; border-radius:50%; background:#E7E2D8; color:#6b6358; font-size:11px; font-weight:700; display:flex; align-items:center; justify-content:center; }
+      .rail .r .t { font-size:11.5px; color:var(--muted); }
+      .rail .r.active { border-color:var(--navy); background:var(--navy); }
+      .rail .r.active .d { background:#fff; color:var(--navy); }
+      .rail .r.active .t { color:#fff; font-weight:700; }
+      .rail .r.done .d { background:var(--ok); color:#fff; }
+
+      main { padding:18px 24px 8px; }
+      .wstep { display:none; }
+      .wstep.show { display:block; }
+      .wstep h2 { font-size:16px; margin:0 0 4px; }
+      .wstep .sub { font-size:12.5px; color:var(--muted); margin:0 0 14px; line-height:1.6; }
+
+      .card { border:1px solid var(--line); border-radius:8px; padding:13px 15px; margin:10px 0; background:var(--card); font-size:12.7px; line-height:1.7; }
+      .card h3 { margin:0 0 6px; font-size:13px; }
+      code { background:#F2EEE6; padding:1px 5px; border-radius:4px; font-family:'SF Mono',Consolas,monospace; font-size:12px; }
+      .kv { margin:2px 0; }
+      .muted { color:var(--muted); }
+
+      button { font-family:inherit; font-size:13px; border:1px solid var(--navy); background:#fff; color:var(--navy); padding:7px 14px; border-radius:6px; cursor:pointer; white-space:nowrap; }
+      button:hover { background:var(--navy); color:#fff; }
+      button:disabled { opacity:.45; cursor:default; }
+      .primary { background:var(--navy); color:#fff; font-weight:700; padding:9px 20px; }
+      .ghost { border-color:var(--line); color:var(--ink); }
+      .row { display:flex; align-items:center; gap:10px; flex-wrap:wrap; margin:8px 0; }
+      .val { font-size:12px; color:var(--blue); word-break:break-all; }
+      input[type=text] { font-family:inherit; font-size:13px; padding:7px 10px; border:1px solid var(--line); border-radius:6px; min-width:220px; background:#fff; color:var(--ink); }
+      input[type=text]:focus, .cf-in:focus, textarea:focus { outline:none; border-color:var(--navy); }
+      .cf-grid { display:grid; grid-template-columns:120px 1fr; gap:8px 12px; align-items:center; margin:8px 0; }
+      .cf-lb { font-size:12.5px; color:var(--muted); text-align:right; }
+      .cf-in { font-family:inherit; font-size:13px; padding:6px 9px; border:1px solid var(--line); border-radius:6px; background:#fff; color:var(--ink); width:100%; }
+      textarea.cf-in { resize:vertical; min-height:42px; }
+
+      pre.tpl { background:#15161A; color:#E8E5DE; font-family:'SF Mono',Consolas,monospace; font-size:11.5px; line-height:1.55; padding:11px 13px; border-radius:8px; overflow:auto; max-height:230px; white-space:pre-wrap; margin:8px 0; }
+
+      .li { display:flex; gap:8px; align-items:flex-start; }
+      .li .mk { flex:none; width:14px; }
+      .ok-c{color:var(--ok)} .warn-c{color:var(--warn)} .err-c{color:var(--err)} .mut-c{color:var(--muted)}
+
+      .img { border:1px solid var(--line); border-radius:8px; padding:11px 13px; margin:8px 0; background:#fff; }
+      .img .top { display:flex; justify-content:space-between; gap:10px; align-items:center; }
+      .img .nm { font-size:13px; font-weight:700; }
+      .img .meta { font-size:11.5px; color:var(--muted); margin-top:2px; }
+      .img .pr { font-size:12px; background:#F7F4ED; border-radius:6px; padding:7px 9px; margin-top:7px; line-height:1.55; }
+
+      .file { display:flex; align-items:center; justify-content:space-between; gap:10px; padding:9px 12px; border:1px solid var(--line); border-radius:6px; margin-bottom:6px; background:#fff; }
+      .file .nm { font-size:13px; font-weight:600; }
+      .file .pth { font-size:11px; color:var(--muted); margin-top:2px; word-break:break-all; }
+      .x { color:var(--err); }
+
+      .stage { font-size:12.5px; color:var(--muted); }
+      .stage.run { color:var(--blue); font-weight:600; } .stage.ok { color:var(--ok); font-weight:700; } .stage.err { color:var(--err); font-weight:700; }
+
+      /* 홈(시작) 화면 — Hero 런처: 대표 이미지 풀화면 + 상단-중앙 오버레이(세로 버튼) */
+      #home { position:relative; min-height:100vh; overflow:hidden; display:flex; flex-direction:column; justify-content:flex-start; align-items:center;
+              padding-top:9vh; background:linear-gradient(160deg,#0D1B3D,#1E3A8A); }
+      #home .hero-bg { position:absolute; inset:0; width:100%; height:100%; object-fit:cover; z-index:0; }
+      #home::after { content:''; position:absolute; inset:0; z-index:1;
+        background:linear-gradient(180deg, rgba(12,18,38,.60) 0%, rgba(12,18,38,.32) 40%, rgba(12,18,38,.20) 100%); }
+      .home-overlay { position:relative; z-index:2; text-align:center; color:#fff; padding:0 24px; max-width:600px; }
+      .home-icon { width:54px; height:54px; margin:0 auto 14px; border-radius:16px; background:rgba(255,255,255,.16); border:1px solid rgba(255,255,255,.42); display:flex; align-items:center; justify-content:center; font-size:26px; }
+      .home-overlay h1 { font-size:34px; font-weight:800; letter-spacing:-.02em; margin:0 0 12px; text-shadow:0 2px 16px rgba(0,0,0,.55); }
+      .home-overlay p { font-size:14.5px; line-height:1.75; color:rgba(255,255,255,.95); margin:0 auto 26px; max-width:420px; text-shadow:0 2px 12px rgba(0,0,0,.5); }
+      .home-cta { display:flex; flex-direction:column; align-items:center; gap:11px; }
+      /* 세 버튼을 하나의 세트로: 동일 폭/높이, 텍스트 중앙, 아이콘 우측 고정 */
+      .home-cta button { position:relative; width:264px; padding:14px 42px; font-size:14.5px; text-align:center; }
+      .home-cta .big { width:264px; padding:14px 42px; font-size:14.5px; }
+      .home-cta .bi { position:absolute; right:18px; top:50%; transform:translateY(-50%); opacity:.92; font-size:15px; line-height:1; }
+      .home-cta .arr { font-size:17px; opacity:1; }
+      .home-cta .primary { background:var(--navy); color:#fff; border-color:var(--navy); font-weight:700; box-shadow:0 8px 24px rgba(13,27,61,.4); }
+      .home-cta .primary:hover { background:#15233f; color:#fff; }
+      .home-cta .ghost { background:rgba(255,255,255,.94); color:var(--ink); border-color:rgba(255,255,255,.7); }
+      .home-cta .ghost:hover { background:#fff; color:var(--navy); }
+      /* 사용법 모달 */
+      .modal-overlay { position:fixed; inset:0; background:rgba(15,23,42,.5); display:flex; align-items:center; justify-content:center; z-index:50; padding:24px; }
+      .modal-box { background:#fff; border-radius:14px; max-width:660px; width:100%; max-height:84vh; overflow:auto; box-shadow:0 24px 64px rgba(0,0,0,.32); }
+      .modal-hd { display:flex; justify-content:space-between; align-items:center; padding:16px 20px; border-bottom:1px solid var(--line); position:sticky; top:0; background:#fff; }
+      .modal-hd b { font-size:15px; }
+      .modal-body { padding:14px 20px 20px; font-size:13px; line-height:1.7; }
+      .modal-body .kv { margin:0 0 10px; }
+      footer { position:sticky; bottom:0; background:var(--paper); border-top:1px solid var(--line); padding:12px 24px; }
+      .nav { display:flex; align-items:center; justify-content:space-between; gap:12px; }
+      .nav .mid { flex:1; }
+      pre.log { background:#15161A; color:#E8E5DE; font-family:'SF Mono',Consolas,monospace; font-size:11px; line-height:1.5; padding:10px 12px; border-radius:8px; height:120px; overflow:auto; white-space:pre-wrap; margin:10px 0 0; }
+      .loghd { display:flex; justify-content:space-between; align-items:center; font-size:11.5px; color:var(--muted); margin-top:6px; }
+      .hide { display:none !important; }
+    </style>
+  </head>
+  <body>
+    <!-- 홈(시작) 화면 — Hero 런처 -->
+    <div id="home">
+      <img id="home-hero-img" class="hero-bg" src="assets/home-hero.png" alt="" />
+      <div class="home-overlay">
+        <h1>전자책 만들기</h1>
+        <p>AI로 만든 원고와 이미지를 넣으면<br />PDF · DOCX · EPUB 전자책이 완성됩니다.</p>
+        <div class="home-cta">
+          <button class="primary big" id="home-start">시작하기<span class="bi arr">▶</span></button>
+          <button class="ghost" id="home-open">기존 프로젝트 열기<span class="bi">📂</span></button>
+          <button class="ghost" id="home-howto">사용법<span class="bi">❓</span></button>
+        </div>
+      </div>
+    </div>
+
+    <!-- 사용법 모달 -->
+    <div id="usage-modal" class="modal-overlay hide">
+      <div class="modal-box">
+        <div class="modal-hd"><b>사용법 — 전자책 만들기 (STEP 1~9)</b><button class="ghost" id="usage-close">닫기</button></div>
+        <div class="modal-body">
+          <div class="kv"><b>STEP 1. AI로 원고 만들기</b> — 전자책 주제를 입력하면 AI 원고 작성 프롬프트가 완성됩니다. 복사해 ChatGPT·Claude에 붙여넣어 Markdown 원고(.md)를 받으세요.</div>
+          <div class="kv"><b>STEP 2. 프로젝트 선택</b> — "+ 새 프로젝트 만들기"로 책 하나를 만들고, 받은 원고를 [원고 불러오기]로 가져옵니다. (하나의 책 = 하나의 프로젝트)</div>
+          <div class="kv"><b>STEP 3. 출판 정보 설정</b> — 저자명·발행자·저작권자·저자 소개·면책 문구를 입력합니다. (책 제목·부제는 원고에서 자동, 발행일은 오늘 자동)</div>
+          <div class="kv"><b>STEP 4. 미리보기 생성</b> — 원고만으로 HTML 미리보기를 만들어 구조·레이아웃을 먼저 확인합니다.</div>
+          <div class="kv"><b>STEP 5. 이미지 만들기</b> — 표지·본문 이미지의 프롬프트를 복사해 외부 AI로 생성합니다. 표지는 <code>cover.png</code>, 본문은 <code>IMG-001.png</code> 형식.</div>
+          <div class="kv"><b>STEP 6. 이미지 넣기</b> — 프로젝트 images 폴더에 이미지를 넣고, 미리보기를 다시 만들어 반영을 확인합니다.</div>
+          <div class="kv"><b>STEP 7. 최종 확인</b> — 표지·목차·이미지·누락 여부와 출력 형식을 점검합니다.</div>
+          <div class="kv"><b>STEP 8. 전자책 만들기</b> — PDF·출판용 PDF·DOCX·EPUB·HTML과 크몽 자료를 한 번에 생성합니다.</div>
+          <div class="kv"><b>STEP 9. 결과 확인</b> — 완성된 파일을 열거나 프로젝트 output 폴더를 엽니다.</div>
+        </div>
+      </div>
+    </div>
+
+    <div id="wizard" class="hide">
+    <header>
+      <button id="btn-home" class="ghost">← 홈으로</button>
+      <h1>전자책 만들기</h1>
+      <p>아래 단계를 차례대로 따라가면 원고에서 PDF · DOCX · EPUB 전자책까지 완성됩니다.</p>
+    </header>
+
+    <div class="rail" id="rail"></div>
+
+    <main>
+      <!-- 1. AI로 원고 만들기 -->
+      <section class="wstep" data-step="1">
+        <h2>1. AI로 원고 만들기</h2>
+        <p class="sub"><b>전자책 주제 하나만</b> 입력하면 됩니다. 아래 프롬프트에 자동으로 들어가니, 복사해서 AI(ChatGPT · Claude 등)에게 보내세요. 원고와 <b>이미지 프롬프트까지 함께</b> 만들어집니다.</p>
+
+        <div class="row">
+          <input id="topic-input" type="text" placeholder="전자책 주제 (예: 왕초보를 위한 AI 영상 제작 입문)" style="flex:1; min-width:320px" />
+        </div>
+
+        <div class="card" style="border-color:var(--navy)">
+          <h3>AI 원고 작성 프롬프트</h3>
+          <div class="muted" style="margin-bottom:8px">위에 입력한 주제가 아래 프롬프트에 자동으로 반영됩니다. [복사] 후 AI에게 붙여넣으세요.</div>
+          <pre class="tpl" id="tpl-ai-main">전자책 주제:
+<span id="topic-echo">여기에 주제 입력</span>
+
+당신은 전문 전자책 작가입니다.
+위 주제로 실제 판매 가능한 전자책 원고를 작성해주세요.
+
+조건:
+1. Markdown 형식으로 작성
+2. 읽기 쉬운 문체
+3. 초보자도 이해할 수 있도록 설명
+4. 최소 8개 이상의 Chapter 구성
+5. 각 Chapter는 충분한 내용을 포함 (일반 본문 위주)
+6. 컴포넌트(표·체크리스트·FAQ·Timeline 등)는 꼭 필요할 때만, 한 Chapter에 1~2개 이내로만 사용
+7. 억지로 여러 컴포넌트를 넣지 말 것 — 목표는 "읽기 편한 책"이지 "컴포넌트 쇼케이스"가 아님
+8. 에세이·명언집·자기계발서 등은 컴포넌트를 거의 쓰지 말고 본문 흐름으로 작성
+9. 중요한 부분은 강조, 실전 팁 포함, 독자가 바로 따라할 수 있도록 구성
+10. 이미지가 필요한 부분은 이미지 블록 형식으로 작성
+
+[정확한 형식 — 이 형식을 반드시 지켜주세요]
+- 제목: 첫 줄에  # 책 제목
+- 부제/저자: 그 아래에  subtitle: 부제   /   author: 저자
+- 각 장(章): "## Chapter 1. 제목" 형식 (숫자와 점 필수, 1부터 순서대로)
+- 강조: ==중요한 문장==
+- 컴포넌트 예 (꼭 필요할 때만 사용 — 형식 참고용):
+:::checklist
+- 항목 1
+- 항목 2
+:::
+
+:::faq
+q: 질문
+a: 답변
+:::
+
+- 표지 이미지는 원고 최상단(제목·부제·저자 아래, 첫 Chapter 앞)에 반드시 1개:
+:::image
+id: cover
+type: cover
+filename: cover.png
+prompt: 전자책 표지 디자인. 책 제목·부제·저자명이 들어갈 여백을 둔 세로형 A4 비율(1240x1748 이상) 표지. 주제에 맞는 분위기·색감을 상세히.
+:::
+
+- 본문 이미지는 IMG-001 부터, 각 형식 그대로:
+:::image
+id: IMG-001
+type: chapter
+filename: IMG-001.png
+prompt: 본문과 어울리는 이미지 설명(생성 AI가 바로 쓸 수 있게 상세히)
+:::
+
+이미지 블록 규칙:
+- 표지: id=cover, type=cover, filename=cover.png — 딱 1개, 최상단. 절대 IMG-001 로 만들지 말 것.
+- 본문: id=IMG-001, IMG-002, IMG-003 … 순서, type=chapter, filename=IMG-00N.png
+- 표지는 세로 A4(1240x1748 이상), 본문은 9:16 세로(1080x1920 이상) 권장
+- prompt는 생성 AI가 바로 쓸 수 있게 상세하게
+
+목표는 실제 돈을 받고 판매할 수 있는 수준의 전자책입니다.</pre>
+          <div class="row">
+            <button class="primary" data-copy="tpl-ai-main">📋 AI 원고 작성 프롬프트 복사</button>
+          </div>
+        </div>
+
+        <div class="card" style="background:#F0FDF4;border-color:#BBF7D0">
+          💡 <b>이미지는 나중에 따로 생각하는 것이 아닙니다.</b> AI가 원고를 쓸 때 이미지 프롬프트까지 함께 준비합니다. 다음 단계에서 그 프롬프트로 이미지를 생성해 넣으면 됩니다.
+        </div>
+
+        <details class="card">
+          <summary style="cursor:pointer;font-weight:700">고급 사용자용 Markdown 규칙 보기</summary>
+          <div style="margin-top:10px">
+            <div class="kv">• <b>제목</b>: 맨 윗줄 <code># 책 제목</code></div>
+            <div class="kv">• <b>subtitle</b>: <code>subtitle: 부제</code> &nbsp; <b>author</b>: <code>author: 저자</code> &nbsp;(표지 이미지는 자동으로 <code>cover.png</code> 사용)</div>
+            <div class="kv">• <b>Chapter</b>: <code>## Chapter 1. 제목</code> <span class="muted">— 숫자와 점 형식 필수</span></div>
+            <div class="kv">• <b>문단/강조</b>: 빈 줄로 문단 구분 / <code>==중요==</code> / 키워드 <code>[[tag:키워드]]</code></div>
+            <div class="kv">• <b>checklist</b>: <code>:::checklist</code> + <code>- 항목</code> 줄들 + <code>:::</code></div>
+            <div class="kv">• <b>faq</b>: <code>:::faq</code> + <code>q: 질문</code> / <code>a: 답변</code> 쌍 + <code>:::</code></div>
+            <div class="kv">• <b>timeline</b>: <code>:::timeline</code> + (날짜 / 제목 / 설명) 3줄씩 빈 줄로 구분 + <code>:::</code></div>
+            <div class="kv">• 그 밖에: steps · stats · table(<code>| |</code>) · chart · info · tip · note · warning · compare · before-after · feature · process · rating 등</div>
+            <div class="kv">• <b>image block</b>: <code>:::image</code> / <code>id: IMG-001</code> / <code>type: chapter</code> / <code>prompt: 설명</code> / <code>:::</code></div>
+            <div class="kv">• <b>이미지 파일명</b>: 표지 <code>assets/images/cover.png</code> · 본문 <code>assets/images/IMG-001.png</code>(id와 동일)</div>
+            <div class="row" style="margin-top:10px"><button class="ghost" data-copy="tpl-start">📋 직접 쓰기용 원고 시작 템플릿 복사</button></div>
+            <pre class="tpl" id="tpl-start"># 내 전자책 제목
+
+subtitle: 한 줄 부제
+author: 저자 이름
+
+## Chapter 1. 첫 번째 장 제목
+
+여기에 문단을 씁니다. 중요한 부분은 ==이렇게== 강조할 수 있습니다.
+
+:::checklist
+- 첫 번째 할 일
+- 두 번째 할 일
+:::
+
+:::image
+id: IMG-001
+type: chapter
+prompt: 이 자리에 들어갈 이미지를 설명하세요
+:::
+
+## Chapter 2. 두 번째 장 제목
+
+다음 장의 내용을 이어서 씁니다.</pre>
+          </div>
+        </details>
+      </section>
+
+      <!-- 2. 프로젝트 선택 -->
+      <section class="wstep" data-step="2">
+        <h2>2. 프로젝트 선택</h2>
+        <p class="sub"><b>하나의 책 = 하나의 프로젝트</b>입니다. 프로젝트마다 원고·이미지·결과물이 따로 보관되어 다른 책과 섞이지 않습니다.</p>
+        <div class="row">
+          <input id="new-project-name" type="text" placeholder="새 책 이름 (예: 사랑이별_명언50선)" />
+          <button id="btn-new-project">+ 새 프로젝트 만들기</button>
+          <button class="ghost" id="btn-refresh-projects">새로고침</button>
+        </div>
+        <div id="project-list" class="muted" style="margin-top:6px">프로젝트를 불러오는 중…</div>
+        <div class="card hide" id="active-project"></div>
+      </section>
+
+      <!-- 3. 출판 정보 설정 -->
+      <section class="wstep" data-step="3">
+        <h2>3. 출판 정보 설정</h2>
+        <p class="sub">표지·판권에 들어갈 <b>저작권·발행 정보</b>를 입력하세요. 저자명·발행자·저작권자·저자 소개·면책 문구만 설정합니다.</p>
+        <div id="config-step" class="card">먼저 2단계에서 프로젝트를 선택하세요.</div>
+      </section>
+
+      <!-- 4. 미리보기 생성 -->
+      <section class="wstep" data-step="4">
+        <h2>4. 미리보기 생성</h2>
+        <p class="sub">먼저 <b>원고만으로 미리보기(HTML)</b>를 만들어 구조와 레이아웃을 확인합니다. 이미지가 아직 없으면 자리표시자로 보입니다.</p>
+        <div class="row">
+          <button class="primary" id="btn-preview">미리보기 만들기</button>
+          <button class="ghost hide" id="btn-preview-open">미리보기 열기</button>
+          <span class="stage" id="stage-3"></span>
+        </div>
+        <div class="card" id="preview-note3">원고 구조가 의도대로 나오는지 먼저 확인하세요. 문제가 있으면 1단계 규칙을 참고해 원고를 고친 뒤 다시 만들면 됩니다.</div>
+      </section>
+
+      <!-- 5. 이미지 만들기 -->
+      <section class="wstep" data-step="5">
+        <h2>5. 이미지 만들기</h2>
+        <p class="sub">원고에 필요한 이미지 목록입니다. 각 <b>프롬프트를 복사</b>해 외부 AI 이미지 도구에서 만들고, 표시된 <b>파일명</b>으로 저장하세요.</p>
+        <div class="row">
+          <button id="btn-analyze">이미지 목록 분석</button>
+          <span class="stage" id="stage-4"></span>
+        </div>
+        <div id="img-list"></div>
+      </section>
+
+      <!-- 6. 이미지 넣기 -->
+      <section class="wstep" data-step="6">
+        <h2>6. 이미지 넣기 & 다시 미리보기</h2>
+        <p class="sub">이 프로젝트의 <b>images 폴더</b>에 이미지를 직접 넣으세요. 표지는 <code>cover.png</code>, 본문 이미지는 <code>IMG-001.png</code> 형식으로 저장합니다.</p>
+        <div class="row">
+          <button id="btn-open-images">📁 이미지 폴더 열기</button>
+          <span class="val" id="img-val"></span>
+        </div>
+        <div class="row">
+          <button class="primary" id="btn-preview2">이미지 반영 & 미리보기 다시 만들기</button>
+          <button class="ghost hide" id="btn-preview-open2">미리보기 열기</button>
+          <span class="stage" id="stage-5"></span>
+        </div>
+        <div id="missing5" class="card hide"></div>
+      </section>
+
+      <!-- 7. 최종 확인 -->
+      <section class="wstep" data-step="7">
+        <h2>7. 최종 확인</h2>
+        <p class="sub">전자책을 만들기 전에 마지막으로 점검합니다.</p>
+        <div class="row">
+          <button id="btn-final-check">최종 점검</button>
+          <span class="stage" id="stage-6"></span>
+        </div>
+        <div id="final-panel" class="card hide"></div>
+        <div class="card">
+          <h3>생성될 출력 형식</h3>
+          <div class="kv">• <b>book.pdf</b> — 대표 전자책 PDF</div>
+          <div class="kv">• <b>book-paged.pdf</b> — 출판용 PDF(쪽번호·러닝헤드·목차 쪽번호)</div>
+          <div class="kv">• <b>book.docx</b> · <b>book.epub</b> · <b>book.html</b> + 크몽 자료(미리보기·상세 이미지)</div>
+        </div>
+      </section>
+
+      <!-- 8. 전자책 만들기 -->
+      <section class="wstep" data-step="8">
+        <h2>8. 전자책 만들기</h2>
+        <p class="sub">모든 형식을 한 번에 생성합니다. 이미지가 많으면 1~2분 정도 걸릴 수 있습니다.</p>
+        <div class="row">
+          <button class="primary" id="btn-build">전자책 만들기</button>
+          <span class="stage" id="stage-7"></span>
+        </div>
+        <div id="build-summary" class="card hide"></div>
+      </section>
+
+      <!-- 9. 결과 확인 -->
+      <section class="wstep" data-step="9">
+        <h2>9. 결과 확인</h2>
+        <p class="sub">완성된 파일을 열어 확인하세요.</p>
+        <div id="result-list"></div>
+        <div class="row" style="margin-top:10px">
+          <button id="btn-open-output">📁 결과 폴더 열기 (output)</button>
+          <button class="ghost" id="btn-open-detail">📁 크몽 자료 폴더 열기</button>
+        </div>
+        <div class="card muted" id="result-note" style="margin-top:10px">결과물은 output/ 폴더에 보관됩니다. (개발용 npm test 실행 시에만 비워지니, 배포 파일은 여기서 바로 확인·복사하세요.)</div>
+      </section>
+    </main>
+
+    <footer>
+      <div class="nav">
+        <button id="btn-prev" class="ghost">← 이전</button>
+        <div class="mid">
+          <div class="loghd"><span id="rail-label">1 / 8</span><span class="stage" id="stage-global"></span></div>
+        </div>
+        <button id="btn-next" class="primary">다음 →</button>
+      </div>
+      <pre class="log hide" id="log"></pre>
+    </footer>
+    </div><!-- /wizard -->
+
+    <script>
+      const STEPS = ['원고 만들기','프로젝트 선택','출판 정보','미리보기','이미지 만들기','이미지 넣기','최종 확인','만들기','결과'];
+      let cur = 1;
+      let activeProject = null, outputDir = null, lastOutputs = [];
+      function payload() { return { projectPath: activeProject ? activeProject.path : null }; }
+
+      const $ = (id) => document.getElementById(id);
+      const logEl = $('log');
+      function appendLog(s) { logEl.classList.remove('hide'); logEl.textContent += s; logEl.scrollTop = logEl.scrollHeight; }
+      function setStage(id, text, cls) { const el = $(id); if (!el) return; el.textContent = text || ''; el.className = 'stage' + (cls ? ' ' + cls : ''); }
+      function esc(s){ return String(s==null?'':s).replace(/[&<>"]/g,(c)=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c])); }
+
+      // ── 레일 + 단계 전환 ──
+      function buildRail() {
+        const rail = $('rail');
+        rail.innerHTML = '';
+        STEPS.forEach((t, i) => {
+          const n = i + 1;
+          const r = document.createElement('div');
+          r.className = 'r' + (n === cur ? ' active' : '') + (n < cur ? ' done' : '');
+          r.innerHTML = '<span class="d">' + (n < cur ? '✓' : n) + '</span><span class="t">' + t + '</span>';
+          r.onclick = () => showStep(n);
+          rail.appendChild(r);
+        });
+      }
+      function showStep(n) {
+        cur = Math.max(1, Math.min(STEPS.length, n));
+        document.querySelectorAll('.wstep').forEach((s) => s.classList.toggle('show', Number(s.dataset.step) === cur));
+        buildRail();
+        $('rail-label').textContent = cur + ' / ' + STEPS.length;
+        $('btn-prev').disabled = cur === 1;
+        $('btn-next').classList.toggle('hide', cur === STEPS.length);
+        if (cur === 3 && typeof renderConfigStep === 'function') renderConfigStep();
+        if (cur === 6 && typeof updateImgVal === 'function') updateImgVal();
+      }
+      $('btn-prev').onclick = () => showStep(cur - 1);
+      $('btn-next').onclick = () => showStep(cur + 1);
+
+      // ── 홈 ↔ Wizard 진입 ──
+      function goWizard(step) { $('home').classList.add('hide'); $('wizard').classList.remove('hide'); showStep(step); }
+      function goHome() { $('wizard').classList.add('hide'); $('home').classList.remove('hide'); }
+      $('home-start').onclick = () => goWizard(1);
+      $('home-open').onclick = () => goWizard(2);
+      $('home-howto').onclick = () => $('usage-modal').classList.remove('hide');
+      $('usage-close').onclick = () => $('usage-modal').classList.add('hide');
+      $('usage-modal').addEventListener('click', (e) => { if (e.target === $('usage-modal')) $('usage-modal').classList.add('hide'); });
+      $('btn-home').onclick = goHome;
+      // 대표 이미지가 없으면 자리만 숨김(텍스트·버튼은 유지)
+      $('home-hero-img').addEventListener('error', () => $('home-hero-img').classList.add('hide'));
+
+      function init() {
+        // UI 는 즉시 렌더(비동기 호출에 막히지 않게 — 견고성).
+        showStep(1);
+        if (!window.api) return; // Electron 외 환경(미리보기)에서도 레이아웃은 보이도록
+        window.api.onLog(appendLog);
+        window.api.onStage((s) => setStage('stage-global', s, s === '완료' || /준비됨/.test(s) ? 'ok' : s === '오류' ? 'err' : 'run'));
+        window.api.paths().then((p) => { outputDir = p.outputDir; }).catch(() => {});
+        refreshProjects();
+      }
+      init();
+
+      // ── 프로젝트(2단계) ──
+      async function refreshProjects() {
+        if (!window.api) return;
+        const box = $('project-list');
+        const projects = await window.api.listProjects();
+        box.classList.remove('muted');
+        if (!projects || projects.length === 0) { box.innerHTML = '<div class="muted">아직 만든 책이 없습니다. "+ 새 프로젝트 만들기" 로 첫 책을 시작하세요.</div>'; return; }
+        box.innerHTML = activeProject ? '' : '<div class="muted" style="margin-bottom:8px">작업할 책을 선택하거나 새로 만드세요.</div>';
+        for (const p of projects) {
+          const selected = activeProject && activeProject.path === p.path;
+          const row = document.createElement('div'); row.className = 'file';
+          row.innerHTML = '<div class="nm">📖 ' + esc(p.name) + (selected ? ' <span class="ok-c">· 작업 중</span>' : '') + '</div>';
+          const b = document.createElement('button'); b.textContent = selected ? '작업 중' : '선택';
+          if (selected) b.className = 'ghost';
+          b.onclick = () => selectProject(p);
+          const del = document.createElement('button'); del.className = 'ghost'; del.textContent = '삭제'; del.style.marginLeft = '6px';
+          del.onclick = () => deleteProject(p);
+          const grp = document.createElement('div'); grp.appendChild(b); grp.appendChild(del);
+          row.appendChild(grp);
+          box.appendChild(row);
+        }
+      }
+      async function deleteProject(p) {
+        const r = await window.api.deleteProject({ projectPath: p.path });
+        if (r && r.ok) {
+          if (activeProject && activeProject.path === p.path) { activeProject = null; $('active-project').classList.add('hide'); }
+          setStage('stage-global', '프로젝트 삭제됨 ✓', 'ok');
+          refreshProjects();
+        } else if (r && r.error) {
+          setStage('stage-global', '삭제 실패: ' + r.error, 'err');
+        }
+      }
+      function selectProject(p) {
+        activeProject = { name: p.name, path: p.path };
+        renderActiveProject(p);
+        refreshProjects();
+      }
+      function renderActiveProject(p) {
+        const el = $('active-project'); el.classList.remove('hide');
+        const hasMd = p && p.hasMd;
+        const src = p && p.sourceName;
+        const mdLine = hasMd
+          ? '원고: <span class="ok-c">' + esc(src || 'book.md') + ' 적용됨</span>' + (src ? ' <span class="muted">(프로젝트 안 book.md 로 저장됨)</span>' : '')
+          : '원고: <span class="warn-c">아직 없음</span> <span class="muted">— [원고 불러오기]로 .md 파일을 선택하세요</span>';
+        el.innerHTML = '<h3>현재 프로젝트: ' + esc((activeProject && activeProject.name) || '') + '</h3>' +
+          '<div class="kv">' + mdLine + '</div>' +
+          '<div class="kv">이미지: ' + ((p && p.imageCount) || 0) + '개</div>' +
+          '<div class="row" style="margin-top:8px"><button id="btn-import-md">📄 원고 불러오기(.md)</button>' +
+          '<button class="ghost" id="btn-open-proj">📁 프로젝트 폴더 열기</button></div>' +
+          '<div class="muted" style="margin-top:6px">' + (hasMd ? '원고가 적용되었습니다. 다음 단계(출판 정보)로 진행하세요.' : 'AI로 작성한 .md 원고를 "원고 불러오기"로 가져오면 이 프로젝트에 적용됩니다.') + '</div>';
+        $('btn-import-md').onclick = async () => {
+          const r = await window.api.importManuscript(payload());
+          if (r && r.ok) { await refreshProjectMeta(); setStage('stage-global', '원고 불러옴 ✓', 'ok'); }
+        };
+        $('btn-open-proj').onclick = () => window.api.openProjectDir({ projectPath: activeProject.path });
+      }
+
+      // ── STEP3: 출판 정보 설정(저작권/발행/저자 등) ──
+      // 변하지 않는 정보만. 제목·부제는 원고에서, 발행일은 오늘 날짜 자동.
+      const CONFIG_FIELDS = [
+        { k: 'author', label: '저자명', ph: '예: 홍길동' },
+        { k: 'publisher', label: '발행자', ph: '예: 홍길동 출판' },
+        { k: 'brand', label: '저작권자', ph: '© 표시에 들어갈 이름' },
+        { k: 'authorBio', label: '저자 소개', ph: '저자 소개 문구', ta: true },
+        { k: 'disclaimer', label: '면책 문구', ph: '면책 조항 문구', ta: true },
+      ];
+      async function renderConfigStep() {
+        const box = $('config-step');
+        if (!activeProject) { box.innerHTML = '먼저 2단계에서 프로젝트를 선택하세요.'; return; }
+        const cfg = (await window.api.getConfig(payload())) || {};
+        let h = '<div class="muted" style="margin-bottom:8px">저작권·발행 정보는 <b>책을 만드는 사용자</b> 기준입니다. (책 제목·부제는 원고에서 자동, 발행일은 만든 날짜 자동)</div><div class="cf-grid">';
+        for (const f of CONFIG_FIELDS) {
+          const val = esc(cfg[f.k] == null ? '' : cfg[f.k]);
+          h += '<label class="cf-lb">' + f.label + '</label>';
+          h += f.ta
+            ? '<textarea class="cf-in" data-k="' + f.k + '" placeholder="' + esc(f.ph) + '">' + val + '</textarea>'
+            : '<input class="cf-in" type="text" data-k="' + f.k + '" value="' + val + '" placeholder="' + esc(f.ph) + '" />';
+        }
+        h += '</div><div class="row"><button class="primary" id="btn-save-config">설정 저장</button><span class="stage" id="cf-stage"></span></div>' +
+          '<div class="muted" style="margin-top:6px">저장 후 다음 단계(미리보기)를 다시 만들면 표지/판권의 저작권·발행 정보가 반영됩니다.</div>';
+        box.innerHTML = h;
+        $('btn-save-config').onclick = async () => {
+          const cfg2 = {};
+          box.querySelectorAll('.cf-in').forEach((el) => { const v = el.value.trim(); if (v) cfg2[el.getAttribute('data-k')] = v; });
+          const r = await window.api.saveConfig({ projectPath: activeProject.path, config: cfg2 });
+          setStage('cf-stage', r && r.ok ? '저장됨 ✓ (미리보기를 다시 만드세요)' : '저장 실패', r && r.ok ? 'ok' : 'err');
+        };
+      }
+      async function refreshProjectMeta() {
+        const projects = await window.api.listProjects();
+        const me = projects.find((x) => activeProject && x.path === activeProject.path);
+        if (me) renderActiveProject(me);
+        refreshProjects();
+      }
+      $('btn-refresh-projects').onclick = refreshProjects;
+      async function createNewProject() {
+        const input = $('new-project-name');
+        let name = (input.value || '').trim();
+        if (!name) name = '새 책 ' + String(Date.now()).slice(-6); // 비우면 고유 기본 이름
+        const r = await window.api.createProject(name);
+        if (!r.ok) { setStage('stage-global', r.error || '생성 실패', 'err'); await refreshProjects(); return; }
+        input.value = '';
+        setStage('stage-global', '새 프로젝트 생성됨 ✓ (원고를 불러오세요)', 'ok');
+        selectProject({ name: r.name, path: r.path, hasMd: false, imageCount: 0, sourceName: null });
+      }
+      $('btn-new-project').onclick = createNewProject;
+      $('new-project-name').addEventListener('keydown', (e) => { if (e.key === 'Enter') createNewProject(); });
+
+      // ── 1단계: 주제 입력 → 프롬프트에 자동 반영(텍스트로 안전 주입) ──
+      (function () {
+        const ti = $('topic-input'), te = $('topic-echo');
+        if (ti && te) ti.addEventListener('input', () => { te.textContent = ti.value.trim() || '여기에 주제 입력'; });
+      })();
+
+      // ── 1단계: 복사 버튼 ──
+      document.querySelectorAll('[data-copy]').forEach((b) => {
+        b.onclick = async () => {
+          const id = b.getAttribute('data-copy');
+          const el = $(id);
+          if (!el) return;
+          if (window.api) await window.api.copyText(el.textContent);
+          const orig = b.textContent; b.textContent = '복사됨 ✓';
+          setTimeout(() => (b.textContent = orig), 1200);
+        };
+      });
+
+      // ── 3단계: 미리보기 ──
+      let previewPath = null;
+      async function doPreview(stageId, openBtnId) {
+        if (!activeProject) { setStage(stageId, '먼저 2단계에서 프로젝트를 선택하세요', 'err'); return { ok: false }; }
+        setStage(stageId, '미리보기 만드는 중…', 'run');
+        const res = await window.api.preview(payload());
+        if (!res.ok) {
+          setStage(stageId, '실패 — 로그/점검 확인', 'err');
+          if (res.preflight) return res;
+          return res;
+        }
+        previewPath = res.path;
+        setStage(stageId, '미리보기 준비됨 ✓', 'ok');
+        $(openBtnId).classList.remove('hide');
+        return res;
+      }
+      $('btn-preview').onclick = async () => { $('btn-preview').disabled = true; await doPreview('stage-3', 'btn-preview-open'); $('btn-preview').disabled = false; };
+      $('btn-preview-open').onclick = () => previewPath && window.api.openPath(previewPath);
+
+      // ── 4단계: 이미지 목록 분석 ──
+      // 표지(cover.png) 전용 프롬프트 — 책 제목/부제/저자 + 표지 디자인 스펙 포함
+      function coverPrompt(r) {
+        const L = ['전자책 표지(book cover) 디자인.'];
+        if (r && r.title) L.push('책 제목: ' + r.title);
+        if (r && r.subtitle) L.push('부제: ' + r.subtitle);
+        if (r && r.author) L.push('저자명: ' + r.author);
+        L.push('형식: 세로형 A4 비율, 권장 1240×1748px 이상.');
+        L.push('구성: 제목·부제·저자명이 잘 보이도록 상단/하단에 텍스트가 들어갈 여백을 둔 표지 레이아웃.');
+        L.push('분위기: 책 주제와 어울리는 색감·이미지로 디자인. (원하는 스타일을 자유롭게 덧붙이세요)');
+        return L.join('\n');
+      }
+      function specForHint(h) {
+        if (h === 'cover') return '표지 · 세로(A4 비율) · 권장 1240×1748px 이상';
+        if (h === 'promo') return '썸네일/홍보 · 정사각 또는 9:16 · 권장 1080px 이상';
+        if (h === 'chapter') return '본문 삽화 · 원고 분위기에 맞게 · 권장 1200px 이상';
+        if (h === 'detail') return '상세/설명 이미지 · 권장 1200px 이상';
+        return '권장 1200px 이상';
+      }
+      $('btn-analyze').onclick = async () => {
+        if (!activeProject) { setStage('stage-4', '먼저 2단계에서 프로젝트를 선택하세요', 'err'); return; }
+        $('btn-analyze').disabled = true;
+        setStage('stage-4', '분석 중…', 'run');
+        const r = await window.api.preflight(payload());
+        $('btn-analyze').disabled = false;
+        const box = $('img-list');
+        box.innerHTML = '';
+        if (!r || (r.errors && r.errors.length)) { setStage('stage-4', '원고 확인 필요', 'err'); box.innerHTML = '<div class="card err-c">' + esc((r && r.errors && r.errors[0]) || '점검 실패') + '</div>'; return; }
+        // 표지 카드 — 원고의 cover 블록 프롬프트 우선, 없으면 자동 생성(fallback)
+        const cover = r.cover || {};
+        const coverText = (cover.prompt && cover.prompt.trim()) ? cover.prompt : coverPrompt(r);
+        box.appendChild(imgCard('cover.png', cover.exists, specForHint('cover'), coverText, 'cover'));
+        // 본문 이미지
+        for (const it of (r.images && r.images.items) || []) {
+          box.appendChild(imgCard(it.id + '.png', it.exists, specForHint(it.usageHint), it.prompt, it.usageHint, it.recommendedPath));
+        }
+        const total = (r.images && r.images.total) || 0;
+        const miss = (r.images && r.images.missing) || 0;
+        setStage('stage-4', '이미지 ' + total + '개 · 표지 ' + (cover.exists ? '있음' : '없음') + (miss ? ' · 본문 누락 ' + miss : ''), miss || !cover.exists ? 'warn' : 'ok');
+      };
+      function imgCard(filename, exists, spec, prompt, hint, recPath) {
+        const el = document.createElement('div');
+        el.className = 'img';
+        const mark = exists ? '<span class="ok-c">✓ 준비됨</span>' : '<span class="warn-c">· 아직 없음</span>';
+        el.innerHTML =
+          '<div class="top"><div><div class="nm">' + esc(filename) + '  ' + mark + '</div>' +
+          '<div class="meta">' + esc(spec) + (recPath ? ' · 넣을 위치: ' + esc(recPath) : ' · 넣을 위치: assets/images/' + esc(filename)) + '</div></div></div>' +
+          (prompt ? '<div class="pr">' + esc(prompt) + '</div>' : '');
+        if (prompt) {
+          const b = document.createElement('button');
+          b.className = 'ghost'; b.style.marginTop = '7px'; b.textContent = '📋 이 프롬프트 복사';
+          b.onclick = async () => { await window.api.copyText(prompt); const o = b.textContent; b.textContent = '복사됨 ✓'; setTimeout(() => (b.textContent = o), 1200); };
+          el.appendChild(b);
+        }
+        return el;
+      }
+
+      // ── 5단계: 프로젝트 이미지 폴더 + 다시 미리보기 ──
+      function updateImgVal() { $('img-val').textContent = activeProject ? (activeProject.path + '\\images') : '(프로젝트를 먼저 선택하세요)'; }
+      $('btn-open-images').onclick = () => { if (activeProject) window.api.openProjectDir({ projectPath: activeProject.path, sub: 'images' }); };
+      $('btn-preview2').onclick = async () => {
+        $('btn-preview2').disabled = true;
+        const res = await doPreview('stage-5', 'btn-preview-open2');
+        $('btn-preview2').disabled = false;
+        const m = $('missing5');
+        const pf = res && res.preflight;
+        if (pf && pf.images) {
+          m.classList.remove('hide');
+          const miss = pf.images.missing || 0;
+          let h = '<h3>이미지 상태</h3>';
+          h += '<div class="li"><span class="mk ' + (pf.cover && pf.cover.exists ? 'ok-c' : 'warn-c') + '">' + (pf.cover && pf.cover.exists ? '✓' : '•') + '</span><span>표지 ' + (pf.cover && pf.cover.exists ? '준비됨' : '없음(텍스트 표지)') + '</span></div>';
+          h += '<div class="li"><span class="mk ' + (miss === 0 ? 'ok-c' : 'warn-c') + '">' + (miss === 0 ? '✓' : '•') + '</span><span>본문 이미지 ' + pf.images.total + '개 중 ' + (pf.images.total - miss) + '개 준비' + (miss ? ' (누락 ' + miss + ')' : '') + '</span></div>';
+          for (const it of pf.images.items || []) if (!it.exists) h += '<div class="li"><span class="mk err-c">✗</span><span>' + esc(it.id) + ' 없음 → ' + esc(it.recommendedPath) + '</span></div>';
+          if (miss > 0) h += '<div class="muted" style="margin-top:6px">누락 이미지는 미리보기에서 자리표시자로 표시됩니다. 채운 뒤 다시 만들면 반영됩니다.</div>';
+          m.innerHTML = h;
+        }
+      };
+      $('btn-preview-open2').onclick = () => previewPath && window.api.openPath(previewPath);
+
+      // ── 6단계: 최종 점검 ──
+      $('btn-final-check').onclick = async () => {
+        if (!activeProject) { setStage('stage-6', '먼저 2단계에서 프로젝트를 선택하세요', 'err'); return; }
+        $('btn-final-check').disabled = true;
+        setStage('stage-6', '점검 중…', 'run');
+        const r = await window.api.preflight(payload());
+        $('btn-final-check').disabled = false;
+        const p = $('final-panel'); p.classList.remove('hide');
+        if (!r || (r.errors && r.errors.length)) { setStage('stage-6', '원고 문제 — 수정 필요', 'err'); p.innerHTML = '<span class="err-c">✗ ' + esc((r && r.errors && r.errors[0]) || '점검 실패') + '</span>'; return; }
+        let h = '<h3>점검 결과</h3>';
+        h += line('✓', 'ok-c', '제목: <b>' + esc(r.title || '(없음)') + '</b>');
+        h += line('✓', 'ok-c', '목차(챕터): ' + r.chapters + '개');
+        h += r.cover && r.cover.exists ? line('✓', 'ok-c', '표지: 준비됨') : line('•', 'warn-c', '표지: 없음 → 텍스트 표지로 생성');
+        const miss = (r.images && r.images.missing) || 0;
+        h += miss === 0 ? line('✓', 'ok-c', '본문 이미지: 모두 준비됨(' + (r.images.total) + '개)') : line('•', 'warn-c', '본문 이미지: 누락 ' + miss + '개(자리표시자로 표시)');
+        h += '<div class="muted" style="margin-top:6px">' + (miss === 0 && r.cover && r.cover.exists ? '모든 준비가 끝났습니다. 다음 단계에서 전자책을 만드세요.' : '누락이 있어도 만들 수 있습니다. 더 완성도를 높이려면 이미지를 채운 뒤 진행하세요.') + '</div>';
+        p.innerHTML = h;
+        setStage('stage-6', '점검 완료 ✓', 'ok');
+      };
+      function line(mk, cls, t) { return '<div class="li"><span class="mk ' + cls + '">' + mk + '</span><span>' + t + '</span></div>'; }
+
+      // ── 7단계: 전자책 만들기 ──
+      $('btn-build').onclick = async () => {
+        if (!activeProject) { setStage('stage-7', '먼저 2단계에서 프로젝트를 선택하세요', 'err'); return; }
+        $('btn-build').disabled = true;
+        setStage('stage-7', '만드는 중… (PDF/DOCX/EPUB)', 'run');
+        const res = await window.api.build(payload());
+        $('btn-build').disabled = false;
+        const sum = $('build-summary'); sum.classList.remove('hide');
+        if (res.stage === 'preflight' && res.preflight) {
+          setStage('stage-7', '원고 문제로 중단 ✗', 'err');
+          sum.innerHTML = '<span class="err-c">✗ ' + esc((res.preflight.errors && res.preflight.errors[0]) || '원고 점검 실패') + '</span><div class="muted">1단계 규칙을 참고해 원고를 고친 뒤 다시 시도하세요.</div>';
+          return;
+        }
+        lastOutputs = res.outputs || [];
+        const made = (res.files || []).length, total = (res.outputs || []).length;
+        setStage('stage-7', res.ok ? '완료 ✓' : '일부 실패 ✗', res.ok ? 'ok' : 'err');
+        sum.innerHTML = '<h3>생성 결과</h3>' + line(res.ok ? '✓' : '•', res.ok ? 'ok-c' : 'warn-c', '산출물 ' + made + '/' + total + '개 생성됨' + (res.detailCount ? ' · 크몽 자료 ' + res.detailCount + '개' : ''));
+        renderResults();
+        if (res.ok) showStep(9);
+      };
+
+      // ── 8단계: 결과 ──
+      function renderResults() {
+        const list = $('result-list'); list.innerHTML = '';
+        for (const o of lastOutputs) {
+          const row = document.createElement('div'); row.className = 'file';
+          const left = document.createElement('div');
+          left.innerHTML = o.exists
+            ? '<div class="nm">' + esc(o.label) + ' <span class="mut-c">· ' + o.file + '</span></div><div class="pth">' + esc(o.path) + '</div>'
+            : '<div class="nm">' + esc(o.label) + ' <span class="x">✗ 생성 안 됨</span></div>';
+          row.appendChild(left);
+          if (o.exists) { const b = document.createElement('button'); b.textContent = '열기'; b.onclick = () => window.api.openPath(o.path); row.appendChild(b); }
+          list.appendChild(row);
+        }
+      }
+      function projOutDir() { return activeProject ? (activeProject.path + '\\output') : outputDir; }
+      $('btn-open-output').onclick = () => window.api.openPath(projOutDir());
+      $('btn-open-detail').onclick = () => window.api.openPath(projOutDir() + '\\detail-images');
+    </script>
+  </body>
+</html>

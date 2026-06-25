@@ -1,0 +1,121 @@
+<!doctype html><html lang="ko"><head><meta charset="utf-8"><title>Component Design System 03/04</title><style>
+@page { size: 430mm 300mm; margin: 16mm; }
+* { box-sizing: border-box; margin: 0; padding: 0; }
+html, body { background: #F3F4F6; color: #111827; font-family: Pretendard, "Noto Sans KR", "Apple SD Gothic Neo", system-ui, sans-serif; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+.wrap { background: #fff; border-radius: 12px; overflow: hidden; }
+.top { background: #0F172A; color: #fff; padding: 22px 28px; display: flex; align-items: center; gap: 16px; }
+.top h1 { font-size: 22px; font-weight: 700; }
+.top .pill { background: rgba(255,255,255,.12); padding: 6px 12px; border-radius: 999px; font-size: 13px; }
+.top .note { margin-left: auto; font-size: 12px; color: #cbd5e1; }
+.grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 20px; padding: 24px; }
+.cell > h2 { font-size: 15px; font-weight: 700; margin-bottom: 12px; }
+.cell > h2 b { color: #2563EB; }
+.card { background: #fff; border: 1px solid #E5E7EB; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,.06); padding: 16px; }
+
+/* 25 Tab Content */
+.tabs { display: flex; gap: 18px; border-bottom: 1px solid #E5E7EB; }
+.tabs .t { padding: 8px 2px; font-size: 13px; color: #6B7280; }
+.tabs .t.on { color: #2563EB; font-weight: 700; border-bottom: 2px solid #2563EB; }
+.tab-card { margin-top: 14px; background: #F9FAFB; border: 1px solid #E5E7EB; border-radius: 8px; padding: 16px; }
+.tab-card .h { font-weight: 700; font-size: 14px; margin-bottom: 6px; }
+.tab-card .d { color: #6B7280; font-size: 13px; line-height: 1.6; }
+
+/* 26/27 Dropdown / Select */
+.field { height: 42px; border: 1px solid #E5E7EB; border-radius: 8px; display: flex; align-items: center; justify-content: space-between; padding: 0 14px; font-size: 13px; color: #6B7280; }
+.field .cv { color: #9CA3AF; }
+.menu { margin-top: 8px; border: 1px solid #E5E7EB; border-radius: 8px; overflow: hidden; position: relative; }
+.menu .opt { padding: 11px 14px; font-size: 13px; border-bottom: 1px solid #F3F4F6; }
+.menu .opt:last-child { border-bottom: 0; }
+.menu .opt.on { background: #EFF5FF; color: #2563EB; font-weight: 600; }
+.menu .sb { position: absolute; right: 4px; top: 6px; bottom: 6px; width: 4px; border-radius: 999px; background: #E5E7EB; }
+.menu .sb::before { content: ""; position: absolute; left: 0; top: 0; width: 4px; height: 38%; border-radius: 999px; background: #C4CBD6; }
+
+/* 28 Toggle */
+.tgl-row { display: flex; align-items: center; justify-content: space-between; padding: 12px 0; border-bottom: 1px solid #F3F4F6; font-size: 14px; }
+.tgl-row:last-child { border-bottom: 0; }
+.tgl { width: 44px; height: 26px; border-radius: 999px; background: #D1D5DB; position: relative; }
+.tgl.on { background: #2563EB; }
+.tgl::after { content: ""; position: absolute; top: 3px; left: 3px; width: 20px; height: 20px; border-radius: 50%; background: #fff; }
+.tgl.on::after { left: 21px; }
+
+/* 29 Switch */
+.sw { display: flex; gap: 12px; }
+.sw .c { flex: 1; border: 1px solid #E5E7EB; border-radius: 8px; padding: 14px; position: relative; min-height: 84px; }
+.sw .c.on { border: 2px solid #2563EB; background: #F5F9FF; padding: 13px; }
+.sw .c .t { font-weight: 700; font-size: 14px; } .sw .c.on .t { color: #2563EB; }
+.sw .c .d { color: #6B7280; font-size: 12px; margin-top: 6px; }
+.sw .c .mk { position: absolute; right: 12px; top: 12px; width: 18px; height: 18px; border-radius: 50%; border: 2px solid #D1D5DB; }
+.sw .c.on .mk { background: #2563EB; border-color: #2563EB; color: #fff; display: flex; align-items: center; justify-content: center; font-size: 11px; }
+
+/* 30 Slider */
+.sl-top { display: flex; justify-content: space-between; font-size: 13px; margin-bottom: 12px; }
+.sl-track { height: 6px; background: #E5E7EB; border-radius: 999px; position: relative; margin: 0 2px 8px; }
+.sl-track > i { display: block; height: 100%; width: 75%; background: #2563EB; border-radius: 999px; }
+.sl-track .knob { position: absolute; left: 75%; top: 50%; transform: translate(-50%,-50%); width: 16px; height: 16px; border-radius: 50%; background: #2563EB; border: 2px solid #fff; box-shadow: 0 0 0 1px #2563EB; }
+.sl-ticks { display: flex; justify-content: space-between; font-size: 11px; color: #9CA3AF; }
+
+/* 31 Rating */
+.rate { text-align: center; }
+.rate .stars { font-size: 26px; letter-spacing: 4px; }
+.rate .on { color: #F59E0B; } .rate .off { color: #D1D5DB; }
+.rate .meta { font-size: 13px; color: #374151; margin-top: 8px; }
+.rate .meta .cnt { color: #6B7280; }
+
+/* 32 Breadcrumb */
+.bc { display: flex; align-items: center; gap: 8px; font-size: 13px; color: #6B7280; flex-wrap: wrap; }
+.bc .sep { color: #C4CBD6; }
+.bc .cur { color: #2563EB; font-weight: 700; }
+
+/* 33 Pagination */
+.pg { display: flex; gap: 6px; align-items: center; }
+.pg .b { min-width: 34px; height: 34px; border: 1px solid #E5E7EB; border-radius: 8px; display: inline-flex; align-items: center; justify-content: center; font-size: 13px; color: #374151; }
+.pg .b.on { background: #2563EB; border-color: #2563EB; color: #fff; font-weight: 700; }
+
+/* 34 Tag */
+.tags { display: flex; flex-wrap: wrap; gap: 10px; }
+.tag { font-size: 12px; font-weight: 600; padding: 6px 12px; border-radius: 7px; border: 1px solid; }
+.tag.blue { background: #EFF6FF; color: #2563EB; border-color: #BFDBFE; }
+.tag.green { background: #F0FDF4; color: #16A34A; border-color: #BBF7D0; }
+.tag.red { background: #FEF2F2; color: #EF4444; border-color: #FECACA; }
+.tag.amber { background: #FFFBEB; color: #B45309; border-color: #FDE68A; }
+.tag.purple { background: #F5F3FF; color: #7C3AED; border-color: #DDD6FE; }
+.tag.add { background: #fff; color: #2563EB; border: 1px dashed #93B4F5; }
+
+/* 35 Chip */
+.chips { display: flex; flex-wrap: wrap; gap: 10px; }
+.chip { display: inline-flex; align-items: center; gap: 8px; font-size: 12px; background: #F3F4F6; border: 1px solid #E5E7EB; border-radius: 999px; padding: 6px 12px; color: #374151; }
+.chip .x { color: #9CA3AF; }
+
+/* 36 Avatar */
+.avs { display: flex; gap: 16px; align-items: center; }
+.av { width: 48px; height: 48px; border-radius: 50%; position: relative; display: flex; align-items: center; justify-content: center; font-weight: 700; color: #fff; font-size: 15px; flex: none; }
+.av.p1 { background: #93C5FD; } .av.p2 { background: #FBCFE8; } .av.mj { background: #2563EB; } .av.df { background: #E5E7EB; color: #9CA3AF; }
+.av .glyph { font-size: 20px; }
+.av .dot { position: absolute; right: 0; bottom: 0; width: 13px; height: 13px; border-radius: 50%; background: #16A34A; border: 2px solid #fff; }
+</style></head><body>
+  <div class="wrap">
+    <div class="top"><h1>UI 컴포넌트 디자인 시스템</h1><span class="pill">03 / 04 · 25~36번</span><span class="note">검수용 데모 — 샘플 데이터</span></div>
+    <div class="grid"><div class="cell"><h2><b>25.</b> Tab Content</h2><div class="card"><div class="tabs"><span class="t on">개요</span><span class="t">상세 정보</span><span class="t">설정</span><span class="t">기록</span></div>
+    <div class="tab-card"><div class="h">▤ 개요</div><div class="d">이곳은 선택된 탭에 대한 콘텐츠 영역입니다. 필요한 정보를 여기에 표시합니다.</div></div></div></div><div class="cell"><h2><b>26.</b> Dropdown</h2><div class="card"><div class="field"><span>옵션을 선택하세요</span><span class="cv">▾</span></div>
+    <div class="menu"><div class="opt">옵션 1</div><div class="opt on">옵션 2</div><div class="opt">옵션 3</div><div class="opt">옵션 4</div><div class="sb"></div></div></div></div><div class="cell"><h2><b>27.</b> Select</h2><div class="card"><div class="field"><span>카테고리 선택</span><span class="cv">▾</span></div>
+    <div class="menu"><div class="opt">디자인</div><div class="opt">개발</div><div class="opt on">마케팅</div><div class="opt">기획</div><div class="sb"></div></div></div></div><div class="cell"><h2><b>28.</b> Toggle</h2><div class="card">
+    <div class="tgl-row"><span>알림 설정</span><span class="tgl on"></span></div>
+    <div class="tgl-row"><span>다크 모드</span><span class="tgl"></span></div>
+    <div class="tgl-row"><span>자동 저장</span><span class="tgl on"></span></div></div></div><div class="cell"><h2><b>29.</b> Switch</h2><div class="card"><div class="sw">
+    <div class="c on"><div class="mk">✓</div><div class="t">옵션 A</div><div class="d">옵션 A에 대한 설명입니다.</div></div>
+    <div class="c"><div class="mk"></div><div class="t">옵션 B</div><div class="d">옵션 B에 대한 설명입니다.</div></div>
+  </div></div></div><div class="cell"><h2><b>30.</b> Slider</h2><div class="card"><div class="sl-top"><span>볼륨</span><b>75%</b></div>
+    <div class="sl-track"><i></i><span class="knob"></span></div>
+    <div class="sl-ticks"><span>0%</span><span>25%</span><span>50%</span><span>75%</span><span>100%</span></div></div></div><div class="cell"><h2><b>31.</b> Rating</h2><div class="card"><div class="rate"><div class="stars"><span class="on">★★★★</span><span class="off">★</span></div>
+    <div class="meta"><b>4.0 / 5.0</b> <span class="cnt">(128개 평가)</span></div></div></div></div><div class="cell"><h2><b>32.</b> Breadcrumb</h2><div class="card"><div class="bc"><span>⌂</span><span class="sep">›</span><span>대시보드</span><span class="sep">›</span><span>프로젝트</span><span class="sep">›</span><span class="cur">UI 디자인 시스템</span></div></div></div><div class="cell"><h2><b>33.</b> Pagination</h2><div class="card"><div class="pg"><span class="b">‹</span><span class="b">1</span><span class="b on">2</span><span class="b">3</span><span class="b">4</span><span class="b">5</span><span class="b">›</span></div></div></div><div class="cell"><h2><b>34.</b> Tag</h2><div class="card"><div class="tags">
+    <span class="tag blue">디자인</span><span class="tag green">개발</span><span class="tag red">중요</span><span class="tag amber">참고</span><span class="tag purple">업데이트</span><span class="tag add">+ 태그 추가</span>
+  </div></div></div><div class="cell"><h2><b>35.</b> Chip</h2><div class="card"><div class="chips">
+    <span class="chip">React <span class="x">✕</span></span><span class="chip">TypeScript <span class="x">✕</span></span><span class="chip">Next.js <span class="x">✕</span></span><span class="chip">UI/UX <span class="x">✕</span></span>
+  </div></div></div><div class="cell"><h2><b>36.</b> Avatar</h2><div class="card"><div class="avs">
+    <span class="av p1"><span class="glyph">👤</span><span class="dot"></span></span>
+    <span class="av p2"><span class="glyph">👤</span><span class="dot"></span></span>
+    <span class="av mj">MJ<span class="dot"></span></span>
+    <span class="av df"><span class="glyph">👤</span><span class="dot"></span></span>
+  </div></div></div></div>
+  </div>
+  </body></html>

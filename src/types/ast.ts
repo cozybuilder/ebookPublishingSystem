@@ -21,6 +21,7 @@ export interface Metadata {
   title: string; // '#'
   subtitle?: string; // 'subtitle:' (선택)
   author?: string; // 'author:'   (선택)
+  cover?: string; // 'cover:' (선택) — 표지 이미지 자산 id (기본 'cover' → assets/images/cover.png|jpg)
 }
 
 export interface Chapter {
@@ -42,6 +43,32 @@ export type BlockType =
   | 'faq'
   | 'warning'
   | 'result'
+  | 'callout'
+  | 'divider'
+  | 'code'
+  | 'timeline'
+  | 'stats'
+  | 'chart'
+  | 'feature'
+  | 'progress'
+  | 'stepper'
+  | 'timeline-card'
+  | 'compare-card'
+  | 'alert'
+  | 'process'
+  | 'rating'
+  | 'tags'
+  | 'chips'
+  | 'tree'
+  | 'pagination'
+  | 'empty'
+  | 'search'
+  | 'tooltip'
+  | 'popover'
+  | 'modal'
+  | 'drawer'
+  | 'skeleton'
+  | 'file'
   | 'image';
 
 export type Block =
@@ -56,6 +83,32 @@ export type Block =
   | FaqBlock
   | WarningBlock
   | ResultBlock
+  | CalloutBlock
+  | DividerBlock
+  | CodeBlock
+  | TimelineBlock
+  | StatsBlock
+  | ChartBlock
+  | FeatureBlock
+  | ProgressBlock
+  | StepperBlock
+  | TimelineCardBlock
+  | CompareCardBlock
+  | AlertBlock
+  | ProcessBlock
+  | RatingBlock
+  | TagsBlock
+  | ChipsBlock
+  | TreeBlock
+  | PaginationBlock
+  | EmptyStateBlock
+  | SearchBlock
+  | TooltipBlock
+  | PopoverBlock
+  | ModalBlock
+  | DrawerBlock
+  | SkeletonBlock
+  | FileBlock
   | ImageBlock;
 
 export interface ParagraphBlock {
@@ -119,9 +172,221 @@ export interface WarningBlock {
   text: string;
 }
 
+/** 리절트 박스 변형 — :::result variant: success|info|warning|error (없으면 기본) */
+export type ResultVariant = 'success' | 'info' | 'warning' | 'error';
 export interface ResultBlock {
   type: 'result';
   text: string;
+  variant?: ResultVariant;
+}
+
+/** 콜아웃(정보/팁/노트) — :::info / :::tip / :::note */
+export type CalloutVariant = 'info' | 'tip' | 'note';
+export interface CalloutBlock {
+  type: 'callout';
+  variant: CalloutVariant;
+  text: string;
+}
+
+/** 구분선 — :::divider 또는 단독 `---` / `***` / `___` 줄 */
+export interface DividerBlock {
+  type: 'divider';
+}
+
+/** 코드 블록 — 표준 ``` 펜스(언어 선택) */
+export interface CodeBlock {
+  type: 'code';
+  lang: string;
+  code: string;
+}
+
+/** 타임라인 — :::timeline (항목: 날짜/제목/설명, 빈 줄로 구분) */
+export interface TimelineItem {
+  date: string;
+  title: string;
+  desc: string;
+}
+export interface TimelineBlock {
+  type: 'timeline';
+  items: TimelineItem[];
+}
+
+/** 수치 카드(Metric/Stats) — :::stats (icon/value/label, 항목당 빈 줄 구분) */
+export interface StatItem {
+  icon: string;
+  value: string;
+  label: string;
+}
+export interface StatsBlock {
+  type: 'stats';
+  items: StatItem[];
+}
+
+/** 차트 — :::chart (현재 type: bar 지원) */
+export interface ChartBlock {
+  type: 'chart';
+  chartType: string;
+  title: string;
+  unit: string;
+  center: string;
+  labels: string[];
+  values: number[];
+}
+
+/** 피처 카드 — :::feature (icon/title/desc + 체크리스트 불릿, title 외 모두 선택) */
+export interface FeatureBlock {
+  type: 'feature';
+  icon: string;
+  title: string;
+  desc: string;
+  items: string[];
+}
+
+/** 진행률 — :::progress (라벨: 퍼센트, 첫 항목=전체 진행률). percent 는 0~100 clamp */
+export interface ProgressItem {
+  label: string;
+  percent: number;
+}
+export interface ProgressBlock {
+  type: 'progress';
+  items: ProgressItem[];
+}
+
+/** 진행 단계 — :::stepper (current=현재 1-base, desc=현재 설명(선택), 불릿=단계 목록) */
+export interface StepperBlock {
+  type: 'stepper';
+  current: number;
+  desc: string;
+  steps: string[];
+}
+
+/** 타임라인 카드 — :::timeline-card (DS 04/04 #42). 항목=TimelineItem(date 선택/title 필수/desc 선택) */
+export interface TimelineCardBlock {
+  type: 'timeline-card';
+  items: TimelineItem[];
+}
+
+// ===== 통합 스프린트 15~30 (DS 잔여 핵심 컴포넌트, 정적 변환) =====
+
+/** 15 Compare Card — :::compare-card (DS 02/04 #18). highlight=강조 열(선택) */
+export interface CompareCardBlock {
+  type: 'compare-card';
+  columns: string[];
+  highlight: string;
+  rows: string[][];
+}
+
+/** 16 Alert — :::alert (DS 02/04 #23). variant 별 색/라벨 */
+export type AlertVariant = 'success' | 'info' | 'warning' | 'error';
+export interface AlertBlock {
+  type: 'alert';
+  variant: AlertVariant;
+  text: string;
+}
+
+/** 17 Process — :::process (DS 02/04 #16). 단계 흐름(아이콘 선택) */
+export interface ProcessItem {
+  icon: string;
+  title: string;
+  desc: string;
+}
+export interface ProcessBlock {
+  type: 'process';
+  items: ProcessItem[];
+}
+
+/** 18 Rating — :::rating (DS 03/04 #31). value/max 별점 */
+export interface RatingBlock {
+  type: 'rating';
+  value: number;
+  max: number;
+  label: string;
+}
+
+/** 19 Tag Group — :::tags (DS 03/04 #34) */
+export interface TagsBlock {
+  type: 'tags';
+  items: string[];
+}
+
+/** 20 Chip Group — :::chips (DS 03/04 #35) */
+export interface ChipsBlock {
+  type: 'chips';
+  items: string[];
+}
+
+/** 21 Tree — :::tree (DS 04/04 #43). depth=들여쓰기 깊이 */
+export interface TreeItem {
+  depth: number;
+  label: string;
+}
+export interface TreeBlock {
+  type: 'tree';
+  items: TreeItem[];
+}
+
+/** 22 Pagination — :::pagination (DS 02/04 #24 + 03/04 #33). 페이지 정보 블록 */
+export interface PaginationBlock {
+  type: 'pagination';
+  current: number;
+  total: number;
+}
+
+/** 23 Empty State — :::empty (DS 04/04 #47) */
+export interface EmptyStateBlock {
+  type: 'empty';
+  icon: string;
+  title: string;
+  desc: string;
+}
+
+/** 24 Search Bar — :::search (DS 04/04 #46). 검색 예시 블록 */
+export interface SearchBlock {
+  type: 'search';
+  placeholder: string;
+  query: string;
+}
+
+/** 25 Tooltip — :::tooltip (DS 04/04 #37) → 설명 박스 */
+export interface TooltipBlock {
+  type: 'tooltip';
+  label: string;
+  text: string;
+}
+
+/** 26 Popover — :::popover (DS 04/04 #38) → 설명 박스 */
+export interface PopoverBlock {
+  type: 'popover';
+  title: string;
+  text: string;
+}
+
+/** 27 Modal — :::modal (DS 04/04 #39) → 강조 카드 */
+export interface ModalBlock {
+  type: 'modal';
+  title: string;
+  text: string;
+}
+
+/** 28 Drawer — :::drawer (DS 04/04 #40) → 강조 카드 */
+export interface DrawerBlock {
+  type: 'drawer';
+  title: string;
+  text: string;
+}
+
+/** 29 Skeleton — :::skeleton (DS 04/04 #48) → placeholder 카드 */
+export interface SkeletonBlock {
+  type: 'skeleton';
+  lines: number;
+}
+
+/** 30 File Uploader — :::file (DS 04/04 #45) → 파일 정보 카드 */
+export interface FileBlock {
+  type: 'file';
+  name: string;
+  size: string;
+  fileType: string;
 }
 
 /**

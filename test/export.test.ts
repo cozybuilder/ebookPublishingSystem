@@ -131,7 +131,7 @@ check('mode 정상: --prefix 단독은 canvas', mode(['--prefix', 'sparse']).kin
 // print CSS 주입(임시 HTML 대상) — 원본 문자열 불변 검증
 const sampleHtml = '<html><head><title>t</title></head><body><div class="page"></div></body></html>';
 const injected = injectPrintCss(sampleHtml);
-check('injectPrintCss: </head> 직전 주입', injected.includes('data-pdf-print="v1"') && injected.indexOf('data-pdf-print') < injected.indexOf('</head>'));
+check('injectPrintCss: </head> 직전 주입', injected.includes('data-pdf-print="v6"') && injected.indexOf('data-pdf-print') < injected.indexOf('</head>'));
 check('injectPrintCss: 원본 문자열 불변(입력 보존)', sampleHtml === '<html><head><title>t</title></head><body><div class="page"></div></body></html>');
 check('injectPrintCss: @page A4 포함', injected.includes('@page') && injected.includes('A4'));
 check('injectPrintCss: break-inside 보호', injected.includes('break-inside: avoid'));

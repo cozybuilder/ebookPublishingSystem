@@ -1,0 +1,11 @@
+Missing images:
+- IMG-001
+- IMG-002
+- IMG-003
+- IMG-004
+
+Please add:
+assets/images/IMG-001.png
+assets/images/IMG-002.png
+assets/images/IMG-003.png
+assets/images/IMG-004.png

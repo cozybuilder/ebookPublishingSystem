@@ -25,8 +25,13 @@ const AUTO_FRONT_PAGES = new Set(['CoverPage', 'CopyrightPage', 'TableOfContents
 function frontMatterPages(book: Book, overrides?: FrontMatterOverrides): ComponentPage[] {
   const fm = buildFrontMatter(book, overrides).components;
   const pick = (types: string[]): Component[] => fm.filter((c) => types.includes(c.type));
+  // 표지 이미지가 있으면 이미지(배경) + 제목/부제/저자(오버레이)를 함께, 없으면 텍스트 표지(무회귀).
+  const hasCoverImage = fm.some((c) => c.type === 'CoverImage');
+  const coverComponents = hasCoverImage
+    ? pick(['CoverImage', 'TitleBlock', 'SubtitleBlock', 'AuthorBlock'])
+    : pick(['TitleBlock', 'SubtitleBlock', 'AuthorBlock']);
   return [
-    { type: 'CoverPage', components: pick(['TitleBlock', 'SubtitleBlock', 'AuthorBlock']) },
+    { type: 'CoverPage', components: coverComponents },
     { type: 'CopyrightPage', components: pick(['CopyrightNotice']) },
     { type: 'TableOfContentsPage', components: pick(['TableOfContentsList']) },
     { type: 'ContentPage', components: pick(['AuthorBio', 'Disclaimer']) },
