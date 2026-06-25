@@ -1,7 +1,4 @@
 {
   "$schema": "https://openapi.vercel.sh/vercel.json",
-  "cleanUrls": true,
-  "functions": {
-    "api/verify-launch.js": { "runtime": "nodejs20.x" }
-  }
+  "cleanUrls": true
 }
