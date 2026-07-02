@@ -1,5 +1,9 @@
 # Ebook Publishing System 기준정보 v0.1
 
+> ⚠️ **SUPERSEDED (아카이브 후보).** 이 v0.1 초기 기준은 루트 [PROJECT_CONSTITUTION.md](../PROJECT_CONSTITUTION.md)
+> 와 [STATUS.md](../STATUS.md) 로 대체되었다. 조직 공통 표준의 SSOT는 `../../cozybuilder-ops`.
+> 이력 참고용으로만 보존한다.
+
 ## 프로젝트 목적
 
 Markdown 원고를 입력하면 CozyBuilder Lab 스타일의 전자책 상품 패키지를 자동 생성하는 출판 엔진을 만든다.

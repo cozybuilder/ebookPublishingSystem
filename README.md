@@ -39,7 +39,18 @@ Markdown 원고 + 이미지를 입력하면 상품 수준의 전자책(PDF/DOCX/
 
 - **기본 = Upload Mode** : 사용자가 원고/이미지를 직접 준비. **운영비 0원, API 의존성 없음.**
 - **선택 = API Auto Mode** : (추후 Premium) 사용자 API Key 입력 시에만 자동 생성.
-- 기준 문서: [GLOBAL_CONSTITUTION.md](GLOBAL_CONSTITUTION.md) · [PROJECT_CONSTITUTION.md](PROJECT_CONSTITUTION.md)
+
+## 문서 지도
+
+- **조직 공통 표준(SSOT)** : `cozybuilder-ops` 저장소 (`../cozybuilder-ops` · GitHub `cozybuilder/cozybuilder-ops`) — 헌법 `GLOBAL.md`, 절차 `PLAYBOOK.md`, **Homepage↔프로그램 경계 `PROGRAM_INTEGRATION.md`**. 충돌 시 ops 우선.
+- **현재 상태(살아있는 상태)** : [STATUS.md](STATUS.md)
+- **제품 방향(프로젝트 범위)** : [PROJECT_CONSTITUTION.md](PROJECT_CONSTITUTION.md) · 결정 로그 [DECISIONS.md](DECISIONS.md) · 개발 가이드 [CLAUDE.md](CLAUDE.md)
+
+## 위치·경계 (Homepage는 플랫폼, Ebook은 독립 제품)
+
+- Ebook 은 **독립 정식 웹프로그램**이다 — 독립 저장소/도메인/배포(예 `ebook.cozybuilder.co.kr`, `deploy/`), Launch Token 검증 후 실행.
+- **Homepage(cozybuilder.co.kr)** 는 플랫폼만 담당한다: 로그인·구독·권한·`/apps/[appKey]` 진입점. 엔진 본체(파서/조립/출력)를 흡수하지 않는다.
+- 현재 형태 : **엔진 연결 완료**(UX 셸이 아니라 실제 엔진 파이프라인 동작) — 로컬 CLI + Electron GUI + `deploy/` 웹 배포(standalone). 경계 표준 = ops `PROGRAM_INTEGRATION.md`.
 
 ## 출력 구조
 
@@ -79,7 +90,7 @@ output/
 
 ## 현재 상태
 
-- **v0.1** — Upload Mode 제품 플로우 정비 단계
+- 살아있는 상태(SSOT)는 [STATUS.md](STATUS.md) 를 따른다. (컴포넌트 30종 실매핑, 4출력, PDF v6 + Paged.js 경로, Season 2 샘플/표지/GUI 등)
 
 ## 실행 규칙
 

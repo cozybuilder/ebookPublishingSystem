@@ -1,7 +1,10 @@
 # STATUS — 현재 상태 요약 (Phase 1/2 완료, 안정 버전)
 
-> 새 채팅창에서 바로 개발을 재개하기 위한 핸드오프 요약.
-> 권위 문서: [GLOBAL_CONSTITUTION.md](GLOBAL_CONSTITUTION.md) · [PROJECT_CONSTITUTION.md](PROJECT_CONSTITUTION.md) · 이력 [DECISIONS.md](DECISIONS.md)
+> 새 채팅창에서 바로 개발을 재개하기 위한 핸드오프 요약. 이 프로젝트의 **살아있는 상태 SSOT**.
+> 조직 공통 표준(SSOT)은 **cozybuilder-ops**(`../cozybuilder-ops/GLOBAL.md`·`PLAYBOOK.md`·`PROGRAM_INTEGRATION.md`) — 충돌 시 ops 우선.
+> 프로젝트 문서: [PROJECT_CONSTITUTION.md](PROJECT_CONSTITUTION.md) · [CLAUDE.md](CLAUDE.md) · 이력 [DECISIONS.md](DECISIONS.md).
+>
+> **위치·경계**: Ebook = 독립 정식 웹프로그램(독립 저장소/도메인/배포 `ebook.cozybuilder.co.kr`·`deploy/`, Launch Token 검증). Homepage=플랫폼(로그인/구독/진입)만. **현재 = 엔진 연결 완료**(UX 셸 아님). 표준 = ops `PROGRAM_INTEGRATION.md`.
 
 ## 역할
 - 코지(CEO) · 코비(PM) · 클로(개발). 보고는 하나의 ```text 블록.

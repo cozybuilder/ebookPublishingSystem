@@ -1,11 +1,19 @@
 # CLAUDE.md — Ebook Publishing System
 
-## 최상위 기준
+## 최상위 기준 (SSOT)
 
-작업 전 두 문서를 읽는다. 기억보다 문서를 우선한다.
+조직 공통 표준의 SSOT는 **cozybuilder-ops** 저장소다(로컬 형제 경로 `../cozybuilder-ops`, GitHub `cozybuilder/cozybuilder-ops`). 충돌 시 ops 문서가 우선한다. 기억이 아니라 문서를 따른다.
 
-1. [GLOBAL_CONSTITUTION.md](GLOBAL_CONSTITUTION.md)
-2. [PROJECT_CONSTITUTION.md](PROJECT_CONSTITUTION.md)
+1. 조직 헌법·규약·소통 원칙 : `../cozybuilder-ops/GLOBAL.md`
+2. 운영 절차·보고 형식 : `../cozybuilder-ops/PLAYBOOK.md`
+3. **Homepage(플랫폼) ↔ Ebook(독립 프로그램) 경계** : `../cozybuilder-ops/PROGRAM_INTEGRATION.md`
+4. 프로젝트 등록/상태 포인터 : `../cozybuilder-ops/PROJECTS.md`
+
+이 저장소가 단독 소유하는 문서(프로젝트 사실):
+- 현재 상태(살아있는 상태 SSOT) : [STATUS.md](STATUS.md)
+- 결정 로그 : [DECISIONS.md](DECISIONS.md)
+- 제품 방향(프로젝트 범위) : [PROJECT_CONSTITUTION.md](PROJECT_CONSTITUTION.md)
+- (조직 공통 원칙 로컬 사본은 ops 로 이관 — [GLOBAL_CONSTITUTION.md](GLOBAL_CONSTITUTION.md) 는 포인터)
 
 ## 현재 목표
 
@@ -27,4 +35,5 @@
 
 ## 소통
 
-- 클로 → 코비 보고는 하나의 ```text 블록으로 작성한다. (블록 전달 원칙)
+- 소통·보고 원칙의 SSOT는 `../cozybuilder-ops/GLOBAL.md §7` + 형식은 `../cozybuilder-ops/PLAYBOOK.md §P3`.
+- 요약: 모든 지시·보고는 복붙 가능한 ```text 코드블록 안에 작성한다(평문 금지). 새 대화창에서도 동일.

@@ -1,4 +1,10 @@
-# 공통 기준정보 (최신)
+# PROJECT_CONSTITUTION — Ebook Publishing System (프로젝트 기준)
+
+> 조직 공통 표준(역할·소통·Additive·SSOT·저장소/커밋 규약)의 SSOT는 **cozybuilder-ops**
+> (`../cozybuilder-ops/GLOBAL.md`·`PLAYBOOK.md`). 충돌 시 ops 우선. 이 문서는 **Ebook 프로젝트 고유의 제품 방향/판단**만 단독 소유한다(복제 금지, 링크 참조).
+>
+> **위치·경계** : Ebook 은 **독립 정식 웹프로그램**이다(독립 저장소/도메인/배포 — 예 `ebook.cozybuilder.co.kr`, `deploy/`). Homepage(cozybuilder.co.kr)는 **플랫폼**(로그인/구독/권한/`/apps/[appKey]` 진입점)만 담당하고 엔진 본체를 흡수하지 않는다. 경계 표준 = `../cozybuilder-ops/PROGRAM_INTEGRATION.md`.
+> **현재 상태(살아있는 상태) SSOT** = [STATUS.md](STATUS.md).
 
 ## 최종 방향 — Hybrid Publishing / Shorts Engine
 
@@ -102,6 +108,8 @@
 - 작업 흐름을 끊는 반복 승인 요청을 지양하고, 가능하면 **구현 → 테스트 → 검증 → 완료 보고**로 한 번에 진행한다.
 - 사용자는 CEO이며, 개발자는 멈춰서 반복 승인받기보다 **결과물과 변경사항 보고**를 우선한다.
 
-# 상위 기준
+# 상위 기준 (SSOT)
 
-GLOBAL_CONSTITUTION.md를 따른다.
+조직 공통 표준은 **cozybuilder-ops** 를 따른다: `../cozybuilder-ops/GLOBAL.md`(헌법·소통·Additive) · `../cozybuilder-ops/PLAYBOOK.md`(절차·보고 형식) · `../cozybuilder-ops/PROGRAM_INTEGRATION.md`(Homepage↔프로그램 경계). 충돌 시 ops 우선.
+
+> 위 "운영 원칙 — 개발자 자율성"은 본 프로젝트 팀 합의(프로젝트 소유)이며, ops 공통 표준을 보완한다.
